@@ -1,0 +1,22 @@
+# =============================================================================
+# .dockerignore - Shopify Autonomous Store Platform
+# =============================================================================
+
+node_modules/
+.git/
+.gitignore
+.next/
+coverage/
+dist/
+.env
+.env.*
+*.md
+Dockerfile
+docker-compose*.yml
+.vscode/
+.idea/
+tests/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
