@@ -12,7 +12,7 @@ Frontend
 
 Dashboard
 
-Review Center
+Review Center (per-section: Research, Content, SEO, Landing)
 
 Agent Monitoring
 
@@ -60,7 +60,15 @@ Research Agent
 
 ↓
 
+Research Review + Edit
+
+↓
+
 Content Agent
+
+↓
+
+Content Review + Edit
 
 ↓
 
@@ -68,7 +76,15 @@ SEO Agent
 
 ↓
 
+SEO Review + Edit
+
+↓
+
 Landing Agent
+
+↓
+
+Landing Review + Edit
 
 ↓
 
@@ -76,7 +92,7 @@ Shopify Agent
 
 ↓
 
-Review Queue
+Final Review
 
 ↓
 
@@ -85,6 +101,35 @@ Approval
 ↓
 
 Publish
+
+---
+
+## Per-Section Review & Edit Pages
+
+Each generation step (Research, Content, SEO, Landing) has a dedicated dashboard page at:
+
+```
+/dashboard/workflows/:id/research
+/dashboard/workflows/:id/content
+/dashboard/workflows/:id/seo
+/dashboard/workflows/:id/landing
+```
+
+Each page provides:
+- View generated content
+- Edit any field inline before approving
+- Approve → proceed to next step
+- Reject with feedback → trigger re-generation
+
+---
+
+## Review Gates
+
+Each generation step (Research, Content, SEO, Landing) is followed by a review gate.
+
+Approve → proceed to next step.
+
+Reject → return to the generating step for rework (max 3 reworks per step).
 
 ---
 

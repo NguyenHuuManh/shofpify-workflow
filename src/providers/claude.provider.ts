@@ -20,6 +20,7 @@ import type { GenerateTextInput, GenerateTextOutput } from '@/types/ai-provider.
 import type { AIProviderConfig } from './base-ai-provider';
 import { loadEnv } from '@/lib/env';
 import { logger } from '@/lib/logger';
+import { AppError, ErrorCodes } from '@/lib/errors';
 
 // Lazy-loaded Anthropic client
 let _anthropicClient: unknown = null;
@@ -27,6 +28,14 @@ let _anthropicClient: unknown = null;
 function getAnthropicClient(): unknown {
   if (!_anthropicClient) {
     const env = loadEnv();
+
+    if (!env.ANTHROPIC_API_KEY) {
+      throw new AppError({
+        code: ErrorCodes.CONFIGURATION_ERROR,
+        message: 'ANTHROPIC_API_KEY is not set. Set it in .env or use a different provider.',
+        statusCode: 500,
+      });
+    }
     // Dynamic import to avoid issues if the SDK isn't installed
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { default: Anthropic } = require('@anthropic-ai/sdk') as {

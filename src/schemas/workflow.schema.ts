@@ -22,7 +22,14 @@ export const workflowFilterSchema = z.object({
     .enum(['PENDING', 'RUNNING', 'FAILED', 'COMPLETED', 'CANCELLED'])
     .optional(),
   currentStep: z
-    .enum(['RESEARCH', 'CONTENT', 'SEO', 'LANDING', 'IMAGE', 'SHOPIFY', 'REVIEW', 'PUBLISH'])
+    .enum([
+      'RESEARCH', 'RESEARCH_REVIEW',
+      'CONTENT', 'CONTENT_REVIEW',
+      'SEO', 'SEO_REVIEW',
+      'LANDING', 'LANDING_REVIEW',
+      'IMAGE', 'SHOPIFY',
+      'REVIEW', 'FINAL_REVIEW', 'PUBLISH',
+    ])
     .optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

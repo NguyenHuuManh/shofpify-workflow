@@ -334,26 +334,49 @@ DRAFT
 
 RESEARCHING
 
-CONTENT_GENERATED
+RESEARCH_REVIEW
 
-SEO_GENERATED
+CONTENT_GENERATING
 
-LANDING_GENERATED
+CONTENT_REVIEW
 
-SHOPIFY_DRAFT_CREATED
+SEO_GENERATING
 
-PENDING_REVIEW
+SEO_REVIEW
+
+LANDING_GENERATING
+
+LANDING_REVIEW
+
+IMAGE_GENERATING
+
+SHOPIFY_DRAFT_CREATING
+
+FINAL_REVIEW
 
 APPROVED
 
-REJECTED
-
 PUBLISHED
+
+REJECTED
 ```
 
 Never skip states.
 
 Workflow state changes must be persisted.
+
+---
+
+## Review Gate Rules
+
+Each generation step (RESEARCHING, CONTENT_GENERATING, SEO_GENERATING, LANDING_GENERATING) must be followed by its corresponding review step (*_REVIEW) before the next generation step can begin.
+
+Review outcome:
+
+- Approved → proceed to next generation step
+- Rejected → return to the generating step for rework (max 3 reworks per step)
+
+FINAL_REVIEW is the last review gate before APPROVED → PUBLISHED.
 
 ---
 

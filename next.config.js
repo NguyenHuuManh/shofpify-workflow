@@ -3,12 +3,11 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
-  // Server-only packages excluded from client bundle
-  serverComponentsExternalPackages: ['pino', 'pino-pretty', '@prisma/client', 'prisma'],
-
   experimental: {
     // Enable typed routes when stable
     typedRoutes: false,
+    // Server-only packages excluded from client bundle
+    serverComponentsExternalPackages: ['pino', 'pino-pretty', 'thread-stream', '@prisma/client', 'prisma'],
   },
 
   // Redirects for common patterns

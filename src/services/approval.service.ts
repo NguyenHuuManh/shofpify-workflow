@@ -253,6 +253,79 @@ export class ApprovalService {
     logger.info({ workflowId, reviewerId }, 'Changes requested on workflow');
     return approval;
   }
+
+  // ---------------------------------------------------------------------------
+  // Per-Step Review Operations (Intermediate Review Gates)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Review a specific workflow step (research, content, seo, landing, final).
+   * Approve → advances to next step. Reject → triggers rework or final rejection.
+   */
+  async reviewStep(
+    workflowId: string,
+    reviewStep: 'RESEARCH_REVIEW' | 'CONTENT_REVIEW' | 'SEO_REVIEW' | 'LANDING_REVIEW' | 'FINAL_REVIEW',
+    reviewerId: string,
+    decision: 'APPROVED' | 'REJECTED',
+    comment?: string,
+  ): Promise<Approval> {
+    const workflow = await this.workflowRepo.findByIdOrThrow(workflowId);
+
+    if (workflow.status !== 'RUNNING') {
+      throw new AppError({
+        code: ErrorCodes.INVALID_WORKFLOW_TRANSITION,
+        message: `Cannot review a workflow with status '${workflow.status}'`,
+        statusCode: 400,
+      });
+    }
+
+    if (workflow.currentStep !== reviewStep) {
+      throw new AppError({
+        code: ErrorCodes.INVALID_WORKFLOW_TRANSITION,
+        message: `Workflow is at step '${workflow.currentStep}', expected '${reviewStep}'`,
+        statusCode: 400,
+      });
+    }
+
+    // Create approval record
+    const approval = await this.approvalRepo.create({
+      workflowId,
+      reviewerId,
+      status: decision,
+      comment,
+    });
+
+    const action = decision === 'APPROVED'
+      ? `WORKFLOW_STEP_APPROVED_${reviewStep}`
+      : `WORKFLOW_STEP_REJECTED_${reviewStep}`;
+
+    await this.auditRepo.create({
+      entityType: 'Workflow',
+      entityId: workflowId,
+      action,
+      actorId: reviewerId,
+      metadata: { step: reviewStep, decision, comment },
+    });
+
+    // Update product status based on review step
+    if (decision === 'APPROVED' && reviewStep === 'FINAL_REVIEW') {
+      await this.productRepo.updateStatus(workflow.productId, 'APPROVED');
+    }
+
+    logger.info(
+      { workflowId, reviewStep, decision, reviewerId },
+      `Step review ${decision.toLowerCase()}`,
+    );
+
+    return approval;
+  }
+
+  /**
+   * Check if a review step matches the expected generating step for rework validation.
+   */
+  isReviewStep(step: string): step is 'RESEARCH_REVIEW' | 'CONTENT_REVIEW' | 'SEO_REVIEW' | 'LANDING_REVIEW' | 'FINAL_REVIEW' {
+    return ['RESEARCH_REVIEW', 'CONTENT_REVIEW', 'SEO_REVIEW', 'LANDING_REVIEW', 'FINAL_REVIEW'].includes(step);
+  }
 }
 
 export const approvalService = new ApprovalService();

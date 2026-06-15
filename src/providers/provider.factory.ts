@@ -17,10 +17,12 @@
 
 import type { AIProvider } from '@/types/ai-provider.interface';
 import { ClaudeProvider } from './claude.provider';
+import { DeepSeekProvider } from './deepseek.provider';
 import type { AIProviderConfig } from './base-ai-provider';
 import { logger } from '@/lib/logger';
+import { loadEnv } from '@/lib/env';
 
-export type ProviderName = 'claude' | 'openai' | 'deepseek';
+export type ProviderName = 'claude' | 'deepseek' | 'openai';
 
 /** Provider constructor type */
 type ProviderConstructor = new (config?: AIProviderConfig) => AIProvider;
@@ -28,8 +30,9 @@ type ProviderConstructor = new (config?: AIProviderConfig) => AIProvider;
 /** Registry of all available AI providers */
 const providerRegistry = new Map<ProviderName, ProviderConstructor>();
 
-// Register Claude by default
+// Register providers
 providerRegistry.set('claude', ClaudeProvider);
+providerRegistry.set('deepseek', DeepSeekProvider);
 
 /**
  * Register a new provider implementation.
@@ -78,10 +81,27 @@ export function createProvider(
 }
 
 /**
- * Create the default provider based on environment configuration.
- * Uses ANTHROPIC_API_KEY by default, falls back to other configured providers.
+ * Create the default provider based on available API keys.
+ * Priority: Claude > DeepSeek > error
  */
 export function createDefaultProvider(config?: AIProviderConfig): AIProvider {
-  // Future: check which API keys are configured and pick accordingly
-  return createProvider('claude', config);
+  const env = loadEnv();
+
+  // Check for real Anthropic key (skip placeholder/dummy values)
+  const hasAnthropic = env.ANTHROPIC_API_KEY
+    && env.ANTHROPIC_API_KEY.length > 20
+    && !env.ANTHROPIC_API_KEY.startsWith('placeholder');
+
+  if (hasAnthropic) {
+    return createProvider('claude', config);
+  }
+
+  if (env.DEEPSEEK_API_KEY) {
+    logger.info('No valid Anthropic key found — using DeepSeek');
+    return createProvider('deepseek', config);
+  }
+
+  throw new Error(
+    'No AI provider configured. Set ANTHROPIC_API_KEY or DEEPSEEK_API_KEY in .env',
+  );
 }

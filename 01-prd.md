@@ -33,17 +33,25 @@ The platform should automatically:
 ```text
 Research Product
     ↓
+Review & Edit Research
+    ↓
 Generate Product Content
+    ↓
+Review & Edit Content
     ↓
 Generate SEO Metadata
     ↓
+Review & Edit SEO
+    ↓
 Generate Landing Page
+    ↓
+Review & Edit Landing Page
     ↓
 Generate Image Prompts
     ↓
 Create Shopify Draft
     ↓
-Human Review
+Final Review
     ↓
 Publish Product
 ```
@@ -184,10 +192,12 @@ The system must:
 
 The system must:
 
-* Support approvals
-* Support rejections
+* Support per-step approvals (Research, Content, SEO, Landing)
+* Support final approval before publishing
+* Support rejections with step-specific feedback
+* Support rework loops (reject → regenerate)
 * Support comments
-* Track review history
+* Track review history per step
 
 ---
 
@@ -301,6 +311,48 @@ The system shall log all agent executions.
 ## FR-014
 
 The system shall log all workflow state changes.
+
+---
+
+## FR-015
+
+The system shall require human approval after the Research step before proceeding to Content generation.
+
+---
+
+## FR-016
+
+The system shall require human approval after the Content step before proceeding to SEO generation.
+
+---
+
+## FR-017
+
+The system shall require human approval after the SEO step before proceeding to Landing Page generation.
+
+---
+
+## FR-018
+
+The system shall require human approval after the Landing Page step before proceeding to Shopify draft creation.
+
+---
+
+## FR-019
+
+The system shall allow reviewers to reject a step with feedback, triggering re-generation of that step.
+
+---
+
+## FR-020
+
+The system shall provide dedicated review pages for each workflow step (Research, Content, SEO, Landing) where reviewers can view and edit generated content before approving.
+
+---
+
+## FR-021
+
+The system shall persist all manual edits to generated content and track edit history.
 
 ---
 

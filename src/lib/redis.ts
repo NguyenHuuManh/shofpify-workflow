@@ -25,14 +25,14 @@ function createRedisClient(): Redis {
   const client = new Redis(env.REDIS_URL, {
     maxRetriesPerRequest: null, // Required for BullMQ
     enableReadyCheck: true,
-    lazyConnect: false,
-    retryStrategy(times: number): number | void {
-      if (times > 10) {
-        logger.fatal('Redis connection failed after 10 retries');
-        return;
+    lazyConnect: true, // Don't connect until first use (optional for dev without Redis)
+    retryStrategy(times: number): number | undefined {
+      if (times > 3) {
+        logger.warn('Redis unavailable after 3 retries — running without queue');
+        return; // Stop retrying
       }
-      const delay = Math.min(times * 200, 5000);
-      logger.warn({ attempt: times, delay }, 'Redis reconnecting...');
+      const delay = Math.min(times * 500, 3000);
+      logger.warn({ attempt: times, delay }, 'Redis connecting...');
       return delay;
     },
   });
@@ -42,7 +42,7 @@ function createRedisClient(): Redis {
   });
 
   client.on('error', (error: Error) => {
-    logger.error({ error: error.message }, 'Redis error');
+    logger.warn({ error: error.message }, 'Redis unavailable — queue features disabled');
   });
 
   client.on('close', () => {

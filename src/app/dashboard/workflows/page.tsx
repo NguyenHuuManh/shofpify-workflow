@@ -5,6 +5,7 @@
  */
 
 import { Card, Table, Badge, Button } from '@/components/ui';
+import { DeleteWorkflowButton } from '@/components/dashboard/delete-workflow-button';
 import { workflowService } from '@/services/workflow.service';
 import type { WorkflowStatus } from '@prisma/client';
 
@@ -78,13 +79,15 @@ export default async function WorkflowsPage(): Promise<React.ReactElement> {
             <span key="date" style={{ color: '#94a3b8', fontSize: '13px' }}>
               {new Date(wf.startedAt).toLocaleDateString()}
             </span>,
-            <a
-              key="actions"
-              href={`/dashboard/workflows/${wf.id}`}
-              style={{ color: '#3b82f6', fontWeight: 500, textDecoration: 'none' }}
-            >
-              View →
-            </a>,
+            <div key="actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <a
+                href={`/dashboard/workflows/${wf.id}`}
+                style={{ color: '#3b82f6', fontWeight: 500, textDecoration: 'none' }}
+              >
+                View →
+              </a>
+              <DeleteWorkflowButton workflowId={wf.id} />
+            </div>,
           ])}
         />
       </Card>

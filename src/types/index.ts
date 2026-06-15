@@ -7,6 +7,7 @@
  * - Re-export Prisma enums as TypeScript types
  * - Define DTO types for API boundaries
  * - Define workflow-related types
+ * - Define per-step review types
  *
  * Dependencies:
  * - @prisma/client
@@ -60,6 +61,41 @@ export interface ApprovalInput {
 }
 
 // -----------------------------------------------------------------------------
+// Per-Step Review Types
+// -----------------------------------------------------------------------------
+
+/**
+ * Review step identifiers matching the intermediate review gates.
+ */
+export type ReviewStep = 'research' | 'content' | 'seo' | 'landing' | 'final';
+
+/**
+ * Decision on a single workflow step review.
+ */
+export interface ReviewDecision {
+  /** Which review gate this decision applies to */
+  step: ReviewStep;
+  /** Review outcome */
+  decision: 'APPROVED' | 'REJECTED';
+  /** Required when rejecting */
+  comment?: string;
+  /** Reviewer user ID */
+  reviewerId: string;
+}
+
+/**
+ * Per-step review status stored on the workflow context.
+ */
+export interface StepReviewStatus {
+  step: ReviewStep;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reviewedAt?: string;
+  reviewerId?: string;
+  comment?: string;
+  reworkCount: number;
+}
+
+// -----------------------------------------------------------------------------
 // Workflow Context
 // -----------------------------------------------------------------------------
 
@@ -76,6 +112,8 @@ export interface WorkflowContext {
   seo?: ProductSEOResult;
   landingPage?: LandingPageResult;
   imagePrompts?: ImagePrompt[];
+  /** Per-step review tracking */
+  reviews?: Record<ReviewStep, StepReviewStatus>;
 }
 
 export interface ProductResearchResult {

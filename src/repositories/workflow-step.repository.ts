@@ -119,6 +119,27 @@ export class WorkflowStepRepository extends BaseRepository {
     });
   }
 
+  /**
+   * Reset a step to PENDING for rework.
+   * Increments the rework counter in metadata.
+   */
+  async resetToPending(
+    id: string,
+    reworkCount: number,
+    tx?: TransactionClient,
+  ): Promise<WorkflowStep> {
+    const client = tx ?? this.db;
+    return client.workflowStep.update({
+      where: { id },
+      data: {
+        status: 'PENDING',
+        completedAt: null,
+        errorMessage: null,
+        metadata: { reworkCount },
+      },
+    });
+  }
+
   async deleteByWorkflowId(
     workflowId: string,
     tx?: TransactionClient,

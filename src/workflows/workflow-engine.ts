@@ -2,19 +2,21 @@
  * Purpose:
  * WorkflowEngine — the primary orchestrator for product creation workflows.
  * Builds the LangGraph, executes workflows, and coordinates BullMQ integration.
+ * Supports intermediate review gates with resume-after-approval flow.
  *
  * Architecture:
  *   WorkflowEngine
- *     ├── Builds LangGraph (StateGraph)
+ *     ├── Builds LangGraph (StateGraph with review gates)
  *     ├── Starts workflow via WorkflowService
  *     ├── Executes the graph (in-process or via BullMQ)
- *     └── Handles completion/failure
+ *     ├── Pauses at review gates for human input
+ *     └── Resumes from review states after human decision
  *
  * Responsibilities:
- * - Create and configure workflow graphs
+ * - Create and configure workflow graphs with intermediate reviews
  * - Execute workflows synchronously or via job queue
+ * - Handle resume after per-step review approval/rejection
  * - Track workflow progress and state
- * - Handle retry logic
  *
  * Dependencies:
  * - @langchain/langgraph
@@ -49,7 +51,7 @@ export class WorkflowEngine {
 
   /**
    * Start and execute a new product creation workflow.
-   * This is the main entry point called by API routes or job producers.
+   * Runs the graph until it hits a review gate or terminal state.
    */
   async execute(workflowId: string, productId: string, productIdea: string): Promise<GraphState> {
     logger.info(
@@ -57,13 +59,9 @@ export class WorkflowEngine {
       'WorkflowEngine starting execution',
     );
 
-    // Build the LangGraph
     const graph = buildWorkflowGraph(this.aiProvider);
-
-    // Create initial state
     const initialState = createInitialState(workflowId, productId, productIdea);
 
-    // Execute the graph (streams through all nodes)
     const result = await graph.invoke(initialState) as GraphState;
 
     logger.info(
@@ -80,13 +78,14 @@ export class WorkflowEngine {
 
   /**
    * Resume a workflow from a specific state.
-   * Used after human approval or when resuming from BullMQ.
+   * Used after human review decision at any review gate.
    */
   async resume(
     workflowId: string,
     productId: string,
     productIdea: string,
     currentState: WorkflowState,
+    context?: GraphState['context'],
   ): Promise<GraphState> {
     logger.info(
       { workflowId, currentState },
@@ -104,7 +103,7 @@ export class WorkflowEngine {
     const graph = buildWorkflowGraph(this.aiProvider);
 
     const state: GraphState = {
-      context: {
+      context: context ?? {
         workflowId,
         productId,
         productIdea,
@@ -112,7 +111,18 @@ export class WorkflowEngine {
       currentState,
     };
 
-    return graph.invoke(state) as Promise<GraphState>;
+    const result = await graph.invoke(state) as GraphState;
+
+    logger.info(
+      {
+        workflowId,
+        previousState: currentState,
+        finalState: result.currentState,
+      },
+      'WorkflowEngine resume completed',
+    );
+
+    return result;
   }
 
   /**
@@ -138,12 +148,8 @@ export class WorkflowEngine {
       currentState: WorkflowState.DRAFT,
     };
 
-    // Execute graph; LangGraph will resume from where it left off
     return graph.invoke(state) as Promise<GraphState>;
   }
 }
 
-/**
- * Default singleton engine instance.
- */
 export const workflowEngine = new WorkflowEngine();

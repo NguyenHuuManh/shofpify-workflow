@@ -50,13 +50,12 @@ const envSchema = z.object({
   SHOPIFY_API_VERSION: z.string().default('2024-04'),
   SHOPIFY_API_SECRET: z.string().min(1),
 
-  // Anthropic
-  ANTHROPIC_API_KEY: z.string().min(1),
+  // AI Providers (at least one must be configured)
+  ANTHROPIC_API_KEY: optionalString,
   ANTHROPIC_MODEL: z.string().default('claude-3-5-sonnet-20240620'),
-
-  // Alternative AI Providers
-  OPENAI_API_KEY: optionalString,
   DEEPSEEK_API_KEY: optionalString,
+  DEEPSEEK_MODEL: z.string().default('deepseek-chat'),
+  OPENAI_API_KEY: optionalString,
 
   // Authentication
   AUTH_SECRET: z.string().min(32),

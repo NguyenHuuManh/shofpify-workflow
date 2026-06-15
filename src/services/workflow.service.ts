@@ -38,16 +38,21 @@ import type { ProductRepository } from '@/repositories/product.repository';
 import type { AuditLogRepository } from '@/repositories/audit-log.repository';
 
 /**
- * Ordered sequence of workflow steps matching the product creation pipeline.
+ * Ordered sequence of workflow steps matching the product creation pipeline
+ * with intermediate review gates after each generation step.
  */
 const WORKFLOW_STEP_SEQUENCE: WorkflowStepType[] = [
   'RESEARCH',
+  'RESEARCH_REVIEW',
   'CONTENT',
+  'CONTENT_REVIEW',
   'SEO',
+  'SEO_REVIEW',
   'LANDING',
+  'LANDING_REVIEW',
   'IMAGE',
   'SHOPIFY',
-  'REVIEW',
+  'FINAL_REVIEW',
   'PUBLISH',
 ];
 
@@ -291,6 +296,127 @@ export class WorkflowService {
   }
 
   /**
+   * Record a per-step review decision (approve or reject).
+   * Called by the API after a human reviews a specific step.
+   *
+   * On approve: advances to the next step in the sequence.
+   * On reject:  returns to the preceding generating step for rework,
+   *             or rejects the entire workflow if max reworks exceeded.
+   */
+  async reviewStep(
+    workflowId: string,
+    reviewStep: WorkflowStepType,
+    decision: 'APPROVED' | 'REJECTED',
+    reviewerId: string,
+    comment?: string,
+  ): Promise<{ nextStep: WorkflowStepType | null; reworkCount: number }> {
+    await this.workflowRepo.findByIdOrThrow(workflowId);
+    const steps = await this.stepRepo.findByWorkflowId(workflowId);
+
+    const currentStep = steps.find((s) => s.step === reviewStep);
+    if (!currentStep) {
+      throw new AppError({
+        code: ErrorCodes.NOT_FOUND,
+        message: `Review step '${reviewStep}' not found in workflow '${workflowId}'`,
+        statusCode: 404,
+      });
+    }
+
+    const reworkCount = (currentStep.metadata as Record<string, unknown> | null)?.reworkCount as number ?? 0;
+
+    if (decision === 'APPROVED') {
+      // Complete the review step
+      await this.stepRepo.markCompleted(currentStep.id);
+
+      await this.auditRepo.create({
+        entityType: 'Workflow',
+        entityId: workflowId,
+        action: `STEP_REVIEW_APPROVED_${reviewStep}`,
+        actorId: reviewerId,
+        metadata: { step: reviewStep, comment },
+      });
+
+      // Advance to next step
+      const next = await this.advanceToNextStep(workflowId);
+      logger.info({ workflowId, reviewStep, nextStep: next?.step }, 'Step review approved, advancing');
+
+      return { nextStep: next?.step ?? null, reworkCount };
+    }
+
+    // REJECTED — determine rework or final rejection
+    const MAX_REWORKS = 3;
+    const newReworkCount = reworkCount + 1;
+
+    if (newReworkCount >= MAX_REWORKS) {
+      // Max reworks exceeded — reject entire workflow
+      await this.stepRepo.markFailed(currentStep.id, `Rejected after ${newReworkCount} reworks`);
+      await this.workflowRepo.updateStatus(workflowId, 'FAILED');
+
+      await this.auditRepo.create({
+        entityType: 'Workflow',
+        entityId: workflowId,
+        action: `STEP_REVIEW_MAX_REWORKS_${reviewStep}`,
+        actorId: reviewerId,
+        metadata: { step: reviewStep, reworkCount: newReworkCount, comment },
+      });
+
+      logger.warn({ workflowId, reviewStep, reworkCount: newReworkCount }, 'Max reworks exceeded — workflow rejected');
+      return { nextStep: null, reworkCount: newReworkCount };
+    }
+
+    // Rework — reset to the preceding generating step
+    const generatingStep = this.getGeneratingStepForReview(reviewStep);
+    if (!generatingStep) {
+      throw new AppError({
+        code: ErrorCodes.INVALID_WORKFLOW_TRANSITION,
+        message: `No generating step found for review step '${reviewStep}'`,
+        statusCode: 400,
+      });
+    }
+
+    // Reset the generating step to PENDING so it runs again
+    const genStepRecord = steps.find((s) => s.step === generatingStep);
+    if (genStepRecord) {
+      await this.stepRepo.resetToPending(genStepRecord.id, newReworkCount);
+    }
+
+    // Mark review step for rework
+    await this.stepRepo.markFailed(currentStep.id, `Rejected — reworking (attempt ${newReworkCount}/${MAX_REWORKS})`);
+
+    // Reset the review step for next attempt
+    await this.stepRepo.resetToPending(currentStep.id, newReworkCount);
+
+    // Update workflow current step back to the generating step
+    await this.workflowRepo.updateCurrentStep(workflowId, generatingStep);
+
+    await this.auditRepo.create({
+      entityType: 'Workflow',
+      entityId: workflowId,
+      action: `STEP_REVIEW_REJECTED_${reviewStep}`,
+      actorId: reviewerId,
+      metadata: { step: reviewStep, reworkCount: newReworkCount, comment },
+    });
+
+    logger.info({ workflowId, reviewStep, reworkCount: newReworkCount, returningTo: generatingStep }, 'Step rejected — reworking');
+
+    return { nextStep: generatingStep, reworkCount: newReworkCount };
+  }
+
+  /**
+   * Map a review step to its preceding generating step (for rework loops).
+   */
+  private getGeneratingStepForReview(reviewStep: WorkflowStepType): WorkflowStepType | null {
+    const map: Partial<Record<WorkflowStepType, WorkflowStepType>> = {
+      RESEARCH_REVIEW: 'RESEARCH',
+      CONTENT_REVIEW: 'CONTENT',
+      SEO_REVIEW: 'SEO',
+      LANDING_REVIEW: 'LANDING',
+      FINAL_REVIEW: 'SHOPIFY',
+    };
+    return map[reviewStep] ?? null;
+  }
+
+  /**
    * Cancel the workflow.
    */
   async cancel(workflowId: string, actorId?: string): Promise<Workflow> {
@@ -305,6 +431,40 @@ export class WorkflowService {
 
     logger.info({ workflowId }, 'Workflow cancelled');
     return workflow;
+  }
+
+  /**
+   * Delete the workflow and all related records.
+   */
+  async delete(workflowId: string, actorId?: string): Promise<Workflow> {
+    const workflow = await this.workflowRepo.findByIdOrThrow(workflowId);
+
+    // Delete in transaction: child records → workflow
+    const deleted = await BaseRepository.transaction(async (tx) => {
+      // Delete all related child records first (no cascade in Prisma schema)
+      await tx.$executeRaw`DELETE FROM "WorkflowStep" WHERE "workflowId" = ${workflowId}`;
+      await tx.$executeRaw`DELETE FROM "Approval" WHERE "workflowId" = ${workflowId}`;
+      await tx.$executeRaw`DELETE FROM "AgentRun" WHERE "workflowId" = ${workflowId}`;
+      await tx.$executeRaw`DELETE FROM "AIUsageLog" WHERE "workflowId" = ${workflowId}`;
+      await tx.$executeRaw`DELETE FROM "AuditLog" WHERE "entityId" = ${workflowId} AND "entityType" = 'Workflow'`;
+
+      // Delete the workflow
+      return this.workflowRepo.delete(workflowId, tx);
+    });
+
+    await this.auditRepo.create({
+      entityType: 'Workflow',
+      entityId: workflowId,
+      action: 'WORKFLOW_DELETED',
+      actorId,
+      metadata: { productId: workflow.productId, status: workflow.status },
+    });
+
+    // Reset product to DRAFT
+    await this.productRepo.updateStatus(workflow.productId, 'DRAFT');
+
+    logger.info({ workflowId, productId: workflow.productId }, 'Workflow deleted');
+    return deleted;
   }
 }
 

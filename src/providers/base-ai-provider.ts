@@ -41,6 +41,8 @@ const MODEL_COST_PER_1M_TOKENS: Record<string, { prompt: number; completion: num
   'claude-3-haiku-20240307': { prompt: 0.25, completion: 1.25 },
   'gpt-4o': { prompt: 5.0, completion: 15.0 },
   'gpt-4-turbo': { prompt: 10.0, completion: 30.0 },
+  'deepseek-chat': { prompt: 0.14, completion: 0.28 },
+  'deepseek-reasoner': { prompt: 0.55, completion: 2.19 },
 };
 
 export interface AIProviderConfig {

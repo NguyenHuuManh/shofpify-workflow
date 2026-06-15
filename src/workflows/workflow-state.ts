@@ -5,8 +5,8 @@
  * Every state transition must be persisted via WorkflowService.
  *
  * Responsibilities:
- * - Define the 10 workflow states
- * - Define valid transitions between states
+ * - Define the 17 workflow states (including per-step review gates)
+ * - Define valid transitions between states (including rework loops)
  * - Associate each state with its corresponding agent step
  * - Provide state naming utilities
  *
@@ -17,22 +17,31 @@
 import type { WorkflowStepType } from '@prisma/client';
 
 /**
- * Workflow states as defined in the architecture document.
- * These map to WorkflowStepType in the database.
+ * Workflow states including intermediate review gates.
+ * Matches the state machine defined in 06-deepseek.md.
  */
 export enum WorkflowState {
   DRAFT = 'DRAFT',
   RESEARCHING = 'RESEARCHING',
-  CONTENT_GENERATED = 'CONTENT_GENERATED',
-  SEO_GENERATED = 'SEO_GENERATED',
-  LANDING_GENERATED = 'LANDING_GENERATED',
-  IMAGE_GENERATED = 'IMAGE_GENERATED',
-  SHOPIFY_DRAFT_CREATED = 'SHOPIFY_DRAFT_CREATED',
-  PENDING_REVIEW = 'PENDING_REVIEW',
+  RESEARCH_REVIEW = 'RESEARCH_REVIEW',
+  CONTENT_GENERATING = 'CONTENT_GENERATING',
+  CONTENT_REVIEW = 'CONTENT_REVIEW',
+  SEO_GENERATING = 'SEO_GENERATING',
+  SEO_REVIEW = 'SEO_REVIEW',
+  LANDING_GENERATING = 'LANDING_GENERATING',
+  LANDING_REVIEW = 'LANDING_REVIEW',
+  IMAGE_GENERATING = 'IMAGE_GENERATING',
+  SHOPIFY_DRAFT_CREATING = 'SHOPIFY_DRAFT_CREATING',
+  FINAL_REVIEW = 'FINAL_REVIEW',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
   PUBLISHED = 'PUBLISHED',
 }
+
+/**
+ * Maximum number of reworks allowed per step before forcing rejection.
+ */
+export const MAX_REWORKS_PER_STEP = 3;
 
 /**
  * Valid state transitions.
@@ -40,18 +49,52 @@ export enum WorkflowState {
  */
 export const STATE_TRANSITIONS: Record<WorkflowState, WorkflowState[]> = {
   [WorkflowState.DRAFT]: [WorkflowState.RESEARCHING],
-  [WorkflowState.RESEARCHING]: [WorkflowState.CONTENT_GENERATED],
-  [WorkflowState.CONTENT_GENERATED]: [WorkflowState.SEO_GENERATED],
-  [WorkflowState.SEO_GENERATED]: [WorkflowState.LANDING_GENERATED],
-  [WorkflowState.LANDING_GENERATED]: [WorkflowState.IMAGE_GENERATED],
-  [WorkflowState.IMAGE_GENERATED]: [WorkflowState.SHOPIFY_DRAFT_CREATED],
-  [WorkflowState.SHOPIFY_DRAFT_CREATED]: [WorkflowState.PENDING_REVIEW],
-  [WorkflowState.PENDING_REVIEW]: [
+
+  // Research phase
+  [WorkflowState.RESEARCHING]: [WorkflowState.RESEARCH_REVIEW],
+  [WorkflowState.RESEARCH_REVIEW]: [
+    WorkflowState.CONTENT_GENERATING,   // approved
+    WorkflowState.RESEARCHING,          // rejected → rework
+    WorkflowState.REJECTED,             // rejected → max reworks exceeded
+  ],
+
+  // Content phase
+  [WorkflowState.CONTENT_GENERATING]: [WorkflowState.CONTENT_REVIEW],
+  [WorkflowState.CONTENT_REVIEW]: [
+    WorkflowState.SEO_GENERATING,       // approved
+    WorkflowState.CONTENT_GENERATING,   // rejected → rework
+    WorkflowState.REJECTED,             // rejected → max reworks exceeded
+  ],
+
+  // SEO phase
+  [WorkflowState.SEO_GENERATING]: [WorkflowState.SEO_REVIEW],
+  [WorkflowState.SEO_REVIEW]: [
+    WorkflowState.LANDING_GENERATING,   // approved
+    WorkflowState.SEO_GENERATING,       // rejected → rework
+    WorkflowState.REJECTED,             // rejected → max reworks exceeded
+  ],
+
+  // Landing phase
+  [WorkflowState.LANDING_GENERATING]: [WorkflowState.LANDING_REVIEW],
+  [WorkflowState.LANDING_REVIEW]: [
+    WorkflowState.IMAGE_GENERATING,     // approved
+    WorkflowState.LANDING_GENERATING,   // rejected → rework
+    WorkflowState.REJECTED,             // rejected → max reworks exceeded
+  ],
+
+  // Image + Shopify (no intermediate review — flows through)
+  [WorkflowState.IMAGE_GENERATING]: [WorkflowState.SHOPIFY_DRAFT_CREATING],
+  [WorkflowState.SHOPIFY_DRAFT_CREATING]: [WorkflowState.FINAL_REVIEW],
+
+  // Final review
+  [WorkflowState.FINAL_REVIEW]: [
     WorkflowState.APPROVED,
     WorkflowState.REJECTED,
   ],
+
+  // Terminal
   [WorkflowState.APPROVED]: [WorkflowState.PUBLISHED],
-  [WorkflowState.REJECTED]: [WorkflowState.DRAFT],
+  [WorkflowState.REJECTED]: [],
   [WorkflowState.PUBLISHED]: [], // Terminal state
 };
 
@@ -60,12 +103,16 @@ export const STATE_TRANSITIONS: Record<WorkflowState, WorkflowState[]> = {
  */
 export const STATE_TO_STEP: Partial<Record<WorkflowState, WorkflowStepType>> = {
   [WorkflowState.RESEARCHING]: 'RESEARCH',
-  [WorkflowState.CONTENT_GENERATED]: 'CONTENT',
-  [WorkflowState.SEO_GENERATED]: 'SEO',
-  [WorkflowState.LANDING_GENERATED]: 'LANDING',
-  [WorkflowState.IMAGE_GENERATED]: 'IMAGE',
-  [WorkflowState.SHOPIFY_DRAFT_CREATED]: 'SHOPIFY',
-  [WorkflowState.PENDING_REVIEW]: 'REVIEW',
+  [WorkflowState.RESEARCH_REVIEW]: 'RESEARCH_REVIEW',
+  [WorkflowState.CONTENT_GENERATING]: 'CONTENT',
+  [WorkflowState.CONTENT_REVIEW]: 'CONTENT_REVIEW',
+  [WorkflowState.SEO_GENERATING]: 'SEO',
+  [WorkflowState.SEO_REVIEW]: 'SEO_REVIEW',
+  [WorkflowState.LANDING_GENERATING]: 'LANDING',
+  [WorkflowState.LANDING_REVIEW]: 'LANDING_REVIEW',
+  [WorkflowState.IMAGE_GENERATING]: 'IMAGE',
+  [WorkflowState.SHOPIFY_DRAFT_CREATING]: 'SHOPIFY',
+  [WorkflowState.FINAL_REVIEW]: 'FINAL_REVIEW',
   [WorkflowState.APPROVED]: 'PUBLISH',
 };
 
@@ -74,14 +121,49 @@ export const STATE_TO_STEP: Partial<Record<WorkflowState, WorkflowStepType>> = {
  */
 export const STEP_TO_STATE: Record<WorkflowStepType, WorkflowState> = {
   RESEARCH: WorkflowState.RESEARCHING,
-  CONTENT: WorkflowState.CONTENT_GENERATED,
-  SEO: WorkflowState.SEO_GENERATED,
-  LANDING: WorkflowState.LANDING_GENERATED,
-  IMAGE: WorkflowState.IMAGE_GENERATED,
-  SHOPIFY: WorkflowState.SHOPIFY_DRAFT_CREATED,
-  REVIEW: WorkflowState.PENDING_REVIEW,
+  RESEARCH_REVIEW: WorkflowState.RESEARCH_REVIEW,
+  CONTENT: WorkflowState.CONTENT_GENERATING,
+  CONTENT_REVIEW: WorkflowState.CONTENT_REVIEW,
+  SEO: WorkflowState.SEO_GENERATING,
+  SEO_REVIEW: WorkflowState.SEO_REVIEW,
+  LANDING: WorkflowState.LANDING_GENERATING,
+  LANDING_REVIEW: WorkflowState.LANDING_REVIEW,
+  IMAGE: WorkflowState.IMAGE_GENERATING,
+  SHOPIFY: WorkflowState.SHOPIFY_DRAFT_CREATING,
+  FINAL_REVIEW: WorkflowState.FINAL_REVIEW,
   PUBLISH: WorkflowState.PUBLISHED,
 };
+
+/**
+ * Review states that require human decision.
+ */
+export const REVIEW_STATES: WorkflowState[] = [
+  WorkflowState.RESEARCH_REVIEW,
+  WorkflowState.CONTENT_REVIEW,
+  WorkflowState.SEO_REVIEW,
+  WorkflowState.LANDING_REVIEW,
+  WorkflowState.FINAL_REVIEW,
+];
+
+/**
+ * Check if a state is a review gate (requires human input).
+ */
+export function isReviewState(state: WorkflowState): boolean {
+  return REVIEW_STATES.includes(state);
+}
+
+/**
+ * Get the generating state that precedes a given review state (for rework loops).
+ */
+export function getPrecedingGeneratingState(reviewState: WorkflowState): WorkflowState | null {
+  const map: Partial<Record<WorkflowState, WorkflowState>> = {
+    [WorkflowState.RESEARCH_REVIEW]: WorkflowState.RESEARCHING,
+    [WorkflowState.CONTENT_REVIEW]: WorkflowState.CONTENT_GENERATING,
+    [WorkflowState.SEO_REVIEW]: WorkflowState.SEO_GENERATING,
+    [WorkflowState.LANDING_REVIEW]: WorkflowState.LANDING_GENERATING,
+  };
+  return map[reviewState] ?? null;
+}
 
 /**
  * Check if a transition from one state to another is valid.
@@ -101,12 +183,16 @@ export function getStateLabel(state: WorkflowState): string {
   const labels: Record<WorkflowState, string> = {
     [WorkflowState.DRAFT]: 'Draft',
     [WorkflowState.RESEARCHING]: 'Researching',
-    [WorkflowState.CONTENT_GENERATED]: 'Content Generated',
-    [WorkflowState.SEO_GENERATED]: 'SEO Generated',
-    [WorkflowState.LANDING_GENERATED]: 'Landing Page Generated',
-    [WorkflowState.IMAGE_GENERATED]: 'Images Generated',
-    [WorkflowState.SHOPIFY_DRAFT_CREATED]: 'Shopify Draft Created',
-    [WorkflowState.PENDING_REVIEW]: 'Pending Review',
+    [WorkflowState.RESEARCH_REVIEW]: 'Research Review',
+    [WorkflowState.CONTENT_GENERATING]: 'Content Generating',
+    [WorkflowState.CONTENT_REVIEW]: 'Content Review',
+    [WorkflowState.SEO_GENERATING]: 'SEO Generating',
+    [WorkflowState.SEO_REVIEW]: 'SEO Review',
+    [WorkflowState.LANDING_GENERATING]: 'Landing Page Generating',
+    [WorkflowState.LANDING_REVIEW]: 'Landing Page Review',
+    [WorkflowState.IMAGE_GENERATING]: 'Images Generating',
+    [WorkflowState.SHOPIFY_DRAFT_CREATING]: 'Shopify Draft Creating',
+    [WorkflowState.FINAL_REVIEW]: 'Final Review',
     [WorkflowState.APPROVED]: 'Approved',
     [WorkflowState.REJECTED]: 'Rejected',
     [WorkflowState.PUBLISHED]: 'Published',

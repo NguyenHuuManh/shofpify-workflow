@@ -5,6 +5,7 @@
  */
 
 import { Card, Badge, Button } from '@/components/ui';
+import { DeleteWorkflowButton } from '@/components/dashboard/delete-workflow-button';
 import { workflowService } from '@/services/workflow.service';
 import { notFound } from 'next/navigation';
 import type { StepStatus } from '@prisma/client';
@@ -21,7 +22,7 @@ interface Props {
 }
 
 export default async function WorkflowDetailPage({ params }: Props): Promise<React.ReactElement> {
-  let workflow;
+  let workflow: Awaited<ReturnType<typeof workflowService.getById>>;
   try {
     workflow = await workflowService.getById(params.id);
   } catch {
@@ -65,6 +66,9 @@ export default async function WorkflowDetailPage({ params }: Props): Promise<Rea
           <span style={{ color: '#94a3b8', fontSize: '13px' }}>
             Started {new Date(workflow.startedAt).toLocaleString()}
           </span>
+          <div style={{ marginLeft: 'auto' }}>
+            <DeleteWorkflowButton workflowId={params.id} />
+          </div>
         </div>
       </div>
 
@@ -74,7 +78,21 @@ export default async function WorkflowDetailPage({ params }: Props): Promise<Rea
           Pipeline Progress
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {steps.map((step, i) => (
+          {steps.map((step, i) => {
+            // Determine if this step has a dedicated review+edit page
+            const reviewSteps: Record<string, string> = {
+              RESEARCH: `/dashboard/workflows/${params.id}/research`,
+              RESEARCH_REVIEW: `/dashboard/workflows/${params.id}/research`,
+              CONTENT: `/dashboard/workflows/${params.id}/content`,
+              CONTENT_REVIEW: `/dashboard/workflows/${params.id}/content`,
+              SEO: `/dashboard/workflows/${params.id}/seo`,
+              SEO_REVIEW: `/dashboard/workflows/${params.id}/seo`,
+              LANDING: `/dashboard/workflows/${params.id}/landing`,
+              LANDING_REVIEW: `/dashboard/workflows/${params.id}/landing`,
+            };
+            const reviewUrl = reviewSteps[step.step];
+
+            return (
             <div
               key={step.id}
               style={{
@@ -114,8 +132,21 @@ export default async function WorkflowDetailPage({ params }: Props): Promise<Rea
 
               {/* Step info */}
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a' }}>
+                <div style={{ fontWeight: 600, fontSize: '14px', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {step.step.replace(/_/g, ' ')}
+                  {reviewUrl && (step.status === 'COMPLETED' || step.status === 'RUNNING') && (
+                    <a
+                      href={reviewUrl}
+                      style={{
+                        fontSize: '12px',
+                        color: '#3b82f6',
+                        fontWeight: 500,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      {step.step.includes('REVIEW') ? 'Review & Edit →' : 'View →'}
+                    </a>
+                  )}
                 </div>
                 {step.errorMessage && (
                   <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '2px' }}>
@@ -136,7 +167,8 @@ export default async function WorkflowDetailPage({ params }: Props): Promise<Rea
                 )}
               </div>
             </div>
-          ))}
+          );
+          })}
         </div>
       </Card>
 

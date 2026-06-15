@@ -20,6 +20,7 @@ export type { AIProviderConfig } from './base-ai-provider';
 
 // Implementations
 export { ClaudeProvider } from './claude.provider';
+export { DeepSeekProvider } from './deepseek.provider';
 
 // Factory
 export {
