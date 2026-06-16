@@ -42,8 +42,6 @@ import type { AuditLogRepository } from '@/repositories/audit-log.repository';
  * with intermediate review gates after each generation step.
  */
 const WORKFLOW_STEP_SEQUENCE: WorkflowStepType[] = [
-  'RESEARCH',
-  'RESEARCH_REVIEW',
   'CONTENT',
   'CONTENT_REVIEW',
   'SEO',
@@ -130,7 +128,7 @@ export class WorkflowService {
       const wf = await this.workflowRepo.create(
         {
           productId: parsed.productId,
-          currentStep: 'RESEARCH',
+          currentStep: 'CONTENT',
           userId: actorId,
         },
         tx,

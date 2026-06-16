@@ -27,7 +27,7 @@ export default function NewWorkflowPage(): React.ReactElement {
           ✨ New Product Workflow
         </h2>
         <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
-          Enter a product idea and the platform will automatically research, generate content, and create a Shopify draft.
+          Create a production workflow for a known product. Use Product Research first when you still need to discover candidates.
         </p>
       </div>
 
@@ -68,7 +68,7 @@ export default function NewWorkflowPage(): React.ReactElement {
               }}
             />
             <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px' }}>
-              Be specific — the AI uses this to research the market and generate content.
+              Be specific — the production workflow starts at content generation.
             </p>
           </div>
 
@@ -84,9 +84,8 @@ export default function NewWorkflowPage(): React.ReactElement {
               ⚡ What happens next
             </h4>
             <ol style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: '#475569', lineHeight: 1.8 }}>
-              <li>Research Agent analyzes the market</li>
               <li>Content Agent writes product copy</li>
-              <li>SEO Agent generates metadata & keywords</li>
+              <li>SEO Agent generates metadata and keywords</li>
               <li>Landing Agent designs the page structure</li>
               <li>Image Agent creates image generation prompts</li>
               <li>Shopify Agent creates a draft product</li>

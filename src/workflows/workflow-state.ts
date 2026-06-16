@@ -48,7 +48,7 @@ export const MAX_REWORKS_PER_STEP = 3;
  * Maps each state to the set of states it can transition to.
  */
 export const STATE_TRANSITIONS: Record<WorkflowState, WorkflowState[]> = {
-  [WorkflowState.DRAFT]: [WorkflowState.RESEARCHING],
+  [WorkflowState.DRAFT]: [WorkflowState.CONTENT_GENERATING],
 
   // Research phase
   [WorkflowState.RESEARCHING]: [WorkflowState.RESEARCH_REVIEW],

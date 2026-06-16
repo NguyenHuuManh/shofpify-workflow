@@ -1,77 +1,30 @@
 /**
  * Purpose:
- * Product Research dashboard hub.
- * Server Component — fetches workflow research state through service layer.
+ * Product Research workspace.
+ * Server Component — lists independent research projects and candidate actions.
  */
 
 import { Badge, Button, Card, Table } from '@/components/ui';
-import { workflowService } from '@/services/workflow.service';
-import { productService } from '@/services/product.service';
 import { researchService } from '@/services/research.service';
-import type { ProductCandidate, Workflow, WorkflowStatus } from '@prisma/client';
+import type { ProductCandidate, ResearchProjectStatus } from '@prisma/client';
+import {
+  createResearchProject,
+  promoteCandidate,
+  selectCandidate,
+} from './actions';
 
-const researchSteps = new Set([
-  'RESEARCH',
-  'RESEARCH_REVIEW',
-  'CONTENT',
-  'CONTENT_REVIEW',
-  'SEO',
-  'SEO_REVIEW',
-  'LANDING',
-  'LANDING_REVIEW',
-  'IMAGE',
-  'SHOPIFY',
-  'FINAL_REVIEW',
-  'PUBLISH',
-]);
-
-const statusBadgeVariant: Record<WorkflowStatus, 'warning' | 'info' | 'danger' | 'success' | 'default'> = {
-  PENDING: 'warning',
-  RUNNING: 'info',
-  FAILED: 'danger',
-  COMPLETED: 'success',
-  CANCELLED: 'default',
+const statusBadgeVariant: Record<ResearchProjectStatus, 'warning' | 'info' | 'danger' | 'success' | 'default'> = {
+  ACTIVE: 'info',
+  SELECTED: 'warning',
+  PROMOTED: 'success',
+  ARCHIVED: 'default',
 };
 
-interface ResearchWorkflowRow {
-  workflow: Workflow;
-  productTitle: string;
-  candidateCount: number;
-  selectedCandidate?: ProductCandidate;
-  topCandidate?: ProductCandidate;
-}
-
 export default async function ProductResearchPage(): Promise<React.ReactElement> {
-  const { workflows } = await workflowService.list({ page: 1, limit: 50 });
-  const researchWorkflows = workflows.filter((workflow) =>
-    researchSteps.has(workflow.currentStep),
-  );
-
-  const rows = await Promise.all(
-    researchWorkflows.map(async (workflow): Promise<ResearchWorkflowRow> => {
-      const [product, candidatesResult] = await Promise.all([
-        productService.getById(workflow.productId),
-        researchService.getLatestCandidates(workflow.id),
-      ]);
-
-      const candidates = candidatesResult.candidates;
-      const selectedCandidate = candidates.find((candidate) => candidate.status === 'APPROVED');
-
-      return {
-        workflow,
-        productTitle: product.title,
-        candidateCount: candidates.length,
-        selectedCandidate,
-        topCandidate: selectedCandidate ?? candidates[0],
-      };
-    }),
-  );
-
-  const waitingForReview = rows.filter(
-    (row) => row.workflow.currentStep === 'RESEARCH_REVIEW',
-  ).length;
-  const withCandidates = rows.filter((row) => row.candidateCount > 0).length;
-  const withSelectedCandidate = rows.filter((row) => row.selectedCandidate).length;
+  const projects = await researchService.listProjects();
+  const selectedCount = projects.filter((item) => item.project.status === 'SELECTED').length;
+  const promotedCount = projects.filter((item) => item.project.status === 'PROMOTED').length;
+  const candidateCount = projects.reduce((sum, item) => sum + item.candidates.length, 0);
 
   return (
     <div>
@@ -89,13 +42,67 @@ export default async function ProductResearchPage(): Promise<React.ReactElement>
             Product Research
           </h2>
           <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>
-            Research workbench for candidate discovery and review
+            Discover, compare, and promote winning products before starting production.
           </p>
         </div>
-        <a href="/dashboard/workflows/new">
-          <Button>New Workflow</Button>
-        </a>
       </div>
+
+      <Card style={{ marginBottom: '24px' }}>
+        <form
+          action={createResearchProject}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1fr) 120px auto',
+            gap: '12px',
+            alignItems: 'end',
+          }}
+        >
+          <div>
+            <label
+              htmlFor="query"
+              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
+            >
+              Product idea or niche
+            </label>
+            <input
+              id="query"
+              name="query"
+              required
+              placeholder="portable kitchen gadgets, pet travel accessories..."
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '14px',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="targetMarket"
+              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
+            >
+              Market
+            </label>
+            <input
+              id="targetMarket"
+              name="targetMarket"
+              defaultValue="US"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                fontSize: '14px',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+          <Button type="submit">Run Research</Button>
+        </form>
+      </Card>
 
       <div
         style={{
@@ -105,60 +112,43 @@ export default async function ProductResearchPage(): Promise<React.ReactElement>
           marginBottom: '24px',
         }}
       >
-        <MetricCard label="Research Workflows" value={rows.length} />
-        <MetricCard label="Awaiting Review" value={waitingForReview} />
-        <MetricCard label="With Candidates" value={withCandidates} />
-        <MetricCard label="Selected" value={withSelectedCandidate} />
+        <MetricCard label="Projects" value={projects.length} />
+        <MetricCard label="Candidates" value={candidateCount} />
+        <MetricCard label="Selected" value={selectedCount} />
+        <MetricCard label="Promoted" value={promotedCount} />
       </div>
 
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <Table
-          headers={['Product', 'Workflow', 'Research State', 'Candidates', 'Recommended Candidate', 'Actions']}
-          rows={rows.map((row) => [
-            <div key="product">
-              <a
-                href={`/dashboard/workflows/${row.workflow.id}/research`}
-                style={{ color: '#0f172a', fontWeight: 600, textDecoration: 'none' }}
-              >
-                {row.productTitle}
-              </a>
-              <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>
-                {row.workflow.productId}
-              </div>
-            </div>,
-            <a
-              key="workflow"
-              href={`/dashboard/workflows/${row.workflow.id}`}
-              style={{ color: '#3b82f6', fontWeight: 500, textDecoration: 'none' }}
-            >
-              {row.workflow.id}
-            </a>,
-            <div key="state" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <Badge variant={statusBadgeVariant[row.workflow.status]}>
-                {row.workflow.status}
-              </Badge>
-              <span style={{ color: '#475569', fontSize: '13px' }}>
-                {row.workflow.currentStep}
-              </span>
-            </div>,
-            <span key="candidate-count" style={{ color: '#0f172a', fontWeight: 600 }}>
-              {row.candidateCount}
-            </span>,
-            <CandidateSummary key="candidate" candidate={row.topCandidate} />,
-            <div key="actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <a href={`/dashboard/workflows/${row.workflow.id}/research`}>
-                <Button size="sm" variant="secondary">
-                  Open Research
-                </Button>
-              </a>
-              <a
-                href={`/dashboard/workflows/${row.workflow.id}`}
-                style={{ color: '#64748b', fontWeight: 500, textDecoration: 'none', fontSize: '13px' }}
-              >
-                Workflow
-              </a>
-            </div>,
-          ])}
+          headers={['Research Project', 'Status', 'Candidates', 'Top Candidate', 'Actions']}
+          rows={projects.map((item) => {
+            const topCandidate = item.selectedCandidate ?? item.candidates[0];
+
+            return [
+              <div key="project">
+                <div style={{ color: '#0f172a', fontWeight: 600 }}>
+                  {item.project.query}
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>
+                  {item.project.id}
+                </div>
+              </div>,
+              <Badge key="status" variant={statusBadgeVariant[item.project.status]}>
+                {item.project.status}
+              </Badge>,
+              <span key="candidate-count" style={{ color: '#0f172a', fontWeight: 600 }}>
+                {item.candidates.length}
+              </span>,
+              <CandidateSummary key="candidate" candidate={topCandidate} />,
+              <CandidateActions
+                key="actions"
+                projectId={item.project.id}
+                candidate={topCandidate}
+                isSelected={Boolean(item.selectedCandidate)}
+                isPromoted={item.project.status === 'PROMOTED'}
+              />,
+            ];
+          })}
         />
       </Card>
     </div>
@@ -201,6 +191,61 @@ function CandidateSummary({
       <div style={{ color: '#64748b', fontSize: '12px', marginTop: '2px' }}>
         Score {candidate.winningScore ?? 'N/A'} · {candidate.status}
       </div>
+    </div>
+  );
+}
+
+function CandidateActions({
+  projectId,
+  candidate,
+  isSelected,
+  isPromoted,
+}: {
+  projectId: string;
+  candidate?: ProductCandidate;
+  isSelected: boolean;
+  isPromoted: boolean;
+}): React.ReactElement {
+  return (
+    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <a
+        href={`/dashboard/product-research/${projectId}`}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '6px 12px',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          color: '#0f172a',
+          fontSize: '13px',
+          fontWeight: 600,
+          textDecoration: 'none',
+          lineHeight: '20px',
+        }}
+      >
+        Details
+      </a>
+      {!candidate && (
+        <span style={{ color: '#94a3b8', fontSize: '13px' }}>Run research first</span>
+      )}
+      {candidate && !isSelected && (
+        <form action={selectCandidate}>
+          <input type="hidden" name="candidateId" value={candidate.id} />
+          <Button type="submit" size="sm" variant="secondary">
+            Select
+          </Button>
+        </form>
+      )}
+      {candidate && !isPromoted && (
+        <form action={promoteCandidate}>
+          <input type="hidden" name="candidateId" value={candidate.id} />
+          <Button type="submit" size="sm">
+            Promote
+          </Button>
+        </form>
+      )}
+      {isPromoted && <Badge variant="success">Workflow started</Badge>}
     </div>
   );
 }

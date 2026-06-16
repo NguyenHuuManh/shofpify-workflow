@@ -12,6 +12,7 @@ describe('ResearchService', () => {
   it('should generate, score, persist, and recommend candidates', async () => {
     const run = {
       id: 'run_001',
+      researchProjectId: null,
       productId: 'prod_001',
       workflowId: 'wf_001',
       input: {},
@@ -30,6 +31,7 @@ describe('ResearchService', () => {
     const candidate = {
       id: 'cand_001',
       researchRunId: run.id,
+      researchProjectId: null,
       productId: 'prod_001',
       name: 'Self-cleaning Portable Blender',
       positioning: 'Portable smoothie prep with easy cleanup',
@@ -60,6 +62,7 @@ describe('ResearchService', () => {
       create: vi.fn().mockResolvedValue(run),
       updateCompleted: vi.fn().mockResolvedValue(completedRun),
     };
+    const projectRepo = {};
     const candidateRepo = {
       create: vi.fn().mockResolvedValue(candidate),
     };
@@ -113,6 +116,7 @@ describe('ResearchService', () => {
 
     const service = new ResearchService(
       runRepo as never,
+      projectRepo as never,
       candidateRepo as never,
       sourceRepo as never,
       researchRepo as never,

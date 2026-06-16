@@ -33,8 +33,8 @@ describe('WorkflowState', () => {
   });
 
   describe('isValidTransition', () => {
-    it('should allow DRAFT → RESEARCHING', () => {
-      expect(isValidTransition(WorkflowState.DRAFT, WorkflowState.RESEARCHING)).toBe(true);
+    it('should allow DRAFT → CONTENT_GENERATING', () => {
+      expect(isValidTransition(WorkflowState.DRAFT, WorkflowState.CONTENT_GENERATING)).toBe(true);
     });
 
     it('should allow RESEARCHING → RESEARCH_REVIEW', () => {
@@ -53,8 +53,8 @@ describe('WorkflowState', () => {
       expect(isValidTransition(WorkflowState.RESEARCH_REVIEW, WorkflowState.RESEARCHING)).toBe(true);
     });
 
-    it('should reject DRAFT → CONTENT_GENERATING (skip research)', () => {
-      expect(isValidTransition(WorkflowState.DRAFT, WorkflowState.CONTENT_GENERATING)).toBe(false);
+    it('should reject DRAFT → RESEARCHING in the production workflow', () => {
+      expect(isValidTransition(WorkflowState.DRAFT, WorkflowState.RESEARCHING)).toBe(false);
     });
 
     it('should reject PUBLISHED → anything (terminal)', () => {
@@ -63,8 +63,8 @@ describe('WorkflowState', () => {
   });
 
   describe('getNextStates', () => {
-    it('should return RESEARCHING from DRAFT', () => {
-      expect(getNextStates(WorkflowState.DRAFT)).toEqual([WorkflowState.RESEARCHING]);
+    it('should return CONTENT_GENERATING from DRAFT', () => {
+      expect(getNextStates(WorkflowState.DRAFT)).toEqual([WorkflowState.CONTENT_GENERATING]);
     });
 
     it('should return next states from RESEARCH_REVIEW', () => {

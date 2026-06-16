@@ -16,6 +16,12 @@ vi.mock('@/services/workflow.service', () => ({
   },
 }));
 
+vi.mock('@/repositories/product-content.repository', () => ({
+  productContentRepository: {
+    upsert: vi.fn().mockResolvedValue({ id: 'content_001' }),
+  },
+}));
+
 // Mock all agents
 vi.mock('@/agents/research.agent', () => ({
   ResearchAgent: vi.fn().mockImplementation(() => ({

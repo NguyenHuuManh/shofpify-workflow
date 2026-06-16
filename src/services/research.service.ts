@@ -292,6 +292,37 @@ export class ResearchService {
     );
   }
 
+  async getProjectDetail(projectId: string): Promise<{
+    project: ResearchProject;
+    latestRun: Awaited<ReturnType<ResearchRunRepository['findLatestByResearchProjectId']>>;
+    candidates: ProductCandidate[];
+    selectedCandidate?: ProductCandidate;
+    sources: ResearchSource[];
+    promotedWorkflow: Awaited<ReturnType<WorkflowRepository['findByProductId']>>;
+  }> {
+    const project = await this.projectRepo.findByIdOrThrow(projectId);
+    const latestRun = await this.runRepo.findLatestByResearchProjectId(projectId);
+    const candidates = await this.candidateRepo.findByResearchProjectId(projectId);
+    const selectedCandidate = candidates.find(
+      (candidate) => candidate.id === project.selectedCandidateId,
+    );
+    const sources = latestRun
+      ? await this.sourceRepo.findByResearchRunId(latestRun.id)
+      : [];
+    const promotedWorkflow = project.promotedProductId
+      ? await this.workflowRepo.findByProductId(project.promotedProductId)
+      : null;
+
+    return {
+      project,
+      latestRun,
+      candidates,
+      selectedCandidate,
+      sources,
+      promotedWorkflow,
+    };
+  }
+
   async getProjectCandidates(projectId: string): Promise<{
     researchProjectId: string;
     researchRunId: string | null;
@@ -348,6 +379,24 @@ export class ResearchService {
     };
   }
 
+  async getProjectSources(projectId: string): Promise<{
+    researchProjectId: string;
+    researchRunId: string | null;
+    sources: ResearchSource[];
+  }> {
+    await this.projectRepo.findByIdOrThrow(projectId);
+    const run = await this.runRepo.findLatestByResearchProjectId(projectId);
+    if (!run) {
+      return { researchProjectId: projectId, researchRunId: null, sources: [] };
+    }
+
+    return {
+      researchProjectId: projectId,
+      researchRunId: run.id,
+      sources: await this.sourceRepo.findByResearchRunId(run.id),
+    };
+  }
+
   async selectCandidate(
     workflowId: string,
     candidateId: string,
@@ -366,7 +415,10 @@ export class ResearchService {
     }
 
     await this.candidateRepo.updateStatus(candidateId, 'APPROVED');
-    await this.candidateRepo.markOthersRejected(workflow.productId, candidateId);
+    await this.candidateRepo.markOthersRejected(
+      { productId: workflow.productId },
+      candidateId,
+    );
 
     const existingResearch = await this.researchRepo.findByProductId(workflow.productId);
     await this.researchRepo.upsert(workflow.productId, {
@@ -402,7 +454,7 @@ export class ResearchService {
 
   async selectProjectCandidate(
     candidateId: string,
-    reviewerId: string,
+    reviewerId?: string,
     comment?: string,
   ): Promise<{ selectedCandidateId: string; researchProjectId: string }> {
     const candidate = await this.candidateRepo.findByIdOrThrow(candidateId);
@@ -464,6 +516,15 @@ export class ResearchService {
         message: 'Only the selected candidate can be promoted',
         statusCode: 400,
       });
+    }
+
+    if (!project.selectedCandidateId) {
+      await this.candidateRepo.updateStatus(candidateId, 'APPROVED');
+      await this.candidateRepo.markOthersRejected(
+        { researchProjectId: candidate.researchProjectId },
+        candidateId,
+      );
+      await this.projectRepo.updateSelectedCandidate(project.id, candidateId);
     }
 
     const product = await this.productSvc.create({ title: candidate.name }, reviewerId);

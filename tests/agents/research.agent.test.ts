@@ -30,6 +30,7 @@ const mockResearchRun = {
 const mockCandidate = {
   id: 'cand_001',
   researchRunId: 'run_001',
+  researchProjectId: null,
   productId: 'prod_001',
   name: 'Self-cleaning Portable Blender',
   positioning: 'Portable smoothie prep with less cleanup friction',

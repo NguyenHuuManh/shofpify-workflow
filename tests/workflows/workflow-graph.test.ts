@@ -97,6 +97,12 @@ vi.mock('@/services/workflow.service', () => ({
   },
 }));
 
+vi.mock('@/repositories/product-content.repository', () => ({
+  productContentRepository: {
+    upsert: vi.fn().mockResolvedValue({ id: 'content_001' }),
+  },
+}));
+
 describe('WorkflowGraph', () => {
   const mockAI: AIProvider = {
     providerName: 'test',

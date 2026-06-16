@@ -6,8 +6,8 @@
  * Architecture: LangGraph → AgentNodes → Agents → AIProvider/Service Layer
  *
  * Graph Structure (with per-step review gates):
- *   [RESEARCH] → [RESEARCH_REVIEW] → [CONTENT] → [CONTENT_REVIEW] → [SEO]
- *   → [SEO_REVIEW] → [LANDING] → [LANDING_REVIEW] → [IMAGE] → [SHOPIFY]
+ *   [CONTENT] → [CONTENT_REVIEW] → [SEO] → [SEO_REVIEW]
+ *   → [LANDING] → [LANDING_REVIEW] → [IMAGE] → [SHOPIFY]
  *   → [FINAL_REVIEW] → [PUBLISH]
  *
  * Review gates pause execution. Human approval via API resumes the graph
@@ -22,8 +22,6 @@
 
 import { StateGraph, END, Annotation } from '@langchain/langgraph';
 import {
-  createResearchNode,
-  createResearchReviewNode,
   createContentNode,
   createContentReviewNode,
   createSEONode,
@@ -115,12 +113,11 @@ function getReviewKey(state: WorkflowState): 'research' | 'content' | 'seo' | 'l
 
 /**
  * Build the complete product creation workflow as a LangGraph StateGraph.
- * Includes per-step review gates: research, content, seo, landing, final.
+ * Includes production review gates: content, seo, landing, final.
  */
 export function buildWorkflowGraph(aiProvider?: AIProvider) {
   const graph = new StateGraph(WorkflowAnnotation)
     // Generation nodes
-    .addNode('research', createResearchNode(aiProvider))
     .addNode('content', createContentNode(aiProvider))
     .addNode('seo', createSEONode(aiProvider))
     .addNode('landing', createLandingNode(aiProvider))
@@ -128,7 +125,6 @@ export function buildWorkflowGraph(aiProvider?: AIProvider) {
     .addNode('shopify', createShopifyNode(aiProvider))
 
     // Review gate nodes
-    .addNode('researchReview', createResearchReviewNode())
     .addNode('contentReview', createContentReviewNode())
     .addNode('seoReview', createSEOReviewNode())
     .addNode('landingReview', createLandingReviewNode())
@@ -138,8 +134,7 @@ export function buildWorkflowGraph(aiProvider?: AIProvider) {
     .addNode('publish', createPublishNode(aiProvider))
 
     // Edges: generation → review
-    .addEdge('__start__', 'research')
-    .addEdge('research', 'researchReview')
+    .addEdge('__start__', 'content')
     .addEdge('content', 'contentReview')
     .addEdge('seo', 'seoReview')
     .addEdge('landing', 'landingReview')
@@ -147,11 +142,6 @@ export function buildWorkflowGraph(aiProvider?: AIProvider) {
     .addEdge('shopify', 'finalReview')
 
     // Review routing — approve → next step, reject → rework, no decision → END (pause)
-    .addConditionalEdges('researchReview', (s) => routeFromReview(s, WorkflowState.RESEARCH_REVIEW, 'content', 'research'), {
-      content: 'content',
-      research: 'research',
-      end: END,
-    })
     .addConditionalEdges('contentReview', (s) => routeFromReview(s, WorkflowState.CONTENT_REVIEW, 'seo', 'content'), {
       seo: 'seo',
       content: 'content',
