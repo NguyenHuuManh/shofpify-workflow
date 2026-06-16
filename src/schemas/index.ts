@@ -10,3 +10,4 @@ export * from './product.schema';
 export * from './workflow.schema';
 export * from './approval.schema';
 export * from './asset.schema';
+export * from './research.schema';

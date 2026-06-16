@@ -7,7 +7,7 @@
  *
  * Dependencies:
  * - WorkflowService
- * - Direct agent + repository imports for each step
+ * - Agents for each executable step
  * - api-helpers
  */
 
@@ -18,7 +18,6 @@ import { ResearchAgent } from '@/agents/research.agent';
 import { ContentAgent } from '@/agents/content.agent';
 import { SEOAgent } from '@/agents/seo.agent';
 import { LandingAgent } from '@/agents/landing.agent';
-import { productResearchRepository } from '@/repositories/product-research.repository';
 import { productContentRepository } from '@/repositories/product-content.repository';
 import { productSEORepository } from '@/repositories/product-seo.repository';
 import { landingPageRepository } from '@/repositories/landing-page.repository';
@@ -57,14 +56,7 @@ export async function POST(
       case 'RESEARCH': {
         const agent = new ResearchAgent();
         const ctx = await agent.execute(context);
-        if (ctx.research) {
-          await productResearchRepository.upsert(workflow.productId, {
-            targetAudience: ctx.research.targetAudience,
-            competitors: ctx.research.competitors,
-            painPoints: ctx.research.painPoints,
-            usp: ctx.research.usp,
-            marketSummary: ctx.research.marketSummary,
-          });
+        if (ctx.researchRunId) {
           await workflowService.completeCurrentStep(workflow.id);
         }
         result = 'Research completed → RESEARCH_REVIEW';

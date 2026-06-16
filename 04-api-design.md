@@ -12,11 +12,11 @@ POST /workflow/start
 
 GET /workflow/:id
 
+Workflows start after a ProductCandidate has been selected or a Product already exists. Product Research is exposed through `/product-research` APIs.
+
 ---
 
 ## Workflow — Per-Step Review (Approve / Reject)
-
-POST /workflow/:id/review/research
 
 POST /workflow/:id/review/content
 
@@ -36,10 +36,6 @@ POST /workflow/:id/reject
 
 Each section has its own GET (fetch generated content) and PUT (edit/save changes before approving).
 
-GET /workflow/:id/research
-
-PUT /workflow/:id/research
-
 GET /workflow/:id/content
 
 PUT /workflow/:id/content
@@ -51,6 +47,163 @@ PUT /workflow/:id/seo
 GET /workflow/:id/landing
 
 PUT /workflow/:id/landing
+
+---
+
+## Product Research
+
+### POST /product-research
+
+Creates a product research project and runs the Research Product Intelligence Module.
+
+Request:
+
+```json
+{
+  "query": "portable kitchen gadgets",
+  "targetMarket": "US",
+  "priceBand": {
+    "min": 30,
+    "max": 120
+  },
+  "targetMarginPercent": 40,
+  "riskTolerance": "medium",
+  "excludedCategories": ["regulated", "fragile"],
+  "objective": "find_winning_product"
+}
+```
+
+Response:
+
+```json
+{
+  "researchProjectId": "research-project-id",
+  "researchRunId": "research-run-id",
+  "status": "COMPLETED"
+}
+```
+
+---
+
+### GET /product-research
+
+Returns research projects with latest candidate summary.
+
+---
+
+### GET /product-research/:projectId/candidates
+
+Returns ranked product candidates for the latest research run.
+
+Response:
+
+```json
+{
+  "researchRunId": "research-run-id",
+  "candidates": [
+    {
+      "id": "candidate-id",
+      "name": "Product candidate",
+      "positioning": "Market positioning",
+      "targetMarket": "US",
+      "recommendedPrice": 89.99,
+      "estimatedCOGS": 38,
+      "estimatedShipping": 9,
+      "grossMarginPercent": 47.8,
+      "breakEvenRoas": 2.25,
+      "winningScore": 82,
+      "confidence": "medium",
+      "scores": {
+        "demand": 85,
+        "trend": 78,
+        "competition": 62,
+        "margin": 88,
+        "supplier": 74,
+        "creativePotential": 81,
+        "risk": 35
+      },
+      "risks": []
+    }
+  ]
+}
+```
+
+---
+
+### GET /product-research/candidates/:candidateId
+
+Returns full candidate detail, including cost analysis, competitor summary, supplier summary, risk flags, and linked source evidence.
+
+---
+
+### POST /product-research/candidates/:candidateId/select
+
+Selects the candidate for a research project.
+
+Request:
+
+```json
+{
+  "reviewerId": "user-id",
+  "comment": "Best balance of demand, margin, and creative angles"
+}
+```
+
+Response:
+
+```json
+{
+  "selectedCandidateId": "candidate-id"
+}
+```
+
+---
+
+### POST /product-research/candidates/:candidateId/promote
+
+Promotes a selected candidate into a Product and starts the production workflow at Content.
+
+Request:
+
+```json
+{
+  "reviewerId": "user-id",
+  "comment": "Ready for content generation"
+}
+```
+
+Response:
+
+```json
+{
+  "productId": "product-id",
+  "workflowId": "workflow-id"
+}
+```
+
+---
+
+### GET /product-research/:projectId/sources
+
+Returns normalized source evidence collected during research.
+
+Response:
+
+```json
+{
+  "sources": [
+    {
+      "id": "source-id",
+      "type": "MARKETPLACE",
+      "provider": "Amazon",
+      "url": "https://example.com/product",
+      "extractedSignal": "High review volume and repeated complaint about portability",
+      "confidence": 0.72,
+      "capturedAt": "2026-06-16T00:00:00.000Z"
+    }
+  ]
+}
+```
 
 ---
 

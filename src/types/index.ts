@@ -13,6 +13,8 @@
  * - @prisma/client
  */
 
+import type { Prisma, ProductCandidate } from '@prisma/client';
+
 // Re-export all Prisma types for convenience
 export type {
   User,
@@ -23,6 +25,10 @@ export type {
   LandingPage,
   Asset,
   ShopifyResource,
+  ResearchProject,
+  ResearchRun,
+  ProductCandidate,
+  ResearchSource,
   Workflow,
   WorkflowStep,
   Approval,
@@ -41,7 +47,21 @@ export {
   ApprovalStatus,
   AgentRunStatus,
   AssetType,
+  ResearchSourceType,
+  ResearchCandidateStatus,
+  ResearchProjectStatus,
 } from '@prisma/client';
+
+export type {
+  CandidateScoreResult,
+  CandidateScoringWeights,
+  ResearchProvider,
+  ResearchProviderCollectInput,
+  ResearchProjectSummary,
+  RunResearchInput,
+  RunResearchResult,
+  ScoreCandidateInput,
+} from './research.types';
 
 // -----------------------------------------------------------------------------
 // API DTOs
@@ -108,6 +128,8 @@ export interface WorkflowContext {
   productId: string;
   productIdea: string;
   research?: ProductResearchResult;
+  researchRunId?: string;
+  productCandidates?: ProductCandidate[];
   content?: ProductContentResult;
   seo?: ProductSEOResult;
   landingPage?: LandingPageResult;
@@ -117,10 +139,10 @@ export interface WorkflowContext {
 }
 
 export interface ProductResearchResult {
-  targetAudience: Record<string, unknown>;
-  competitors: Record<string, unknown>;
-  painPoints: Record<string, unknown>;
-  usp: Record<string, unknown>;
+  targetAudience: Prisma.InputJsonValue;
+  competitors: Prisma.InputJsonValue;
+  painPoints: Prisma.InputJsonValue;
+  usp: Prisma.InputJsonValue;
   marketSummary: string;
 }
 
@@ -128,9 +150,9 @@ export interface ProductContentResult {
   headline: string;
   subHeadline?: string;
   description: string;
-  benefits: Record<string, unknown>;
-  features: Record<string, unknown>;
-  faq: Record<string, unknown>;
+  benefits: Prisma.InputJsonValue;
+  features: Prisma.InputJsonValue;
+  faq: Prisma.InputJsonValue;
 }
 
 export interface ProductSEOResult {
@@ -141,7 +163,7 @@ export interface ProductSEOResult {
 }
 
 export interface LandingPageResult {
-  sections: Record<string, unknown>;
+  sections: Prisma.InputJsonValue;
 }
 
 export interface ImagePrompt {

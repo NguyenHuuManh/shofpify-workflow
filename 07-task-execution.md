@@ -151,6 +151,75 @@ Deliverables:
 
 ---
 
+## Phase 7c
+
+Research Product Intelligence Module
+
+Tasks:
+- Add Research Product V2 types for research runs, source evidence, candidates, scoring, risks, and recommendations
+- Add Zod schemas for research run configuration, candidate selection, candidate score payloads, and normalized source evidence
+- Add Prisma models and migrations for ResearchRun, ProductCandidate, ResearchSource, ResearchSourceType, and ResearchCandidateStatus
+- Add repositories for research runs, product candidates, and research sources
+- Add ResearchService to coordinate candidate discovery, source persistence, cost analysis, scoring, recommendation, and selected candidate state
+- Add CandidateScoringService with configurable scoring weights
+- Add provider interfaces for Search, Marketplace, Trend, Keyword, Ads Signal, Supplier, and Social Listening data
+- Add initial provider implementations or stubs behind feature flags and environment configuration
+- Upgrade ResearchAgent to call ResearchService and AIProvider without directly accessing repositories, external APIs, provider SDKs, Prisma, Redis, or Shopify
+- Refactor workflow entrypoints so Research execution is orchestrated through WorkflowService or WorkflowEngine, not duplicated in API routes or server actions
+- Add API routes for research runs, ranked candidates, candidate detail, candidate selection, and source evidence
+- Add top-level /dashboard/product-research menu page for research-focused workflow navigation
+- Decouple Product Research from Workflow so research projects can exist before a Product or Workflow
+- Add candidate promotion flow that creates Product and starts Workflow at Content
+- Upgrade /dashboard/workflows/:id/research into a candidate review page with ranked list, score breakdown, evidence panel, cost analysis, risk flags, approve selected candidate, and reject with feedback
+- Add tests for ResearchService, CandidateScoringService, repositories, API routes, ResearchAgent, and workflow transition behavior
+
+Deliverables:
+- Product Research produces a ranked, source-backed product candidate shortlist outside Workflow
+- Reviewers can select and promote one candidate before Content generation starts
+- Content generation receives selected candidate context
+- Candidate scores, source evidence, costs, risks, and recommendations are persisted and auditable
+
+---
+
+### Phase 7c Implementation Handoff
+
+Current status:
+- Documentation has been updated for Research Product Intelligence Module
+- No Phase 7c code, Prisma migration, repository, service, provider, API route, UI change, or test has been implemented yet
+- Existing Research Product behavior is still the original AI-generated research summary flow
+
+Before implementing Phase 7c, the next session must read:
+- 01-prd.md — Research Product Intelligence Module scope, output, and FR-003a through FR-003f
+- 02-sdd.md — Research Product module architecture, provider categories, pipeline, scoring, and review page requirements
+- 03-ddd.md — ResearchRun, ProductCandidate, ResearchSource, ResearchSourceType, and ResearchCandidateStatus draft models
+- 04-api-design.md — research run, candidates, candidate detail, candidate selection, and source evidence endpoints
+- 05-engineering-standards.md — Research Data Rules and forbidden agent/provider access
+- 06-deepseek.md — Research Provider Rules and required architecture flow
+- 07-task-execution.md — this Phase 7c task list and handoff
+
+Next implementation order:
+1. Types
+2. Zod schemas
+3. Prisma schema and migration
+4. Repositories
+5. ResearchService and CandidateScoringService
+6. Research provider interfaces and initial provider stubs
+7. ResearchAgent upgrade
+8. Workflow/API/server action refactor so Research execution is not duplicated
+9. Research API routes
+10. Research review UI V2
+11. Focused tests
+
+Approval gate:
+- Do not generate Phase 7c code until the user explicitly approves the implementation plan for this module
+
+Architecture warning:
+- Do not let ResearchAgent, API routes, UI, repositories, or workflow nodes call external research APIs or provider SDKs directly
+- Do not let ResearchAgent or workflow nodes persist ProductCandidate, ResearchRun, or ResearchSource records directly through repositories
+- Use ResearchService for business logic and persistence coordination
+
+---
+
 ## Phase 8
 
 Production Deployment

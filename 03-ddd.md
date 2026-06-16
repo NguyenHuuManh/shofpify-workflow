@@ -82,6 +82,12 @@ User
         ├── LandingPage
         ├── Asset
         └── ShopifyResource
+
+ResearchProject
+ │
+ ├── ResearchRun
+ ├── ProductCandidate
+ └── ResearchSource
 ```
 
 ---
@@ -218,6 +224,56 @@ LANDING_IMAGE
 
 ---
 
+## ResearchSourceType
+
+```text
+SEARCH
+
+MARKETPLACE
+
+TREND
+
+KEYWORD
+
+ADS_SIGNAL
+
+SUPPLIER
+
+SOCIAL
+
+AI_ESTIMATE
+```
+
+---
+
+## ResearchCandidateStatus
+
+```text
+DISCOVERED
+
+SHORTLISTED
+
+APPROVED
+
+REJECTED
+```
+
+---
+
+## ResearchProjectStatus
+
+```text
+ACTIVE
+
+SELECTED
+
+PROMOTED
+
+ARCHIVED
+```
+
+---
+
 # 5. User
 
 Represents platform users.
@@ -266,6 +322,10 @@ model Product {
 
   research          ProductResearch?
 
+  researchRuns      ResearchRun[]
+
+  candidates        ProductCandidate[]
+
   content           ProductContent?
 
   seo               ProductSEO?
@@ -300,11 +360,197 @@ model ProductResearch {
 
   marketSummary     String
 
+  selectedCandidateId String?
+
   generatedAt       DateTime
 
   product           Product  @relation(fields: [productId], references: [id])
 }
 ```
+
+---
+
+# 7a. ResearchProject
+
+Represents an independent product research workspace before a Product and Workflow exist.
+
+```prisma
+model ResearchProject {
+  id                  String   @id @default(cuid())
+
+  query               String
+
+  status              ResearchProjectStatus @default(ACTIVE)
+
+  selectedCandidateId String?
+
+  promotedProductId   String?
+
+  summary             String?
+
+  createdAt           DateTime @default(now())
+
+  updatedAt           DateTime @updatedAt
+
+  researchRuns        ResearchRun[]
+
+  candidates          ProductCandidate[]
+}
+```
+
+---
+
+# 7b. ResearchRun
+
+Represents one execution of the Research Product Intelligence Module.
+
+```prisma
+model ResearchRun {
+  id             String   @id @default(cuid())
+
+  researchProjectId String?
+
+  productId      String?
+
+  workflowId     String?
+
+  input          Json
+
+  summary        String?
+
+  recommendation Json?
+
+  providerCosts  Json?
+
+  startedAt      DateTime
+
+  completedAt    DateTime?
+
+  createdAt      DateTime @default(now())
+
+  researchProject ResearchProject? @relation(fields: [researchProjectId], references: [id])
+
+  product        Product?  @relation(fields: [productId], references: [id])
+
+  candidates     ProductCandidate[]
+
+  sources        ResearchSource[]
+}
+```
+
+---
+
+# 7b. ProductCandidate
+
+Represents one possible product opportunity discovered during research.
+
+```prisma
+model ProductCandidate {
+  id                     String                  @id @default(cuid())
+
+  researchRunId          String
+
+  researchProjectId      String?
+
+  productId              String?
+
+  name                   String
+
+  positioning            String
+
+  targetMarket           String?
+
+  sellingAngle           String?
+
+  recommendedPrice       Decimal?
+
+  estimatedCOGS          Decimal?
+
+  estimatedShipping      Decimal?
+
+  estimatedGrossProfit   Decimal?
+
+  grossMarginPercent     Decimal?
+
+  breakEvenRoas          Decimal?
+
+  demandScore            Int?
+
+  trendScore             Int?
+
+  competitionScore       Int?
+
+  marginScore            Int?
+
+  supplierScore          Int?
+
+  creativePotentialScore Int?
+
+  riskScore              Int?
+
+  winningScore           Int?
+
+  confidence             String?
+
+  status                 ResearchCandidateStatus @default(DISCOVERED)
+
+  risks                  Json?
+
+  metadata               Json?
+
+  createdAt              DateTime @default(now())
+
+  researchRun            ResearchRun @relation(fields: [researchRunId], references: [id])
+
+  researchProject        ResearchProject? @relation(fields: [researchProjectId], references: [id])
+
+  product                Product?     @relation(fields: [productId], references: [id])
+
+  sources                ResearchSource[]
+}
+```
+
+---
+
+# 7c. ResearchSource
+
+Stores the source evidence used by the Research Product Intelligence Module.
+
+```prisma
+model ResearchSource {
+  id               String             @id @default(cuid())
+
+  researchRunId    String
+
+  candidateId      String?
+
+  type             ResearchSourceType
+
+  provider         String
+
+  url              String?
+
+  externalId       String?
+
+  title            String?
+
+  extractedSignal  String
+
+  rawData          Json?
+
+  confidence       Float?
+
+  capturedAt       DateTime
+
+  createdAt        DateTime @default(now())
+
+  researchRun      ResearchRun @relation(fields: [researchRunId], references: [id])
+
+  candidate        ProductCandidate? @relation(fields: [candidateId], references: [id])
+}
+```
+
+All candidate recommendations must be traceable to one or more ResearchSource records, or explicitly marked as AI_ESTIMATE with lower confidence.
 
 ---
 

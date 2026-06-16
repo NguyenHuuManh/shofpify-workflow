@@ -55,9 +55,9 @@ export class DeepSeekProvider extends BaseAIProvider {
     super(config);
 
     const env = loadEnv();
-    this.apiKey = env.DEEPSEEK_API_KEY;
+    const apiKey = env.DEEPSEEK_API_KEY;
 
-    if (!this.apiKey) {
+    if (!apiKey) {
       throw new AppError({
         code: ErrorCodes.CONFIGURATION_ERROR,
         message: 'DEEPSEEK_API_KEY is not set',
@@ -65,6 +65,7 @@ export class DeepSeekProvider extends BaseAIProvider {
       });
     }
 
+    this.apiKey = apiKey;
     this.defaultModel = env.DEEPSEEK_MODEL ?? DEFAULT_MODEL;
 
     logger.info({ model: this.defaultModel }, 'DeepSeek provider initialized');

@@ -84,6 +84,31 @@ enum AssetType {
   LANDING_IMAGE
 }
 
+enum ResearchSourceType {
+  SEARCH
+  MARKETPLACE
+  TREND
+  KEYWORD
+  ADS_SIGNAL
+  SUPPLIER
+  SOCIAL
+  AI_ESTIMATE
+}
+
+enum ResearchCandidateStatus {
+  DISCOVERED
+  SHORTLISTED
+  APPROVED
+  REJECTED
+}
+
+enum ResearchProjectStatus {
+  ACTIVE
+  SELECTED
+  PROMOTED
+  ARCHIVED
+}
+
 // =============================================================================
 // Core Domain Models
 // =============================================================================
@@ -112,6 +137,8 @@ model Product {
 
   createdBy       User?             @relation(fields: [createdById], references: [id])
   research        ProductResearch?
+  researchRuns    ResearchRun[]
+  candidates      ProductCandidate[]
   content         ProductContent?
   seo             ProductSEO?
   landingPage     LandingPage?
@@ -130,9 +157,115 @@ model ProductResearch {
   painPoints    Json
   usp           Json
   marketSummary String
+  selectedCandidateId String?
   generatedAt   DateTime
 
   product Product @relation(fields: [productId], references: [id])
+}
+
+model ResearchProject {
+  id                  String                @id @default(cuid())
+  query               String
+  status              ResearchProjectStatus @default(ACTIVE)
+  selectedCandidateId String?
+  promotedProductId   String?
+  summary             String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  researchRuns ResearchRun[]
+  candidates   ProductCandidate[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ResearchRun {
+  id            String    @id @default(cuid())
+  researchProjectId String?
+  productId     String?
+  workflowId    String?
+  input         Json
+  summary       String?
+  recommendation Json?
+  providerCosts Json?
+  startedAt     DateTime
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+
+  researchProject ResearchProject?  @relation(fields: [researchProjectId], references: [id])
+  product         Product?          @relation(fields: [productId], references: [id])
+  candidates      ProductCandidate[]
+  sources         ResearchSource[]
+
+  @@index([researchProjectId])
+  @@index([productId])
+  @@index([workflowId])
+  @@index([createdAt])
+}
+
+model ProductCandidate {
+  id                     String                  @id @default(cuid())
+  researchRunId          String
+  researchProjectId      String?
+  productId              String?
+  name                   String
+  positioning            String
+  targetMarket           String?
+  sellingAngle           String?
+  recommendedPrice       Decimal?                @db.Decimal(10, 2)
+  estimatedCOGS          Decimal?                @db.Decimal(10, 2)
+  estimatedShipping      Decimal?                @db.Decimal(10, 2)
+  estimatedGrossProfit   Decimal?                @db.Decimal(10, 2)
+  grossMarginPercent     Decimal?                @db.Decimal(5, 2)
+  breakEvenRoas          Decimal?                @db.Decimal(6, 2)
+  demandScore            Int?
+  trendScore             Int?
+  competitionScore       Int?
+  marginScore            Int?
+  supplierScore          Int?
+  creativePotentialScore Int?
+  riskScore              Int?
+  winningScore           Int?
+  confidence             String?
+  status                 ResearchCandidateStatus @default(DISCOVERED)
+  risks                  Json?
+  metadata               Json?
+  createdAt              DateTime                @default(now())
+
+  researchRun     ResearchRun      @relation(fields: [researchRunId], references: [id])
+  researchProject ResearchProject? @relation(fields: [researchProjectId], references: [id])
+  product         Product?         @relation(fields: [productId], references: [id])
+  sources         ResearchSource[]
+
+  @@index([researchRunId])
+  @@index([researchProjectId])
+  @@index([productId])
+  @@index([status])
+  @@index([winningScore])
+}
+
+model ResearchSource {
+  id              String             @id @default(cuid())
+  researchRunId   String
+  candidateId     String?
+  type            ResearchSourceType
+  provider        String
+  url             String?
+  externalId      String?
+  title           String?
+  extractedSignal String
+  rawData         Json?
+  confidence      Float?
+  capturedAt      DateTime
+  createdAt       DateTime           @default(now())
+
+  researchRun ResearchRun       @relation(fields: [researchRunId], references: [id])
+  candidate   ProductCandidate? @relation(fields: [candidateId], references: [id])
+
+  @@index([researchRunId])
+  @@index([candidateId])
+  @@index([type])
 }
 
 model ProductContent {

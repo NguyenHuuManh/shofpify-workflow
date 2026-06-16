@@ -51,6 +51,7 @@ export class ProductResearchRepository extends BaseRepository {
       painPoints: Prisma.InputJsonValue;
       usp: Prisma.InputJsonValue;
       marketSummary: string;
+      selectedCandidateId?: string | null;
     },
     tx?: TransactionClient,
   ): Promise<ProductResearch> {

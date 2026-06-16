@@ -130,6 +130,7 @@ export const STEP_TO_STATE: Record<WorkflowStepType, WorkflowState> = {
   LANDING_REVIEW: WorkflowState.LANDING_REVIEW,
   IMAGE: WorkflowState.IMAGE_GENERATING,
   SHOPIFY: WorkflowState.SHOPIFY_DRAFT_CREATING,
+  REVIEW: WorkflowState.FINAL_REVIEW,
   FINAL_REVIEW: WorkflowState.FINAL_REVIEW,
   PUBLISH: WorkflowState.PUBLISHED,
 };

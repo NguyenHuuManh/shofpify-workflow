@@ -12,6 +12,7 @@ import { usePathname } from 'next/navigation';
 
 const navItems = [
   { label: 'Workflows', href: '/dashboard/workflows', icon: '⚡' },
+  { label: 'Product Research', href: '/dashboard/product-research', icon: '🔬' },
   { label: 'Reviews', href: '/dashboard/reviews', icon: '✅' },
   { label: 'Monitoring', href: '/dashboard/monitoring', icon: '📊' },
   { label: 'Settings', href: '/dashboard/settings', icon: '⚙️' },

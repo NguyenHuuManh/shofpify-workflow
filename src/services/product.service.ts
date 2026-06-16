@@ -47,7 +47,7 @@ import type {
   UpdateSEOInput,
   UpdateLandingInput,
 } from '@/schemas/product.schema';
-import type { Product, ProductStatus, ProductResearch, ProductContent, ProductSEO, LandingPage } from '@prisma/client';
+import type { Prisma, Product, ProductStatus, ProductResearch, ProductContent, ProductSEO, LandingPage } from '@prisma/client';
 import type { ProductRepository } from '@/repositories/product.repository';
 import type { ProductResearchRepository } from '@/repositories/product-research.repository';
 import type { ProductContentRepository } from '@/repositories/product-content.repository';
@@ -195,11 +195,12 @@ export class ProductService {
     const existing = await this.researchRepo.findByProductIdOrThrow(productId);
 
     const merged = {
-      targetAudience: parsed.targetAudience ?? (existing.targetAudience as unknown[]),
-      competitors: parsed.competitors ?? (existing.competitors as unknown[]),
-      painPoints: parsed.painPoints ?? (existing.painPoints as unknown[]),
-      usp: parsed.usp ?? (existing.usp as unknown[]),
+      targetAudience: (parsed.targetAudience ?? existing.targetAudience) as Prisma.InputJsonValue,
+      competitors: (parsed.competitors ?? existing.competitors) as Prisma.InputJsonValue,
+      painPoints: (parsed.painPoints ?? existing.painPoints) as Prisma.InputJsonValue,
+      usp: (parsed.usp ?? existing.usp) as Prisma.InputJsonValue,
       marketSummary: parsed.marketSummary ?? existing.marketSummary,
+      selectedCandidateId: existing.selectedCandidateId,
     };
 
     const updated = await this.researchRepo.upsert(productId, merged);
@@ -230,11 +231,11 @@ export class ProductService {
 
     const merged = {
       headline: parsed.headline ?? existing.headline,
-      subHeadline: parsed.subHeadline !== undefined ? parsed.subHeadline : existing.subHeadline,
+      subHeadline: parsed.subHeadline ?? existing.subHeadline ?? undefined,
       description: parsed.description ?? existing.description,
-      benefits: parsed.benefits ?? (existing.benefits as unknown[]),
-      features: parsed.features ?? (existing.features as unknown[]),
-      faq: parsed.faq ?? (existing.faq as unknown[]),
+      benefits: (parsed.benefits ?? existing.benefits) as Prisma.InputJsonValue,
+      features: (parsed.features ?? existing.features) as Prisma.InputJsonValue,
+      faq: (parsed.faq ?? existing.faq) as Prisma.InputJsonValue,
     };
 
     const updated = await this.contentRepo.upsert(productId, merged);
@@ -267,7 +268,7 @@ export class ProductService {
       metaTitle: parsed.metaTitle ?? existing.metaTitle,
       metaDescription: parsed.metaDescription ?? existing.metaDescription,
       slug: parsed.slug ?? existing.slug,
-      keywords: parsed.keywords ?? (existing.keywords as string[]),
+      keywords: (parsed.keywords ?? existing.keywords) as Prisma.InputJsonValue,
     };
 
     const updated = await this.seoRepo.upsert(productId, merged);
@@ -297,7 +298,7 @@ export class ProductService {
     const existing = await this.landingRepo.findByProductIdOrThrow(productId);
 
     const merged = {
-      sections: parsed.sections ?? existing.sections,
+      sections: (parsed.sections ?? existing.sections) as Prisma.InputJsonValue,
     };
 
     const updated = await this.landingRepo.upsert(productId, merged);

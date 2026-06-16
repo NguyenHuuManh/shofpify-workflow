@@ -117,6 +117,8 @@ Agents must never directly call:
 * Shopify API
 * Anthropic SDK
 * Redis
+* External research APIs
+* Provider SDKs
 
 ---
 
@@ -171,6 +173,38 @@ DeepSeekProvider
 ```
 
 Business logic must depend on interfaces only.
+
+---
+
+# Research Provider Rules
+
+The Research Product Intelligence Module must use provider interfaces for all external research data.
+
+Required flow:
+
+```text
+Research Agent
+    ↓
+
+Research Service
+    ↓
+
+Research Provider Interface
+    ↓
+
+External Research API
+```
+
+Never allow:
+
+* Research Agent -> External Research API
+* Research Agent -> Provider SDK
+* API Route -> External Research API
+* Repository -> External Research API
+
+Research conclusions used for candidate ranking must be persisted with source evidence when available. AI-only estimates must be marked as estimates and assigned lower confidence.
+
+Research providers are responsible for normalizing external responses. Research services are responsible for business logic, scoring, cost analysis, and persistence coordination.
 
 ---
 

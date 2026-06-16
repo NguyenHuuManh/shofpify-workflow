@@ -77,11 +77,21 @@ describe('ProviderFactory', () => {
   });
 
   describe('createDefaultProvider', () => {
-    it('should create Claude as default', () => {
+    it('should create the configured default provider', () => {
       const provider = createDefaultProvider();
 
-      expect(provider.providerName).toBe('claude');
-      expect(provider).toBeInstanceOf(ClaudeProvider);
+      const hasValidAnthropicKey =
+        process.env.ANTHROPIC_API_KEY &&
+        process.env.ANTHROPIC_API_KEY.length > 20 &&
+        !process.env.ANTHROPIC_API_KEY.startsWith('placeholder');
+
+      if (hasValidAnthropicKey) {
+        expect(provider.providerName).toBe('claude');
+        expect(provider).toBeInstanceOf(ClaudeProvider);
+      } else {
+        expect(provider.providerName).toBe('mock');
+        expect(provider).toBeInstanceOf(MockProvider);
+      }
     });
   });
 

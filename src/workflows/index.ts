@@ -24,7 +24,11 @@ export {
   createLandingNode,
   createImageNode,
   createShopifyNode,
-  createReviewNode,
+  createResearchReviewNode,
+  createContentReviewNode,
+  createSEOReviewNode,
+  createLandingReviewNode,
+  createFinalReviewNode,
   createPublishNode,
 } from './agent-nodes';
 export type { GraphState } from './agent-nodes';

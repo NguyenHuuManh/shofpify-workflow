@@ -29,7 +29,6 @@ import { ImageAgent } from '@/agents/image.agent';
 import { ShopifyAgent } from '@/agents/shopify.agent';
 import { PublishAgent } from '@/agents/publish.agent';
 import { workflowService } from '@/services/workflow.service';
-import { productResearchRepository } from '@/repositories/product-research.repository';
 import { productContentRepository } from '@/repositories/product-content.repository';
 import { productSEORepository } from '@/repositories/product-seo.repository';
 import { landingPageRepository } from '@/repositories/landing-page.repository';
@@ -60,18 +59,6 @@ export function createResearchNode(aiProvider?: AIProvider) {
     logger.info({ workflowId: state.context.workflowId }, 'Executing Research node');
     try {
       const updatedContext = await agent.execute(state.context);
-
-      // Persist research data to database
-      if (updatedContext.research) {
-        await productResearchRepository.upsert(state.context.productId, {
-          targetAudience: updatedContext.research.targetAudience,
-          competitors: updatedContext.research.competitors,
-          painPoints: updatedContext.research.painPoints,
-          usp: updatedContext.research.usp,
-          marketSummary: updatedContext.research.marketSummary,
-        });
-        logger.info({ workflowId: state.context.workflowId }, 'Research data persisted to DB');
-      }
 
       await workflowService.completeCurrentStep(state.context.workflowId);
       return {

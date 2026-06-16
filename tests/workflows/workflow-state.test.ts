@@ -19,7 +19,7 @@ describe('WorkflowState', () => {
   describe('STATE_TRANSITIONS', () => {
     it('should define all required states', () => {
       const states = Object.values(WorkflowState);
-      expect(states).toHaveLength(11);
+      expect(states).toHaveLength(15);
       expect(states).toContain(WorkflowState.DRAFT);
       expect(states).toContain(WorkflowState.PUBLISHED);
     });
@@ -37,24 +37,24 @@ describe('WorkflowState', () => {
       expect(isValidTransition(WorkflowState.DRAFT, WorkflowState.RESEARCHING)).toBe(true);
     });
 
-    it('should allow RESEARCHING → CONTENT_GENERATED', () => {
-      expect(isValidTransition(WorkflowState.RESEARCHING, WorkflowState.CONTENT_GENERATED)).toBe(true);
+    it('should allow RESEARCHING → RESEARCH_REVIEW', () => {
+      expect(isValidTransition(WorkflowState.RESEARCHING, WorkflowState.RESEARCH_REVIEW)).toBe(true);
     });
 
-    it('should allow PENDING_REVIEW → APPROVED', () => {
-      expect(isValidTransition(WorkflowState.PENDING_REVIEW, WorkflowState.APPROVED)).toBe(true);
+    it('should allow RESEARCH_REVIEW → CONTENT_GENERATING', () => {
+      expect(isValidTransition(WorkflowState.RESEARCH_REVIEW, WorkflowState.CONTENT_GENERATING)).toBe(true);
     });
 
-    it('should allow PENDING_REVIEW → REJECTED', () => {
-      expect(isValidTransition(WorkflowState.PENDING_REVIEW, WorkflowState.REJECTED)).toBe(true);
+    it('should allow RESEARCH_REVIEW → REJECTED', () => {
+      expect(isValidTransition(WorkflowState.RESEARCH_REVIEW, WorkflowState.REJECTED)).toBe(true);
     });
 
-    it('should allow REJECTED → DRAFT', () => {
-      expect(isValidTransition(WorkflowState.REJECTED, WorkflowState.DRAFT)).toBe(true);
+    it('should allow RESEARCH_REVIEW → RESEARCHING for rework', () => {
+      expect(isValidTransition(WorkflowState.RESEARCH_REVIEW, WorkflowState.RESEARCHING)).toBe(true);
     });
 
-    it('should reject DRAFT → CONTENT_GENERATED (skip research)', () => {
-      expect(isValidTransition(WorkflowState.DRAFT, WorkflowState.CONTENT_GENERATED)).toBe(false);
+    it('should reject DRAFT → CONTENT_GENERATING (skip research)', () => {
+      expect(isValidTransition(WorkflowState.DRAFT, WorkflowState.CONTENT_GENERATING)).toBe(false);
     });
 
     it('should reject PUBLISHED → anything (terminal)', () => {
@@ -67,9 +67,10 @@ describe('WorkflowState', () => {
       expect(getNextStates(WorkflowState.DRAFT)).toEqual([WorkflowState.RESEARCHING]);
     });
 
-    it('should return APPROVED and REJECTED from PENDING_REVIEW', () => {
-      const next = getNextStates(WorkflowState.PENDING_REVIEW);
-      expect(next).toContain(WorkflowState.APPROVED);
+    it('should return next states from RESEARCH_REVIEW', () => {
+      const next = getNextStates(WorkflowState.RESEARCH_REVIEW);
+      expect(next).toContain(WorkflowState.CONTENT_GENERATING);
+      expect(next).toContain(WorkflowState.RESEARCHING);
       expect(next).toContain(WorkflowState.REJECTED);
     });
 
@@ -91,7 +92,7 @@ describe('WorkflowState', () => {
   describe('getStateLabel', () => {
     it('should return human-readable labels', () => {
       expect(getStateLabel(WorkflowState.RESEARCHING)).toBe('Researching');
-      expect(getStateLabel(WorkflowState.CONTENT_GENERATED)).toBe('Content Generated');
+      expect(getStateLabel(WorkflowState.CONTENT_GENERATING)).toBe('Content Generating');
       expect(getStateLabel(WorkflowState.PUBLISHED)).toBe('Published');
     });
   });
@@ -105,8 +106,8 @@ describe('WorkflowState', () => {
       expect(STEP_TO_STATE.PUBLISH).toBe(WorkflowState.PUBLISHED);
     });
 
-    it('should have all 8 steps mapped', () => {
-      expect(Object.keys(STEP_TO_STATE)).toHaveLength(8);
+    it('should have all workflow steps mapped', () => {
+      expect(Object.keys(STEP_TO_STATE)).toHaveLength(13);
     });
   });
 

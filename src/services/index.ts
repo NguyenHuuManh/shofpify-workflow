@@ -12,3 +12,5 @@ export { workflowService, WorkflowService } from './workflow.service';
 export { approvalService, ApprovalService } from './approval.service';
 export { assetService, AssetService } from './asset.service';
 export { shopifyService, ShopifyService } from './shopify';
+export { researchService, ResearchService } from './research.service';
+export { candidateScoringService, CandidateScoringService } from './candidate-scoring.service';

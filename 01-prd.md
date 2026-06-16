@@ -28,12 +28,14 @@ Example:
 Portable Blender
 ```
 
-The platform should automatically:
+The platform should separate product discovery from product production:
 
 ```text
-Research Product
+Product Research
     ↓
-Review & Edit Research
+Select Product Candidate
+    ↓
+Start Product Workflow
     ↓
 Generate Product Content
     ↓
@@ -136,6 +138,37 @@ The system must:
 * Identify pain points
 * Identify competitors
 * Generate USPs
+* Discover and rank product candidates from a product idea or niche
+* Collect evidence from external research sources through provider integrations
+* Estimate product cost, shipping cost, gross margin, break-even ROAS, and pricing feasibility
+* Score each product candidate by demand, trend, competition, margin, supplier fit, creative potential, and risk
+* Produce a recommendation for the best product candidate to continue into content generation
+
+---
+
+### Research Product Intelligence Module
+
+Product Research must evolve from AI-only market synthesis into a structured product intelligence module that is independent from the product creation workflow.
+
+The module must:
+
+* Accept a product idea, niche, or broad opportunity prompt
+* Generate multiple product candidates instead of a single research summary
+* Gather supporting data through approved provider interfaces
+* Persist raw source evidence used for scoring and recommendations
+* Rank candidates by commercial viability
+* Highlight cost, fulfillment, competition, legal, seasonality, and saturation risks
+* Allow a human reviewer to select one candidate and promote it into the product creation workflow
+
+The module output must include:
+
+* Ranked product candidate list
+* Score breakdown per candidate
+* Cost and profit analysis
+* Market research summary
+* Source evidence
+* Risk flags
+* Final recommendation
 
 ---
 
@@ -217,12 +250,13 @@ The system must:
 Version 1 will not include:
 
 * Inventory Management
-* Supplier Integration
 * Dynamic Pricing
 * Order Fulfillment
 * Customer Support Automation
 * Ad Campaign Management
 * Analytics Dashboard
+
+Supplier research for cost estimation is in scope for the Research Product Intelligence Module. Supplier order fulfillment, inventory synchronization, and supplier-side order automation remain out of scope.
 
 These features will be implemented in future versions.
 
@@ -232,19 +266,55 @@ These features will be implemented in future versions.
 
 ## FR-001
 
-The system shall allow users to create a product workflow from a product idea.
+The system shall allow users to create an independent product research project from a product idea, niche, or broad opportunity prompt.
 
 ---
 
 ## FR-002
 
-The system shall automatically trigger the Research Agent.
+The system shall trigger product research independently from product creation workflows.
 
 ---
 
 ## FR-003
 
 The system shall generate product research data.
+
+---
+
+## FR-003a
+
+The system shall generate multiple product candidates from a product idea or niche.
+
+---
+
+## FR-003b
+
+The system shall rank product candidates using demand, trend, competition, margin, supplier, creative potential, and risk scores.
+
+---
+
+## FR-003c
+
+The system shall persist source evidence used by the Research Agent, including source type, provider, URL or external identifier, extracted signal, confidence, and capture timestamp.
+
+---
+
+## FR-003d
+
+The system shall estimate selling price, product cost, shipping cost, payment fee, gross profit, gross margin, and break-even ROAS for each product candidate when sufficient data is available.
+
+---
+
+## FR-003e
+
+The system shall allow reviewers to select a specific product candidate and promote it into a product creation workflow.
+
+---
+
+## FR-003f
+
+The system shall not present AI-generated research conclusions as verified facts unless the conclusion is linked to source evidence or explicitly marked as an AI estimate.
 
 ---
 
@@ -316,7 +386,7 @@ The system shall log all workflow state changes.
 
 ## FR-015
 
-The system shall require human approval after the Research step before proceeding to Content generation.
+The system shall require a selected product candidate before starting Content generation.
 
 ---
 
@@ -413,13 +483,22 @@ Business logic must be separated from infrastructure code.
 
 # 9. Workflow
 
-## Product Creation Workflow
+## Product Discovery and Creation Flow
 
 ```text
 Product Idea
       ↓
 
 Research Agent
+      ↓
+
+Research Product Intelligence Module
+      ↓
+
+Ranked Product Candidate Selection
+      ↓
+
+Promote Candidate to Product
       ↓
 
 Content Agent
@@ -454,10 +533,55 @@ Publish Agent
 
 Responsibilities:
 
+* Product candidate discovery
 * Market research
 * Competitor analysis
 * Persona generation
 * USP generation
+* Source-backed evidence collection through Research Provider interfaces
+* Candidate scoring and recommendation
+* Cost, margin, and pricing feasibility analysis
+* Risk flag generation
+
+The Research Agent must not directly access external APIs, Prisma, Redis, Shopify APIs, or provider SDKs. It must coordinate through the service layer and provider interfaces. Product Research is not a mandatory Workflow step; it is a discovery workspace that produces candidates which can be promoted into workflows.
+
+Research output must be structured as:
+
+```json
+{
+  "summary": "Research summary for the opportunity",
+  "candidates": [
+    {
+      "name": "Candidate product name",
+      "positioning": "Primary market position",
+      "targetMarket": "US",
+      "sellingAngle": "Main sales angle",
+      "recommendedPrice": 89.99,
+      "estimatedCOGS": 38,
+      "estimatedShipping": 9,
+      "grossMarginPercent": 47.8,
+      "winningScore": 82,
+      "confidence": "medium",
+      "scores": {
+        "demand": 85,
+        "trend": 78,
+        "competition": 62,
+        "margin": 88,
+        "supplier": 74,
+        "creativePotential": 81,
+        "risk": 35
+      },
+      "risks": [],
+      "evidence": []
+    }
+  ],
+  "recommendation": {
+    "decision": "APPROVE",
+    "bestCandidateId": "candidate-id",
+    "reason": "Strong demand, acceptable competition, and healthy margin"
+  }
+}
+```
 
 ---
 
