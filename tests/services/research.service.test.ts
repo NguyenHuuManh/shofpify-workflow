@@ -338,4 +338,62 @@ describe('ResearchService', () => {
     expect(projectSources.sources).toHaveLength(1);
     expect(projectSources.sources.at(0)?.type).toBe('SEARCH');
   });
+
+  it('should delete a research project and its research records in dependency order', async () => {
+    const project = {
+      id: 'project_delete',
+      query: 'Desk accessories',
+      status: 'ACTIVE',
+      selectedCandidateId: null,
+      promotedProductId: null,
+      summary: null,
+      createdAt: new Date('2026-01-01'),
+      updatedAt: new Date('2026-01-01'),
+    };
+    const calls: string[] = [];
+    const service = new ResearchService(
+      {
+        deleteByResearchProjectId: vi.fn().mockImplementation(async () => {
+          calls.push('runs');
+          return 1;
+        }),
+      } as never,
+      {
+        findByIdOrThrow: vi.fn().mockResolvedValue(project),
+        delete: vi.fn().mockImplementation(async () => {
+          calls.push('project');
+          return project;
+        }),
+      } as never,
+      {
+        deleteByResearchProjectId: vi.fn().mockImplementation(async () => {
+          calls.push('candidates');
+          return 2;
+        }),
+      } as never,
+      {
+        deleteByResearchProjectId: vi.fn().mockImplementation(async () => {
+          calls.push('sources');
+          return 3;
+        }),
+      } as never,
+      {} as never,
+      {} as never,
+      {
+        create: vi.fn().mockResolvedValue({ id: 'audit_001' }),
+      } as never,
+      new CandidateScoringService(),
+      [],
+    );
+
+    const result = await service.deleteProject(project.id, 'user_001');
+
+    expect(result).toEqual({
+      project,
+      deletedRuns: 1,
+      deletedCandidates: 2,
+      deletedSources: 3,
+    });
+    expect(calls).toEqual(['sources', 'candidates', 'runs', 'project']);
+  });
 });

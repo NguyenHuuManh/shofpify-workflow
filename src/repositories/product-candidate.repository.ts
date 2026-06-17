@@ -115,6 +115,17 @@ export class ProductCandidateRepository extends BaseRepository {
       data: { productId },
     });
   }
+
+  async deleteByResearchProjectId(
+    researchProjectId: string,
+    tx?: TransactionClient,
+  ): Promise<number> {
+    const client = tx ?? this.db;
+    const result = await client.productCandidate.deleteMany({
+      where: { researchProjectId },
+    });
+    return result.count;
+  }
 }
 
 export const productCandidateRepository = new ProductCandidateRepository();

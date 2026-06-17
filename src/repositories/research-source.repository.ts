@@ -45,6 +45,19 @@ export class ResearchSourceRepository extends BaseRepository {
       orderBy: { createdAt: 'asc' },
     });
   }
+
+  async deleteByResearchProjectId(
+    researchProjectId: string,
+    tx?: TransactionClient,
+  ): Promise<number> {
+    const client = tx ?? this.db;
+    const result = await client.researchSource.deleteMany({
+      where: {
+        researchRun: { researchProjectId },
+      },
+    });
+    return result.count;
+  }
 }
 
 export const researchSourceRepository = new ResearchSourceRepository();

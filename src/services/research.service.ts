@@ -23,6 +23,7 @@ import { researchRunRepository } from '@/repositories/research-run.repository';
 import { researchSourceRepository } from '@/repositories/research-source.repository';
 import { workflowRepository } from '@/repositories/workflow.repository';
 import { auditLogRepository } from '@/repositories/audit-log.repository';
+import { BaseRepository } from '@/repositories/base.repository';
 import { productService, type ProductService } from './product.service';
 import { workflowService, type WorkflowService } from './workflow.service';
 import { CandidateScoringService, candidateScoringService } from './candidate-scoring.service';
@@ -394,6 +395,59 @@ export class ResearchService {
       researchRunId: run.id,
       sources: this.externalSourcesOnly(await this.sourceRepo.findByResearchRunId(run.id)),
     };
+  }
+
+  async deleteProject(
+    projectId: string,
+    actorId?: string,
+  ): Promise<{
+    project: ResearchProject;
+    deletedRuns: number;
+    deletedCandidates: number;
+    deletedSources: number;
+  }> {
+    const project = await this.projectRepo.findByIdOrThrow(projectId);
+
+    const deleted = await BaseRepository.transaction(async (tx) => {
+      const deletedSources = await this.sourceRepo.deleteByResearchProjectId(projectId, tx);
+      const deletedCandidates = await this.candidateRepo.deleteByResearchProjectId(projectId, tx);
+      const deletedRuns = await this.runRepo.deleteByResearchProjectId(projectId, tx);
+      const deletedProject = await this.projectRepo.delete(projectId, tx);
+
+      return {
+        project: deletedProject,
+        deletedRuns,
+        deletedCandidates,
+        deletedSources,
+      };
+    });
+
+    await this.auditRepo.create({
+      entityType: 'ResearchProject',
+      entityId: projectId,
+      action: 'RESEARCH_PROJECT_DELETED',
+      actorId,
+      metadata: {
+        query: project.query,
+        status: project.status,
+        promotedProductId: project.promotedProductId,
+        deletedRuns: deleted.deletedRuns,
+        deletedCandidates: deleted.deletedCandidates,
+        deletedSources: deleted.deletedSources,
+      },
+    });
+
+    logger.info(
+      {
+        researchProjectId: projectId,
+        deletedRuns: deleted.deletedRuns,
+        deletedCandidates: deleted.deletedCandidates,
+        deletedSources: deleted.deletedSources,
+      },
+      'Research project deleted',
+    );
+
+    return deleted;
   }
 
   private externalSourcesOnly(sources: ResearchSource[]): ResearchSource[] {

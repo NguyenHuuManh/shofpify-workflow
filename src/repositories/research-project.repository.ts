@@ -107,6 +107,15 @@ export class ResearchProjectRepository extends BaseRepository {
       data: { summary },
     });
   }
+
+  async delete(
+    id: string,
+    tx?: TransactionClient,
+  ): Promise<ResearchProject> {
+    const client = tx ?? this.db;
+    await this.findByIdOrThrow(id, tx);
+    return client.researchProject.delete({ where: { id } });
+  }
 }
 
 export const researchProjectRepository = new ResearchProjectRepository();

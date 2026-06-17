@@ -5,10 +5,11 @@
  */
 
 import { Badge, Button, Card, Table } from '@/components/ui';
+import { DeleteResearchProjectButton } from '@/components/dashboard/delete-research-project-button';
+import { ResearchForm } from '@/components/dashboard/research-form';
 import { researchService } from '@/services/research.service';
 import type { ProductCandidate, ResearchProjectStatus } from '@prisma/client';
 import {
-  createResearchProject,
   promoteCandidate,
   selectCandidate,
 } from './actions';
@@ -47,62 +48,7 @@ export default async function ProductResearchPage(): Promise<React.ReactElement>
         </div>
       </div>
 
-      <Card style={{ marginBottom: '24px' }}>
-        <form
-          action={createResearchProject}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) 120px auto',
-            gap: '12px',
-            alignItems: 'end',
-          }}
-        >
-          <div>
-            <label
-              htmlFor="query"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-            >
-              Product idea or niche
-            </label>
-            <input
-              id="query"
-              name="query"
-              required
-              placeholder="portable kitchen gadgets, pet travel accessories..."
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="targetMarket"
-              style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-            >
-              Market
-            </label>
-            <input
-              id="targetMarket"
-              name="targetMarket"
-              defaultValue="US"
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-          <Button type="submit">Run Research</Button>
-        </form>
-      </Card>
+      <ResearchForm />
 
       <div
         style={{
@@ -143,6 +89,7 @@ export default async function ProductResearchPage(): Promise<React.ReactElement>
               <CandidateActions
                 key="actions"
                 projectId={item.project.id}
+                projectQuery={item.project.query}
                 candidate={topCandidate}
                 isSelected={Boolean(item.selectedCandidate)}
                 isPromoted={item.project.status === 'PROMOTED'}
@@ -197,11 +144,13 @@ function CandidateSummary({
 
 function CandidateActions({
   projectId,
+  projectQuery,
   candidate,
   isSelected,
   isPromoted,
 }: {
   projectId: string;
+  projectQuery: string;
   candidate?: ProductCandidate;
   isSelected: boolean;
   isPromoted: boolean;
@@ -246,6 +195,10 @@ function CandidateActions({
         </form>
       )}
       {isPromoted && <Badge variant="success">Workflow started</Badge>}
+      <DeleteResearchProjectButton
+        projectId={projectId}
+        projectQuery={projectQuery}
+      />
     </div>
   );
 }

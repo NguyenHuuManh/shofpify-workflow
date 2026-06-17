@@ -192,3 +192,47 @@ export function Table({ headers, rows }: TableProps): React.ReactElement {
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Spinner
+// ---------------------------------------------------------------------------
+
+interface SpinnerProps {
+  size?: number;
+  style?: React.CSSProperties;
+}
+
+export function Spinner({ size = 20, style }: SpinnerProps): React.ReactElement {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      style={{
+        animation: 'spin 0.8s linear infinite',
+        ...style,
+      }}
+    >
+      <title>Loading</title>
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="#e2e8f0"
+        strokeWidth="3"
+      />
+      <path
+        d="M12 2a10 10 0 0 1 10 10"
+        stroke="#0f172a"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}

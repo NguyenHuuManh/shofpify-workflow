@@ -109,6 +109,17 @@ export class ResearchRunRepository extends BaseRepository {
       },
     });
   }
+
+  async deleteByResearchProjectId(
+    researchProjectId: string,
+    tx?: TransactionClient,
+  ): Promise<number> {
+    const client = tx ?? this.db;
+    const result = await client.researchRun.deleteMany({
+      where: { researchProjectId },
+    });
+    return result.count;
+  }
 }
 
 export const researchRunRepository = new ResearchRunRepository();
