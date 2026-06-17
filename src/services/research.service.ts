@@ -26,20 +26,19 @@ import { auditLogRepository } from '@/repositories/audit-log.repository';
 import { productService, type ProductService } from './product.service';
 import { workflowService, type WorkflowService } from './workflow.service';
 import { CandidateScoringService, candidateScoringService } from './candidate-scoring.service';
-import { createDefaultProvider } from '@/providers/provider.factory';
 import { createDefaultResearchProviders } from '@/providers/research';
 import { AppError, ErrorCodes } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { validate } from '@/lib/validate';
 import {
   normalizedResearchSourceSchema,
-  researchGenerationSchema,
   researchRunConfigSchema,
   createResearchProjectSchema,
 } from '@/schemas/research.schema';
 import type { AIProvider } from '@/types/ai-provider.interface';
 import type {
   NormalizedResearchSourceInput,
+  ProviderEvidenceMetrics,
   ResearchCandidateDraft,
   CreateResearchProjectInput,
   ResearchRunConfigInput,
@@ -59,9 +58,6 @@ import type { ResearchSourceRepository } from '@/repositories/research-source.re
 import type { WorkflowRepository } from '@/repositories/workflow.repository';
 import type { AuditLogRepository } from '@/repositories/audit-log.repository';
 
-const SYSTEM_PROMPT = `You are an expert ecommerce product research strategist.
-Return ONLY valid JSON in the requested format. Mark uncertain data as estimates.`;
-
 export class ResearchService {
   constructor(
     private readonly runRepo: ResearchRunRepository = researchRunRepository,
@@ -73,7 +69,7 @@ export class ResearchService {
     private readonly auditRepo: AuditLogRepository = auditLogRepository,
     private readonly scoring: CandidateScoringService = candidateScoringService,
     private readonly providers: ResearchProvider[] = createDefaultResearchProviders(),
-    private readonly aiProvider?: AIProvider,
+    _aiProvider?: AIProvider,
     private readonly productSvc: ProductService = productService,
     private readonly workflowSvc: WorkflowService = workflowService,
   ) {}
@@ -107,7 +103,7 @@ export class ResearchService {
 
   async run(
     input: RunResearchInput,
-    aiProvider: AIProvider = this.aiProvider ?? createDefaultProvider(),
+    _aiProvider?: AIProvider,
   ): Promise<RunResearchResult> {
     const config = validate(researchRunConfigSchema, input.config ?? {});
     const researchRun = await this.runRepo.create({
@@ -125,26 +121,33 @@ export class ResearchService {
       'Research intelligence run started',
     );
 
-    const generation = await this.generateCandidates(
-      input.productIdea,
-      config,
-      aiProvider,
-    );
     const providerSources = await this.collectProviderSources(
       input.productIdea,
       config,
-      generation.candidates,
+      [],
+    );
+    const candidateDrafts = this.buildCandidatesFromExternalSources(
+      input.productIdea,
+      config,
+      providerSources,
     );
 
     const candidates: ProductCandidate[] = [];
     const sources: ResearchSource[] = [];
 
-    for (const draft of generation.candidates) {
+    for (const draft of candidateDrafts) {
+      const evidenceSources = this.sourcesForCandidate(providerSources, draft);
+      const evidenceAdjustedScoreInput = this.applyEvidenceToScorePayload(
+        {
+          ...draft.scores,
+          recommendedPrice: draft.recommendedPrice,
+          estimatedCOGS: draft.estimatedCOGS,
+          estimatedShipping: draft.estimatedShipping,
+        },
+        evidenceSources,
+      );
       const score = this.scoring.score({
-        ...draft.scores,
-        recommendedPrice: draft.recommendedPrice,
-        estimatedCOGS: draft.estimatedCOGS,
-        estimatedShipping: draft.estimatedShipping,
+        ...evidenceAdjustedScoreInput,
       });
 
       const candidate = await this.candidateRepo.create({
@@ -169,33 +172,28 @@ export class ResearchService {
         creativePotentialScore: score.creativePotentialScore,
         riskScore: score.riskScore,
         winningScore: score.winningScore,
-        confidence: draft.confidence,
+        confidence: this.resolveCandidateConfidence(draft.confidence, evidenceSources),
         status: score.winningScore >= 70 ? 'SHORTLISTED' : 'DISCOVERED',
         risks: draft.risks as Prisma.InputJsonValue,
-        metadata: (draft.metadata ?? {}) as Prisma.InputJsonValue,
+        metadata: {
+          ...(draft.metadata ?? {}),
+          evidence: {
+            sourceCount: evidenceSources.length,
+            sourceTypes: Array.from(new Set(evidenceSources.map((source) => source.type))),
+            backedByExternalEvidence: evidenceSources.length > 0,
+          },
+        } as Prisma.InputJsonValue,
       });
 
       candidates.push(candidate);
-      sources.push(
-        await this.sourceRepo.create({
-          researchRunId: researchRun.id,
-          candidateId: candidate.id,
-          type: 'AI_ESTIMATE',
-          provider: aiProvider.providerName,
-          title: `${draft.name} hypothesis`,
-          extractedSignal:
-            'AI-generated product candidate hypothesis. Treat as estimate unless corroborated by external sources.',
-          rawData: draft as Prisma.InputJsonValue,
-          confidence: draft.confidence === 'high' ? 0.55 : draft.confidence === 'medium' ? 0.4 : 0.25,
-          capturedAt: new Date(),
-        }),
-      );
     }
 
     for (const source of providerSources) {
+      const linkedCandidate = this.findCandidateForSource(source, candidates);
       sources.push(
         await this.sourceRepo.create({
           researchRunId: researchRun.id,
+          candidateId: linkedCandidate?.id,
           type: source.type,
           provider: source.provider,
           url: source.url,
@@ -220,8 +218,9 @@ export class ResearchService {
         : 'No candidate met the recommendation threshold.',
     };
 
+    const summary = this.buildExternalEvidenceSummary(input.productIdea, providerSources, candidates);
     const completedRun = await this.runRepo.updateCompleted(researchRun.id, {
-      summary: generation.summary,
+      summary,
       recommendation,
       providerCosts: { estimatedUsd: 0, currency: 'USD' },
     });
@@ -240,7 +239,7 @@ export class ResearchService {
               sellingAngle: bestCandidate.sellingAngle,
             }
           : {},
-        marketSummary: generation.summary,
+        marketSummary: completedRun.summary ?? summary,
         selectedCandidateId: null,
       });
     }
@@ -266,7 +265,7 @@ export class ResearchService {
       researchRun: completedRun,
       candidates: ranked,
       sources,
-      summary: generation.summary,
+      summary,
       recommendation,
     };
   }
@@ -307,7 +306,7 @@ export class ResearchService {
       (candidate) => candidate.id === project.selectedCandidateId,
     );
     const sources = latestRun
-      ? await this.sourceRepo.findByResearchRunId(latestRun.id)
+      ? this.externalSourcesOnly(await this.sourceRepo.findByResearchRunId(latestRun.id))
       : [];
     const promotedWorkflow = project.promotedProductId
       ? await this.workflowRepo.findByProductId(project.promotedProductId)
@@ -360,7 +359,7 @@ export class ResearchService {
     const candidate = await this.candidateRepo.findByIdOrThrow(candidateId);
     return {
       candidate,
-      sources: await this.sourceRepo.findByCandidateId(candidateId),
+      sources: this.externalSourcesOnly(await this.sourceRepo.findByCandidateId(candidateId)),
     };
   }
 
@@ -375,7 +374,7 @@ export class ResearchService {
 
     return {
       researchRunId: run.id,
-      sources: await this.sourceRepo.findByResearchRunId(run.id),
+      sources: this.externalSourcesOnly(await this.sourceRepo.findByResearchRunId(run.id)),
     };
   }
 
@@ -393,8 +392,12 @@ export class ResearchService {
     return {
       researchProjectId: projectId,
       researchRunId: run.id,
-      sources: await this.sourceRepo.findByResearchRunId(run.id),
+      sources: this.externalSourcesOnly(await this.sourceRepo.findByResearchRunId(run.id)),
     };
+  }
+
+  private externalSourcesOnly(sources: ResearchSource[]): ResearchSource[] {
+    return sources.filter((source) => source.type !== 'AI_ESTIMATE');
   }
 
   async selectCandidate(
@@ -581,6 +584,116 @@ export class ResearchService {
     return research.selectedCandidateId;
   }
 
+  private buildCandidatesFromExternalSources(
+    productIdea: string,
+    config: ResearchRunConfigInput,
+    sources: NormalizedResearchSourceInput[],
+  ): ResearchCandidateDraft[] {
+    const parsedConfig = validate(researchRunConfigSchema, config);
+    const priority = (source: NormalizedResearchSourceInput): number => {
+      if (source.type === 'MARKETPLACE') {
+        return 0;
+      }
+      if (source.type === 'SEARCH') {
+        return 1;
+      }
+      return 2;
+    };
+    const candidateSources = sources
+      .filter((source) => source.type !== 'AI_ESTIMATE')
+      .filter((source) => source.type === 'MARKETPLACE' || source.type === 'SEARCH')
+      .filter((source) => source.title || source.externalId)
+      .sort((a, b) => {
+        const priorityDelta = priority(a) - priority(b);
+        if (priorityDelta !== 0) {
+          return priorityDelta;
+        }
+        return (b.confidence ?? 0) - (a.confidence ?? 0);
+      });
+
+    const seen = new Set<string>();
+    const candidates: ResearchCandidateDraft[] = [];
+
+    for (const source of candidateSources) {
+      const name = this.normalizeCandidateName(source.title ?? source.externalId ?? productIdea);
+      const dedupeKey = name.toLowerCase();
+      if (!name || seen.has(dedupeKey)) {
+        continue;
+      }
+
+      const metrics = this.extractEvidenceMetrics(source);
+      seen.add(dedupeKey);
+      candidates.push({
+        name,
+        positioning: this.truncate(
+          source.extractedSignal || `${name} appeared in external research results for ${productIdea}.`,
+          1000,
+        ),
+        targetMarket: parsedConfig.targetMarket,
+        sellingAngle: this.truncate(
+          `${name} showed external ${source.type.toLowerCase()} evidence from ${source.provider}.`,
+          1000,
+        ),
+        recommendedPrice: metrics.price,
+        estimatedCOGS: metrics.productCost,
+        estimatedShipping: metrics.shippingCost,
+        scores: {
+          demandScore:
+            metrics.demandSignal ??
+            this.volumeToDemandScore(metrics.searchVolume) ??
+            this.reviewCountToDemandScore(metrics.reviewCount),
+          trendScore: metrics.trendSignal,
+          competitionScore: metrics.competitionSignal,
+          supplierScore: metrics.supplierSignal,
+          creativePotentialScore: metrics.creativeSignal,
+          riskScore: metrics.riskSignal,
+        },
+        confidence: 'low',
+        risks: [],
+        metadata: {
+          generatedFrom: 'external_provider_source',
+          sourceType: source.type,
+          sourceProvider: source.provider,
+          sourceUrl: source.url,
+          sourceExternalId: source.externalId,
+        },
+      });
+
+      if (candidates.length >= 5) {
+        break;
+      }
+    }
+
+    return candidates;
+  }
+
+  private normalizeCandidateName(value: string): string {
+    return this.truncate(
+      value
+        .replace(/\s+/g, ' ')
+        .replace(/\s[-|:]\s.*$/u, '')
+        .trim(),
+      255,
+    );
+  }
+
+  private truncate(value: string, maxLength: number): string {
+    return value.length > maxLength ? value.slice(0, maxLength) : value;
+  }
+
+  private buildExternalEvidenceSummary(
+    productIdea: string,
+    sources: NormalizedResearchSourceInput[],
+    candidates: ProductCandidate[],
+  ): string {
+    if (sources.length === 0) {
+      return `No external provider evidence was collected for "${productIdea}". Product Research returned no AI-generated candidates.`;
+    }
+
+    const sourceTypes = Array.from(new Set(sources.map((source) => source.type))).join(', ');
+    return `Collected ${sources.length} external source signals (${sourceTypes}) for "${productIdea}" and produced ${candidates.length} provider-backed product candidates.`;
+  }
+
   private async collectProviderSources(
     productIdea: string,
     config: ResearchRunConfigInput,
@@ -598,84 +711,177 @@ export class ResearchService {
       .map((source) => validate(normalizedResearchSourceSchema, source));
   }
 
-  private async generateCandidates(
-    productIdea: string,
-    config: ResearchRunConfigInput,
-    aiProvider: AIProvider,
+  private sourcesForCandidate(
+    sources: NormalizedResearchSourceInput[],
+    candidate: ResearchCandidateDraft,
+  ): NormalizedResearchSourceInput[] {
+    return sources.filter((source) => this.sourceMatchesCandidate(source, candidate.name));
+  }
+
+  private sourceMatchesCandidate(
+    source: NormalizedResearchSourceInput,
+    candidateName: string,
+  ): boolean {
+    const haystack = [
+      source.title,
+      source.extractedSignal,
+      source.url,
+      source.externalId,
+      JSON.stringify(source.rawData ?? {}),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    const candidateTerms = candidateName
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((term) => term.length > 3);
+
+    return candidateTerms.some((term) => haystack.includes(term));
+  }
+
+  private findCandidateForSource(
+    source: NormalizedResearchSourceInput,
+    candidates: ProductCandidate[],
+  ): ProductCandidate | undefined {
+    return candidates.find((candidate) =>
+      this.sourceMatchesCandidate(source, candidate.name),
+    );
+  }
+
+  private applyEvidenceToScorePayload(
+    base: Partial<ProviderEvidenceMetrics> & {
+      demandScore?: number;
+      trendScore?: number;
+      competitionScore?: number;
+      marginScore?: number;
+      supplierScore?: number;
+      creativePotentialScore?: number;
+      riskScore?: number;
+      recommendedPrice?: number;
+      estimatedCOGS?: number;
+      estimatedShipping?: number;
+    },
+    sources: NormalizedResearchSourceInput[],
   ) {
-    const prompt = this.buildCandidatePrompt(productIdea, config);
-    const output = await aiProvider.generateText({
-      prompt,
-      systemPrompt: SYSTEM_PROMPT,
-      temperature: 0.6,
-      maxTokens: 4096,
-    });
-
-    try {
-      return validate(researchGenerationSchema, JSON.parse(this.cleanJson(output.text)));
-    } catch (error) {
-      if (error instanceof AppError) {
-        throw error;
+    const metrics = sources.map((source) => this.extractEvidenceMetrics(source));
+    const average = (values: Array<number | undefined>): number | undefined => {
+      const present = values.filter((value): value is number => value !== undefined);
+      if (present.length === 0) {
+        return undefined;
       }
+      return Math.round(present.reduce((sum, value) => sum + value, 0) / present.length);
+    };
+    const first = (values: Array<number | undefined>): number | undefined =>
+      values.find((value) => value !== undefined);
 
-      throw new AppError({
-        code: ErrorCodes.AI_PROVIDER_ERROR,
-        message: 'Research AI response was not valid candidate JSON',
-        statusCode: 502,
-        details: { rawText: output.text.slice(0, 500) },
-      });
-    }
+    return {
+      demandScore: average([
+        base.demandScore,
+        average(metrics.map((metric) => metric.demandSignal)),
+        average(metrics.map((metric) => metric.searchVolume).map((volume) => this.volumeToDemandScore(volume))),
+        average(metrics.map((metric) => metric.reviewCount).map((count) => this.reviewCountToDemandScore(count))),
+      ]),
+      trendScore: average([
+        base.trendScore,
+        average(metrics.map((metric) => metric.trendSignal)),
+      ]),
+      competitionScore: average([
+        base.competitionScore,
+        average(metrics.map((metric) => metric.competitionSignal)),
+      ]),
+      supplierScore: average([
+        base.supplierScore,
+        average(metrics.map((metric) => metric.supplierSignal)),
+      ]),
+      creativePotentialScore: average([
+        base.creativePotentialScore,
+        average(metrics.map((metric) => metric.creativeSignal)),
+      ]),
+      riskScore: average([
+        base.riskScore,
+        average(metrics.map((metric) => metric.riskSignal)),
+      ]),
+      recommendedPrice: base.recommendedPrice ?? first(metrics.map((metric) => metric.price)),
+      estimatedCOGS: base.estimatedCOGS ?? first(metrics.map((metric) => metric.productCost)),
+      estimatedShipping: base.estimatedShipping ?? first(metrics.map((metric) => metric.shippingCost)),
+    };
   }
 
-  private buildCandidatePrompt(
-    productIdea: string,
-    config: ResearchRunConfigInput,
-  ): string {
-    const parsed = validate(researchRunConfigSchema, config);
-    return `Generate 3 to 5 ecommerce product candidates for this idea or niche: ${productIdea}
+  private extractEvidenceMetrics(source: NormalizedResearchSourceInput): ProviderEvidenceMetrics {
+    const rawData = source.rawData ?? {};
+    const metrics =
+      rawData.metrics && typeof rawData.metrics === 'object' && !Array.isArray(rawData.metrics)
+        ? (rawData.metrics as ProviderEvidenceMetrics)
+        : {};
 
-Configuration:
-${JSON.stringify(parsed, null, 2)}
-
-Return JSON exactly in this shape:
-{
-  "summary": "market summary",
-  "candidates": [
-    {
-      "name": "candidate name",
-      "positioning": "why this product should win",
-      "targetMarket": "US",
-      "sellingAngle": "primary ad/content angle",
-      "recommendedPrice": 89.99,
-      "estimatedCOGS": 30,
-      "estimatedShipping": 8,
-      "scores": {
-        "demandScore": 80,
-        "trendScore": 70,
-        "competitionScore": 60,
-        "supplierScore": 75,
-        "creativePotentialScore": 85,
-        "riskScore": 35
-      },
-      "confidence": "low|medium|high",
-      "risks": ["risk flag"],
-      "metadata": { "evidenceNote": "what is estimated vs supported" }
+    if (source.type === 'TREND' && typeof rawData.recentInterestAverage === 'number') {
+      return {
+        ...metrics,
+        trendSignal: rawData.recentInterestAverage,
+      };
     }
-  ]
-}`;
+
+    return metrics;
   }
 
-  private cleanJson(text: string): string {
-    let cleaned = text.trim();
-    if (cleaned.startsWith('```json')) {
-      cleaned = cleaned.slice(7);
-    } else if (cleaned.startsWith('```')) {
-      cleaned = cleaned.slice(3);
+  private volumeToDemandScore(volume: number | undefined): number | undefined {
+    if (volume === undefined) {
+      return undefined;
     }
-    if (cleaned.endsWith('```')) {
-      cleaned = cleaned.slice(0, -3);
+    if (volume >= 50000) {
+      return 90;
     }
-    return cleaned.trim();
+    if (volume >= 10000) {
+      return 80;
+    }
+    if (volume >= 3000) {
+      return 70;
+    }
+    if (volume >= 1000) {
+      return 60;
+    }
+    return 45;
+  }
+
+  private reviewCountToDemandScore(count: number | undefined): number | undefined {
+    if (count === undefined) {
+      return undefined;
+    }
+    if (count >= 5000) {
+      return 85;
+    }
+    if (count >= 1000) {
+      return 75;
+    }
+    if (count >= 250) {
+      return 65;
+    }
+    if (count >= 50) {
+      return 55;
+    }
+    return 40;
+  }
+
+  private resolveCandidateConfidence(
+    baseConfidence: ResearchCandidateDraft['confidence'],
+    evidenceSources: NormalizedResearchSourceInput[],
+  ): ResearchCandidateDraft['confidence'] {
+    const sourceTypes = new Set(evidenceSources.map((source) => source.type));
+    const highConfidenceEvidence = evidenceSources.filter(
+      (source) => (source.confidence ?? 0) >= 0.7,
+    );
+
+    if (sourceTypes.size >= 3 && highConfidenceEvidence.length >= 2) {
+      return 'high';
+    }
+
+    if (sourceTypes.size >= 1) {
+      return baseConfidence === 'low' ? 'medium' : baseConfidence;
+    }
+
+    return 'low';
   }
 }
 

@@ -68,6 +68,15 @@ const envSchema = z.object({
   ENABLE_AUTO_PUBLISH: z.coerce.boolean().default(false),
   ENABLE_IMAGE_GENERATION: z.coerce.boolean().default(false),
 
+  // Supplemental Research Providers
+  BRAVE_SEARCH_API_KEY: optionalString,
+  SERPAPI_API_KEY: optionalString,
+  DATAFORSEO_LOGIN: optionalString,
+  DATAFORSEO_PASSWORD: optionalString,
+  META_AD_LIBRARY_ACCESS_TOKEN: optionalString,
+  SUPPLIER_PROVIDER_API_KEY: optionalString,
+  SUPPLIER_PROVIDER_ENDPOINT: optionalUrl,
+
   // Monitoring
   SENTRY_DSN: optionalUrl,
 });
@@ -111,4 +120,18 @@ export function getEnv(): Env {
     return loadEnv();
   }
   return _env;
+}
+
+/**
+ * Read optional provider configuration without forcing full application env
+ * validation during provider construction and unit tests.
+ */
+export function getOptionalEnvValue(key: keyof Env): string | undefined {
+  const value = process.env[key];
+  return value === '' ? undefined : value;
+}
+
+export function getOptionalBooleanEnvValue(key: keyof Env): boolean {
+  const value = getOptionalEnvValue(key);
+  return value === 'true';
 }

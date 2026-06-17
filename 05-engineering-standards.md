@@ -106,6 +106,24 @@ Research providers must normalize external API responses before data reaches the
 
 Provider credentials must be read from environment variables only.
 
+Research providers must not produce fake or stub evidence in normal operation.
+When a provider is not configured, it must return an empty source list and emit a
+structured warning log with the provider name and missing configuration key.
+
+Product Research candidate discovery must be provider-first. The service must
+not use AI-generated candidate fallback when external providers are missing,
+failing, or returning no usable evidence. In that case it must return an empty
+shortlist or surface a visible failure state.
+
+Supplemental research providers should map external data into these source types:
+
+- SEARCH for competitor pages, reviews, discussions, and comparison pages
+- MARKETPLACE for listing price, rating, review count, variants, and complaint evidence
+- TREND for demand direction, seasonality, and regional interest
+- KEYWORD for volume, CPC, difficulty, and buyer-intent keyword evidence
+- ADS_SIGNAL for active ads, creative angles, and saturation indicators
+- SUPPLIER for cost, shipping, processing time, and supplier reliability
+
 ---
 
 ## Validation

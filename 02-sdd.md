@@ -263,6 +263,25 @@ Initial provider categories:
 
 Provider output must be normalized before persistence.
 
+Supplemental provider implementations must use approved API integrations only. If
+credentials are missing, providers must return no evidence and log a structured
+warning; they must not fabricate stub evidence. Supported supplemental provider
+families include:
+
+- Search and competitor discovery via search APIs such as DataForSEO SERP,
+  Brave Search, or SerpAPI
+- Marketplace intelligence via DataForSEO Merchant/Shopping, shopping, Amazon,
+  or marketplace data providers
+- Trend and keyword intelligence via DataForSEO trend/keyword APIs or SerpAPI
+- Ads signal intelligence via approved ads libraries or ads intelligence providers
+- Supplier intelligence via supplier marketplace APIs or approved supplier providers
+
+All provider evidence must be persisted as ResearchSource records with provider,
+URL or external identifier when available, extracted signal, confidence, rawData,
+and capturedAt. AI may synthesize or summarize provider-backed evidence after
+collection, but it must not create fallback product candidates or fallback
+source evidence when providers return no usable data.
+
 ---
 
 ## Research Pipeline
@@ -272,9 +291,9 @@ The Research Product Intelligence Module runs the following pipeline:
 ```text
 Input Product Idea / Niche
     ↓
-Generate Candidate Hypotheses
-    ↓
 Collect External Evidence
+    ↓
+Derive Product Candidates From External Evidence
     ↓
 Normalize Evidence
     ↓
@@ -290,6 +309,12 @@ Candidate Selection
     ↓
 Promote Candidate to Product Workflow
 ```
+
+Product candidates must be derived from external provider evidence such as
+search, marketplace, supplier, trend, keyword, social, or ads signals. If
+providers are unavailable or return no usable evidence, Product Research must
+return an empty shortlist or fail visibly; it must not fall back to
+AI-generated product candidates.
 
 ---
 

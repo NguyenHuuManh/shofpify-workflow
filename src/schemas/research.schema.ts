@@ -15,6 +15,16 @@ import { z } from 'zod';
 
 export const researchRiskToleranceSchema = z.enum(['low', 'medium', 'high']);
 
+export const supplementalProviderSchema = z.enum([
+  'search',
+  'marketplace',
+  'trend',
+  'keyword',
+  'adsSignal',
+  'supplier',
+  'social',
+]);
+
 export const researchRunConfigSchema = z.object({
   targetMarket: z.string().min(2).max(80).default('US'),
   priceBand: z
@@ -30,6 +40,15 @@ export const researchRunConfigSchema = z.object({
   riskTolerance: researchRiskToleranceSchema.default('medium'),
   excludedCategories: z.array(z.string().min(1)).default([]),
   objective: z.string().min(1).max(120).default('find_winning_product'),
+  supplementalProviders: z.array(supplementalProviderSchema).default([
+    'search',
+    'marketplace',
+    'trend',
+    'keyword',
+    'adsSignal',
+    'supplier',
+    'social',
+  ]),
 });
 
 export const candidateScorePayloadSchema = z.object({
@@ -66,6 +85,22 @@ export const normalizedResearchSourceSchema = z.object({
   capturedAt: z.coerce.date().default(() => new Date()),
 });
 
+export const providerEvidenceMetricsSchema = z.object({
+  demandSignal: z.coerce.number().min(0).max(100).optional(),
+  trendSignal: z.coerce.number().min(0).max(100).optional(),
+  competitionSignal: z.coerce.number().min(0).max(100).optional(),
+  supplierSignal: z.coerce.number().min(0).max(100).optional(),
+  creativeSignal: z.coerce.number().min(0).max(100).optional(),
+  riskSignal: z.coerce.number().min(0).max(100).optional(),
+  price: z.coerce.number().positive().optional(),
+  productCost: z.coerce.number().nonnegative().optional(),
+  shippingCost: z.coerce.number().nonnegative().optional(),
+  reviewCount: z.coerce.number().int().nonnegative().optional(),
+  rating: z.coerce.number().min(0).max(5).optional(),
+  searchVolume: z.coerce.number().int().nonnegative().optional(),
+  cpc: z.coerce.number().nonnegative().optional(),
+});
+
 export const researchCandidateDraftSchema = z.object({
   name: z.string().min(1).max(255),
   positioning: z.string().min(1).max(1000),
@@ -98,8 +133,10 @@ export const selectResearchCandidateSchema = z.object({
 
 export type ResearchRunConfigInput = z.input<typeof researchRunConfigSchema>;
 export type ResearchRunConfig = z.output<typeof researchRunConfigSchema>;
+export type SupplementalProviderName = z.infer<typeof supplementalProviderSchema>;
 export type CandidateScorePayload = z.infer<typeof candidateScorePayloadSchema>;
 export type NormalizedResearchSourceInput = z.infer<typeof normalizedResearchSourceSchema>;
+export type ProviderEvidenceMetrics = z.infer<typeof providerEvidenceMetricsSchema>;
 export type ResearchCandidateDraft = z.infer<typeof researchCandidateDraftSchema>;
 export type ResearchGeneration = z.infer<typeof researchGenerationSchema>;
 export type StartResearchRunInput = z.infer<typeof startResearchRunSchema>;

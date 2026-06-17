@@ -179,6 +179,26 @@ Deliverables:
 - Content generation receives selected candidate context
 - Candidate scores, source evidence, costs, risks, and recommendations are persisted and auditable
 
+### Phase 7c Supplemental Provider Upgrade
+
+Supplemental data providers must replace the previous local-only stub behavior
+for Search, Marketplace, Trend, Keyword, Ads Signal, and Supplier evidence.
+
+Implementation requirements:
+- Add optional provider credentials in `.env.example` and validated env loading
+- Keep all external calls inside `src/providers/research/`
+- Return empty evidence with structured warning logs when credentials are missing
+- Persist every normalized external signal as ResearchSource
+- Use provider-backed metrics to adjust candidate scores and confidence
+- Do not fall back to AI-generated product candidates when providers are
+  missing, failing, or returning no evidence; return an empty shortlist or
+  visible failure state instead
+- Add focused provider and ResearchService tests
+
+DataForSEO should be treated as the primary supplemental provider when
+`DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD` are configured. SerpAPI and Brave
+Search remain optional fallbacks for search, marketplace, and trend evidence.
+
 ---
 
 ### Phase 7c Implementation Handoff

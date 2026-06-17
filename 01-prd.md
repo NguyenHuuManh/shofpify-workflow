@@ -286,6 +286,11 @@ The system shall generate product research data.
 
 The system shall generate multiple product candidates from a product idea or niche.
 
+Product candidates must be derived from collected external research evidence.
+If approved research providers are unavailable or return no usable evidence, the
+system shall return an empty candidate list or visible failure instead of
+generating fallback candidates with AI.
+
 ---
 
 ## FR-003b

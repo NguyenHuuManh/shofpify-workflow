@@ -12,8 +12,10 @@ import type {
 import type {
   CandidateScorePayload,
   NormalizedResearchSourceInput,
+  ProviderEvidenceMetrics,
   ResearchCandidateDraft,
   ResearchRunConfig,
+  SupplementalProviderName,
 } from '@/schemas/research.schema';
 
 export interface CandidateScoreResult {
@@ -48,7 +50,21 @@ export interface ResearchProviderCollectInput {
 
 export interface ResearchProvider {
   readonly name: string;
+  readonly providerType?: SupplementalProviderName;
   collect(input: ResearchProviderCollectInput): Promise<NormalizedResearchSourceInput[]>;
+}
+
+export interface SupplementalResearchProviderConfig {
+  apiKey?: string;
+  username?: string;
+  password?: string;
+  endpoint?: string;
+  enabled?: boolean;
+}
+
+export interface NormalizedProviderEvidence {
+  source: NormalizedResearchSourceInput;
+  metrics?: ProviderEvidenceMetrics;
 }
 
 export interface RunResearchInput {
