@@ -5,18 +5,20 @@
  *
  * Responsibilities:
  * - Seed default settings
- * - Create a default admin user
+ * - Create a default admin user with hashed password
+ * - Create a default reviewer user with hashed password
  * - Create sample data for development
  *
  * Dependencies:
  * - @prisma/client
- * - @/lib/prisma (avoided - uses standalone PrismaClient for seed runs)
+ * - bcryptjs (for password hashing)
  *
  * Usage:
  *   npx tsx prisma/seed.ts
  */
 
 import { PrismaClient, UserRole } from '@prisma/client';
+import { hash } from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -42,6 +44,12 @@ async function main(): Promise<void> {
   console.log('  ✓ Settings seeded');
 
   // -------------------------------------------------------------------------
+  // Default Passwords (development only — change in production!)
+  // -------------------------------------------------------------------------
+  const adminPasswordHash = await hash('Admin123!', 12);
+  const reviewerPasswordHash = await hash('Reviewer123!', 12);
+
+  // -------------------------------------------------------------------------
   // Default Admin User
   // -------------------------------------------------------------------------
   await prisma.user.upsert({
@@ -51,9 +59,10 @@ async function main(): Promise<void> {
       email: 'admin@shopify-autonomous.com',
       name: 'Platform Admin',
       role: UserRole.ADMIN,
+      passwordHash: adminPasswordHash,
     },
   });
-  console.log('  ✓ Admin user seeded');
+  console.log('  ✓ Admin user seeded (admin@shopify-autonomous.com / Admin123!)');
 
   // -------------------------------------------------------------------------
   // Default Reviewer User
@@ -65,9 +74,10 @@ async function main(): Promise<void> {
       email: 'reviewer@shopify-autonomous.com',
       name: 'Content Reviewer',
       role: UserRole.REVIEWER,
+      passwordHash: reviewerPasswordHash,
     },
   });
-  console.log('  ✓ Reviewer user seeded');
+  console.log('  ✓ Reviewer user seeded (reviewer@shopify-autonomous.com / Reviewer123!)');
 
   console.log('✅ Seed complete');
 }

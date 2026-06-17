@@ -431,6 +431,30 @@ The system shall persist all manual edits to generated content and track edit hi
 
 ---
 
+## FR-022
+
+The system shall require user authentication (email + password) before accessing any dashboard or API endpoint.
+
+---
+
+## FR-023
+
+The system shall support role-based access control (Admin, Reviewer, Editor) with permissions enforced at the API layer.
+
+---
+
+## FR-024
+
+The system shall issue secure, httpOnly JWT tokens for session management with configurable expiry.
+
+---
+
+## FR-025
+
+The system shall provide a login page at `/login` and redirect unauthenticated users to it.
+
+---
+
 # 8. Non-Functional Requirements
 
 ## NFR-001 Performance

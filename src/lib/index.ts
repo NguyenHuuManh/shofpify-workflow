@@ -26,3 +26,11 @@ export { prisma } from './prisma';
 export { redis } from './redis';
 export { bootstrap } from './bootstrap';
 export { validate } from './validate';
+
+export {
+  hashPassword,
+  comparePassword,
+  signToken,
+  verifyToken,
+  toSafeUser,
+} from './auth';

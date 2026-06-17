@@ -1484,3 +1484,7 @@
     query: "SELECT \"public\".\"Workflow\".\"id\", \"public\".\"Workflow\".\"productId\", \"public\".\"Workflow\".\"userId\", \"public\".\"Workflow\".\"currentStep\"::text, \"public\".\"Workflow\".\"status\"::text, \"public\".\"Workflow\".\"startedAt\", \"public\".\"Workflow\".\"completedAt\", \"public\".\"Workflow\".\"createdAt\", \"public\".\"Workflow\".\"updatedAt\" FROM \"public\".\"Workflow\" WHERE 1=1 ORDER BY \"public\".\"Workflow\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
     params: "[50,0]"
     duration: 1
+ ✓ Compiled in 238ms (532 modules)
+ ✓ Compiled in 133ms (532 modules)
+ ✓ Compiled in 533ms (535 modules)
+ ✓ Compiled in 216ms (303 modules)

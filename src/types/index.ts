@@ -38,6 +38,15 @@ export type {
   Setting,
 } from '@prisma/client';
 
+// Re-export auth types
+export type {
+  LoginInput,
+  RegisterInput,
+  JwtPayload,
+  SafeUser,
+  AuthSession,
+} from './auth.types';
+
 export {
   UserRole,
   ProductStatus,

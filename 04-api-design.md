@@ -6,6 +6,101 @@ Base URL
 
 ---
 
+# Authentication
+
+All `/api/*` endpoints (except `/api/auth/*`) and `/dashboard/*` pages require
+a valid JWT token sent as an httpOnly cookie (`auth_token`).
+
+Unauthenticated requests receive `401 Unauthorized`.
+
+---
+
+## POST /api/auth/login
+
+Authenticates a user and sets the `auth_token` httpOnly cookie.
+
+Request:
+
+```json
+{
+  "email": "admin@shopify-autonomous.com",
+  "password": "secure-password"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user-id",
+      "email": "admin@shopify-autonomous.com",
+      "name": "Platform Admin",
+      "role": "ADMIN"
+    }
+  }
+}
+```
+
+Errors: `401` invalid credentials, `400` validation error.
+
+---
+
+## POST /api/auth/register
+
+Creates a new user. Restricted to ADMIN role.
+
+Request:
+
+```json
+{
+  "email": "editor@shopify-autonomous.com",
+  "name": "Content Editor",
+  "password": "secure-password",
+  "role": "EDITOR"
+}
+```
+
+Response: `201 Created` with user object (without passwordHash).
+
+Errors: `409` email already exists, `403` forbidden (non-admin).
+
+---
+
+## POST /api/auth/logout
+
+Clears the `auth_token` cookie.
+
+Response: `200 OK`
+
+---
+
+## GET /api/auth/me
+
+Returns the currently authenticated user from the JWT token.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user-id",
+      "email": "admin@shopify-autonomous.com",
+      "name": "Platform Admin",
+      "role": "ADMIN"
+    }
+  }
+}
+```
+
+Errors: `401` no valid token.
+
+---
+
 # Workflow
 
 POST /workflow/start

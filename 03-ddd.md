@@ -280,21 +280,23 @@ Represents platform users.
 
 ```prisma
 model User {
-  id          String   @id @default(cuid())
+  id           String   @id @default(cuid())
 
-  email       String   @unique
+  email        String   @unique
 
-  name        String?
+  name         String?
 
-  role        UserRole
+  role         UserRole
 
-  createdAt   DateTime @default(now())
+  passwordHash String
 
-  updatedAt   DateTime @updatedAt
+  createdAt    DateTime @default(now())
 
-  workflows   Workflow[]
+  updatedAt    DateTime @updatedAt
 
-  approvals   Approval[]
+  workflows    Workflow[]
+
+  approvals    Approval[]
 }
 ```
 

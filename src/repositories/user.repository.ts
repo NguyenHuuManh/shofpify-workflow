@@ -75,7 +75,7 @@ export class UserRepository extends BaseRepository {
   // ---------------------------------------------------------------------------
 
   async create(
-    data: Pick<User, 'email' | 'name' | 'role'>,
+    data: Pick<User, 'email' | 'name' | 'role' | 'passwordHash'>,
     tx?: TransactionClient,
   ): Promise<User> {
     const client = tx ?? this.db;
@@ -104,6 +104,21 @@ export class UserRepository extends BaseRepository {
     return client.user.update({
       where: { id },
       data,
+    });
+  }
+
+  async updatePassword(
+    id: string,
+    passwordHash: string,
+    tx?: TransactionClient,
+  ): Promise<User> {
+    const client = tx ?? this.db;
+
+    await this.findByIdOrThrow(id, tx);
+
+    return client.user.update({
+      where: { id },
+      data: { passwordHash },
     });
   }
 

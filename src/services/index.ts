@@ -14,3 +14,4 @@ export { assetService, AssetService } from './asset.service';
 export { shopifyService, ShopifyService } from './shopify';
 export { researchService, ResearchService } from './research.service';
 export { candidateScoringService, CandidateScoringService } from './candidate-scoring.service';
+export { authService, AuthService } from './auth.service';

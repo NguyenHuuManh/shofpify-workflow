@@ -35,6 +35,30 @@ Deliverables:
 
 ---
 
+## Phase 2b
+
+Authentication
+
+Tasks:
+- Add `passwordHash` field to User model + migration
+- Create auth types (`LoginInput`, `RegisterInput`, `AuthSession`, `JwtPayload`)
+- Create Zod schemas (`loginSchema`, `registerSchema`)
+- Create `src/lib/auth.ts` — JWT sign/verify + bcrypt password hashing
+- Extend `UserRepository` with `findByEmail()`, `createWithPassword()`, `updatePassword()`
+- Create `AuthService` — login, register, getSession, verifyToken
+- Create API routes: `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/logout`, `GET /api/auth/me`
+- Create `src/middleware.ts` — protect `/dashboard/*` and `/api/*` (except `/api/auth/*`)
+- Create login page at `/login` with login form
+- Create client-side `AuthProvider` context for session state
+- Update seed script with hashed admin password
+
+Deliverables:
+- Users must authenticate before accessing dashboard or API
+- JWT-based sessions with httpOnly cookies
+- Role-based access control enforced at API layer
+
+---
+
 ## Phase 3
 
 Service Layer

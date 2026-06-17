@@ -11,3 +11,4 @@ export * from './workflow.schema';
 export * from './approval.schema';
 export * from './asset.schema';
 export * from './research.schema';
+export * from './auth.schema';
