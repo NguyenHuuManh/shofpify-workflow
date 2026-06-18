@@ -23,6 +23,11 @@ const input: ResearchProviderCollectInput = {
     riskTolerance: 'medium',
     excludedCategories: [],
     objective: 'find_winning_product',
+    sourcing: {
+      targetSource: '1688',
+      targetCurrency: 'USD',
+      landedCostAssumptions: {},
+    },
     supplementalProviders: ['marketplace'],
   },
   candidates: [],

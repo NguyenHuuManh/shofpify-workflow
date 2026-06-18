@@ -164,7 +164,19 @@ Request:
   "targetMarginPercent": 40,
   "riskTolerance": "medium",
   "excludedCategories": ["regulated", "fragile"],
-  "objective": "find_winning_product"
+  "objective": "find_winning_product",
+  "sourcing": {
+    "targetSource": "1688",
+    "targetCurrency": "USD",
+    "maxMoq": 500,
+    "landedCostAssumptions": {
+      "agentFeePercent": 8,
+      "internationalFreightPerUnit": 8,
+      "customsDutyPercent": 5,
+      "packagingPerUnit": 1.5,
+      "qcPerUnit": 0.75
+    }
+  }
 }
 ```
 
@@ -204,6 +216,24 @@ Response:
       "recommendedPrice": 89.99,
       "estimatedCOGS": 38,
       "estimatedShipping": 9,
+      "factoryUnitCost": 22,
+      "moq": 100,
+      "landedCost": 37,
+      "landedCostBreakdown": {
+        "factoryUnitCost": 22,
+        "tieredPrices": [
+          { "minQuantity": 2, "unitCost": 25 },
+          { "minQuantity": 100, "unitCost": 22 },
+          { "minQuantity": 500, "unitCost": 19 }
+        ],
+        "domesticChinaShipping": 2.5,
+        "internationalFreightEstimate": 8,
+        "agentFeeEstimate": 2,
+        "customsDutyEstimate": 1.5,
+        "packagingEstimate": 1.5,
+        "qcEstimate": 0.75,
+        "assumptions": ["international freight estimated from default config"]
+      },
       "grossMarginPercent": 47.8,
       "breakEvenRoas": 2.25,
       "winningScore": 82,
@@ -214,6 +244,9 @@ Response:
         "competition": 62,
         "margin": 88,
         "supplier": 74,
+        "sourcing": 78,
+        "factoryCost": 82,
+        "logistics": 70,
         "creativePotential": 81,
         "risk": 35
       },
@@ -227,7 +260,7 @@ Response:
 
 ### GET /product-research/candidates/:candidateId
 
-Returns full candidate detail, including cost analysis, competitor summary, supplier summary, risk flags, and linked source evidence.
+Returns full candidate detail, including cost analysis, landed cost breakdown, competitor summary, sourcing summary, risk flags, and linked source evidence.
 
 ---
 
@@ -289,10 +322,30 @@ Response:
   "sources": [
     {
       "id": "source-id",
-      "type": "MARKETPLACE",
-      "provider": "Amazon",
-      "url": "https://example.com/product",
-      "extractedSignal": "High review volume and repeated complaint about portability",
+      "type": "SOURCING",
+      "provider": "1688",
+      "url": "https://detail.1688.com/offer/example.html",
+      "externalId": "1688-offer-id",
+      "title": "Factory product listing",
+      "extractedSignal": "1688 offer with MOQ 100, tiered unit cost from 22 USD equivalent, supplier located in Guangdong",
+      "rawData": {
+        "sourcePlatform": "1688",
+        "offerId": "1688-offer-id",
+        "shopName": "Example Factory",
+        "moq": 100,
+        "tieredPrices": [
+          { "minQuantity": 2, "unitCost": 25 },
+          { "minQuantity": 100, "unitCost": 22 }
+        ],
+        "domesticChinaShipping": 2.5,
+        "metrics": {
+          "productCost": 22,
+          "shippingCost": 2.5,
+          "sourcingSignal": 78,
+          "factoryCostSignal": 82,
+          "logisticsSignal": 70
+        }
+      },
       "confidence": 0.72,
       "capturedAt": "2026-06-16T00:00:00.000Z"
     }

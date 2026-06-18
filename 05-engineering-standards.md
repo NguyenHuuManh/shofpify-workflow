@@ -106,6 +106,11 @@ Research providers must normalize external API responses before data reaches the
 
 Provider credentials must be read from environment variables only.
 
+1688, factory sourcing, scraper API, or sourcing-agent credentials must be read
+from explicit environment variables. Do not overload generic supplier
+credentials for a provider-specific integration once a first-class sourcing
+provider exists.
+
 Research providers must not produce fake or stub evidence in normal operation.
 When a provider is not configured, it must return an empty source list and emit a
 structured warning log with the provider name and missing configuration key.
@@ -119,10 +124,20 @@ Supplemental research providers should map external data into these source types
 
 - SEARCH for competitor pages, reviews, discussions, and comparison pages
 - MARKETPLACE for listing price, rating, review count, variants, and complaint evidence
+- SOURCING for 1688 offers, factory listings, MOQ, tiered prices, supplier/shop metadata, lead time, and landed-cost inputs
 - TREND for demand direction, seasonality, and regional interest
 - KEYWORD for volume, CPC, difficulty, and buyer-intent keyword evidence
 - ADS_SIGNAL for active ads, creative angles, and saturation indicators
-- SUPPLIER for cost, shipping, processing time, and supplier reliability
+- SUPPLIER for legacy generic supplier cost, shipping, processing time, and reliability evidence
+
+Sourcing data that affects ranking must preserve raw source evidence. 1688 data
+must be treated as unverified sourcing evidence until a human or approved
+sourcing verification workflow confirms supplier quality, MOQ, lead time,
+sample availability, and production suitability.
+
+Candidate creation must allow provider-backed sourcing evidence to create a
+candidate directly when the evidence represents a specific product opportunity.
+Do not restrict candidate discovery to marketplace or search evidence.
 
 ---
 

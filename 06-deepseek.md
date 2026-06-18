@@ -206,6 +206,26 @@ Research conclusions used for candidate ranking must be persisted with source ev
 
 Research providers are responsible for normalizing external responses. Research services are responsible for business logic, scoring, cost analysis, and persistence coordination.
 
+1688 and other factory sourcing integrations are Research Provider concerns.
+Never call 1688, scraper APIs, sourcing APIs, or provider SDKs directly from
+Research Agent, API routes, workflow nodes, repositories, or UI code.
+
+Sourcing providers must normalize public sourcing evidence into ResearchSource
+records before scoring. Required evidence includes offer ID or external ID,
+source URL, product title, MOQ, tiered pricing, factory unit cost, domestic
+supplier shipping, supplier/shop metadata, location, lead time, and raw payload
+when available.
+
+1688 evidence is cost and sourcing intelligence, not fulfillment automation.
+Supplier order placement, purchase orders, inventory sync, warehouse operations,
+and supplier-side fulfillment remain out of scope unless a later approved phase
+explicitly adds them.
+
+Research Services must allow sourcing evidence to create product candidates
+directly when the evidence describes a concrete product opportunity. Do not
+require marketplace/search evidence before a 1688-backed product candidate can
+be ranked.
+
 ---
 
 # Shopify Integration Rules

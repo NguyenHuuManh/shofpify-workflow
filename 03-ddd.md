@@ -231,6 +231,8 @@ SEARCH
 
 MARKETPLACE
 
+SOURCING
+
 TREND
 
 KEYWORD
@@ -243,6 +245,12 @@ SOCIAL
 
 AI_ESTIMATE
 ```
+
+`SOURCING` is used for factory and supplier discovery evidence such as 1688
+offers, factory listings, MOQ, tiered pricing, domestic China shipping,
+supplier/shop metadata, and factory/trader signals. Existing `SUPPLIER`
+evidence may remain for legacy generic supplier signals, but new 1688 work
+should use `SOURCING`.
 
 ---
 
@@ -470,6 +478,14 @@ model ProductCandidate {
 
   estimatedShipping      Decimal?
 
+  factoryUnitCost        Decimal?
+
+  moq                    Int?
+
+  landedCost             Decimal?
+
+  landedCostBreakdown    Json?
+
   estimatedGrossProfit   Decimal?
 
   grossMarginPercent     Decimal?
@@ -485,6 +501,12 @@ model ProductCandidate {
   marginScore            Int?
 
   supplierScore          Int?
+
+  sourcingScore          Int?
+
+  factoryCostScore       Int?
+
+  logisticsScore         Int?
 
   creativePotentialScore Int?
 
@@ -511,6 +533,26 @@ model ProductCandidate {
   sources                ResearchSource[]
 }
 ```
+
+Sourcing-specific fields:
+
+- `factoryUnitCost`: best available unit cost from a factory/sourcing source.
+- `moq`: minimum order quantity from the selected or strongest sourcing source.
+- `landedCost`: estimated all-in cost per unit before advertising spend.
+- `landedCostBreakdown`: JSON object for tiered price, domestic China shipping,
+  international freight assumptions, agent fee, packaging, QC, customs/duty,
+  payment fee, and missing-cost assumptions.
+- `sourcingScore`: quality of sourcing opportunity, supplier fit, and evidence
+  confidence.
+- `factoryCostScore`: cost advantage relative to marketplace selling price and
+  target margin.
+- `logisticsScore`: feasibility based on size, weight, fragility, shipping
+  complexity, and landed-cost confidence.
+
+The current implementation may initially store some sourcing fields in
+`metadata` while the Prisma migration is being prepared. Once 1688 sourcing is
+implemented as a first-class provider, these fields should be migrated into the
+model so ranking and UI rendering do not depend on ad hoc JSON parsing.
 
 ---
 
@@ -553,6 +595,12 @@ model ResearchSource {
 ```
 
 All candidate recommendations must be traceable to one or more ResearchSource records, or explicitly marked as AI_ESTIMATE with lower confidence.
+
+For `SOURCING` evidence, `rawData` should preserve the provider payload fields
+needed for auditability and future supplier verification, including offer ID,
+product URL, shop name, location, MOQ, tiered prices, variant data, domestic
+shipping, lead time, badges, transaction signals, and factory/trader indicators
+when available.
 
 ---
 

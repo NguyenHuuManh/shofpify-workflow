@@ -140,8 +140,8 @@ The system must:
 * Generate USPs
 * Discover and rank product candidates from a product idea or niche
 * Collect evidence from external research sources through provider integrations
-* Estimate product cost, shipping cost, gross margin, break-even ROAS, and pricing feasibility
-* Score each product candidate by demand, trend, competition, margin, supplier fit, creative potential, and risk
+* Estimate factory cost, sourcing cost, landed cost, gross margin, break-even ROAS, and pricing feasibility
+* Score each product candidate by demand, trend, competition, margin, sourcing and factory fit, creative potential, and risk
 * Produce a recommendation for the best product candidate to continue into content generation
 
 ---
@@ -157,14 +157,14 @@ The module must:
 * Gather supporting data through approved provider interfaces
 * Persist raw source evidence used for scoring and recommendations
 * Rank candidates by commercial viability
-* Highlight cost, fulfillment, competition, legal, seasonality, and saturation risks
+* Highlight factory cost, sourcing, fulfillment, competition, legal, seasonality, and saturation risks
 * Allow a human reviewer to select one candidate and promote it into the product creation workflow
 
 The module output must include:
 
 * Ranked product candidate list
 * Score breakdown per candidate
-* Cost and profit analysis
+* Sourcing, landed cost, and profit analysis
 * Market research summary
 * Source evidence
 * Risk flags
@@ -256,7 +256,9 @@ Version 1 will not include:
 * Ad Campaign Management
 * Analytics Dashboard
 
-Supplier research for cost estimation is in scope for the Research Product Intelligence Module. Supplier order fulfillment, inventory synchronization, and supplier-side order automation remain out of scope.
+Supplier and factory sourcing research for cost estimation is in scope for the Research Product Intelligence Module. This includes collecting evidence from 1688 or other approved sourcing providers to estimate factory unit cost, MOQ, tiered pricing, domestic China shipping, sourcing risk, and landed cost assumptions.
+
+Supplier order fulfillment, inventory synchronization, purchase order automation, supplier-side order automation, and warehouse or 3PL operations remain out of scope for Version 1.
 
 These features will be implemented in future versions.
 
@@ -295,19 +297,21 @@ generating fallback candidates with AI.
 
 ## FR-003b
 
-The system shall rank product candidates using demand, trend, competition, margin, supplier, creative potential, and risk scores.
+The system shall rank product candidates using demand, trend, competition, margin, sourcing and factory fit, creative potential, logistics feasibility, and risk scores.
 
 ---
 
 ## FR-003c
 
-The system shall persist source evidence used by the Research Agent, including source type, provider, URL or external identifier, extracted signal, confidence, and capture timestamp.
+The system shall persist source evidence used by the Research Agent, including source type, provider, URL or external identifier, extracted signal, confidence, capture timestamp, and raw sourcing fields when available.
 
 ---
 
 ## FR-003d
 
-The system shall estimate selling price, product cost, shipping cost, payment fee, gross profit, gross margin, and break-even ROAS for each product candidate when sufficient data is available.
+The system shall estimate selling price, factory unit cost, MOQ, tiered sourcing cost, domestic supplier shipping, international freight assumptions, payment fee, landed cost, gross profit, gross margin, and break-even ROAS for each product candidate when sufficient data is available.
+
+1688 sourcing data must be treated as research evidence for cost and supplier discovery, not as proof that a supplier has been verified for production. Final supplier selection still requires human review or an approved sourcing verification process.
 
 ---
 
@@ -569,7 +573,7 @@ Responsibilities:
 * USP generation
 * Source-backed evidence collection through Research Provider interfaces
 * Candidate scoring and recommendation
-* Cost, margin, and pricing feasibility analysis
+* Factory sourcing, landed cost, margin, and pricing feasibility analysis
 * Risk flag generation
 
 The Research Agent must not directly access external APIs, Prisma, Redis, Shopify APIs, or provider SDKs. It must coordinate through the service layer and provider interfaces. Product Research is not a mandatory Workflow step; it is a discovery workspace that produces candidates which can be promoted into workflows.
@@ -588,6 +592,15 @@ Research output must be structured as:
       "recommendedPrice": 89.99,
       "estimatedCOGS": 38,
       "estimatedShipping": 9,
+      "landedCostBreakdown": {
+        "factoryUnitCost": 22,
+        "moq": 100,
+        "domesticChinaShipping": 2.5,
+        "internationalFreightEstimate": 8,
+        "agentFeeEstimate": 2,
+        "customsDutyEstimate": 1.5,
+        "packagingEstimate": 2
+      },
       "grossMarginPercent": 47.8,
       "winningScore": 82,
       "confidence": "medium",
@@ -596,7 +609,9 @@ Research output must be structured as:
         "trend": 78,
         "competition": 62,
         "margin": 88,
-        "supplier": 74,
+        "sourcing": 74,
+        "factoryCost": 82,
+        "logistics": 70,
         "creativePotential": 81,
         "risk": 35
       },
@@ -746,7 +761,7 @@ Target:
 
 ## Version 2
 
-* Supplier Integration
+* Supplier Procurement Integration
 * Inventory Synchronization
 * Pricing Agent
 * Ads Agent

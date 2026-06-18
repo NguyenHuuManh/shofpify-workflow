@@ -76,6 +76,9 @@ const envSchema = z.object({
   META_AD_LIBRARY_ACCESS_TOKEN: optionalString,
   SUPPLIER_PROVIDER_API_KEY: optionalString,
   SUPPLIER_PROVIDER_ENDPOINT: optionalUrl,
+  SOURCING_1688_PROVIDER: z.enum(['generic', 'apify', 'oxylabs', 'brightdata']).default('generic'),
+  SOURCING_1688_API_KEY: optionalString,
+  SOURCING_1688_ENDPOINT: optionalUrl,
 
   // Monitoring
   SENTRY_DSN: optionalUrl,

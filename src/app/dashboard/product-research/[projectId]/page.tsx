@@ -244,6 +244,9 @@ function CandidateCard({
         <DataPoint label="Market" value={candidate.targetMarket ?? 'N/A'} />
         <DataPoint label="Price" value={formatMoney(candidate.recommendedPrice)} />
         <DataPoint label="COGS" value={formatMoney(candidate.estimatedCOGS)} />
+        <DataPoint label="Factory Cost" value={formatMoney(candidate.factoryUnitCost)} />
+        <DataPoint label="MOQ" value={candidate.moq?.toString() ?? 'N/A'} />
+        <DataPoint label="Landed Cost" value={formatMoney(candidate.landedCost)} />
         <DataPoint label="Gross Margin" value={formatPercent(candidate.grossMarginPercent)} />
       </div>
 
@@ -261,6 +264,9 @@ function CandidateCard({
         <Score label="Competition" value={candidate.competitionScore} invert />
         <Score label="Margin" value={candidate.marginScore} />
         <Score label="Supplier" value={candidate.supplierScore} />
+        <Score label="Sourcing" value={candidate.sourcingScore} />
+        <Score label="Factory Cost" value={candidate.factoryCostScore} />
+        <Score label="Logistics" value={candidate.logisticsScore} />
         <Score label="Creative" value={candidate.creativePotentialScore} />
         <Score label="Risk" value={candidate.riskScore} invert />
       </div>

@@ -18,6 +18,7 @@ export const researchRiskToleranceSchema = z.enum(['low', 'medium', 'high']);
 export const supplementalProviderSchema = z.enum([
   'search',
   'marketplace',
+  'sourcing',
   'trend',
   'keyword',
   'adsSignal',
@@ -40,9 +41,30 @@ export const researchRunConfigSchema = z.object({
   riskTolerance: researchRiskToleranceSchema.default('medium'),
   excludedCategories: z.array(z.string().min(1)).default([]),
   objective: z.string().min(1).max(120).default('find_winning_product'),
+  sourcing: z
+    .object({
+      targetSource: z.enum(['1688']).default('1688'),
+      targetCurrency: z.string().min(3).max(3).default('USD'),
+      maxMoq: z.coerce.number().int().positive().optional(),
+      landedCostAssumptions: z
+        .object({
+          agentFeePercent: z.coerce.number().min(0).max(100).optional(),
+          internationalFreightPerUnit: z.coerce.number().nonnegative().optional(),
+          customsDutyPercent: z.coerce.number().min(0).max(100).optional(),
+          packagingPerUnit: z.coerce.number().nonnegative().optional(),
+          qcPerUnit: z.coerce.number().nonnegative().optional(),
+        })
+        .default({}),
+    })
+    .default({
+      targetSource: '1688',
+      targetCurrency: 'USD',
+      landedCostAssumptions: {},
+    }),
   supplementalProviders: z.array(supplementalProviderSchema).default([
     'search',
     'marketplace',
+    'sourcing',
     'trend',
     'keyword',
     'adsSignal',
@@ -57,17 +79,22 @@ export const candidateScorePayloadSchema = z.object({
   competitionScore: z.coerce.number().min(0).max(100).optional(),
   marginScore: z.coerce.number().min(0).max(100).optional(),
   supplierScore: z.coerce.number().min(0).max(100).optional(),
+  sourcingScore: z.coerce.number().min(0).max(100).optional(),
+  factoryCostScore: z.coerce.number().min(0).max(100).optional(),
+  logisticsScore: z.coerce.number().min(0).max(100).optional(),
   creativePotentialScore: z.coerce.number().min(0).max(100).optional(),
   riskScore: z.coerce.number().min(0).max(100).optional(),
   recommendedPrice: z.coerce.number().positive().optional(),
   estimatedCOGS: z.coerce.number().nonnegative().optional(),
   estimatedShipping: z.coerce.number().nonnegative().optional(),
+  landedCost: z.coerce.number().nonnegative().optional(),
 });
 
 export const normalizedResearchSourceSchema = z.object({
   type: z.enum([
     'SEARCH',
     'MARKETPLACE',
+    'SOURCING',
     'TREND',
     'KEYWORD',
     'ADS_SIGNAL',
@@ -90,11 +117,17 @@ export const providerEvidenceMetricsSchema = z.object({
   trendSignal: z.coerce.number().min(0).max(100).optional(),
   competitionSignal: z.coerce.number().min(0).max(100).optional(),
   supplierSignal: z.coerce.number().min(0).max(100).optional(),
+  sourcingSignal: z.coerce.number().min(0).max(100).optional(),
+  factoryCostSignal: z.coerce.number().min(0).max(100).optional(),
+  logisticsSignal: z.coerce.number().min(0).max(100).optional(),
   creativeSignal: z.coerce.number().min(0).max(100).optional(),
   riskSignal: z.coerce.number().min(0).max(100).optional(),
   price: z.coerce.number().positive().optional(),
   productCost: z.coerce.number().nonnegative().optional(),
   shippingCost: z.coerce.number().nonnegative().optional(),
+  factoryUnitCost: z.coerce.number().nonnegative().optional(),
+  landedCost: z.coerce.number().nonnegative().optional(),
+  moq: z.coerce.number().int().positive().optional(),
   reviewCount: z.coerce.number().int().nonnegative().optional(),
   rating: z.coerce.number().min(0).max(5).optional(),
   searchVolume: z.coerce.number().int().nonnegative().optional(),
@@ -109,6 +142,10 @@ export const researchCandidateDraftSchema = z.object({
   recommendedPrice: z.coerce.number().positive().optional(),
   estimatedCOGS: z.coerce.number().nonnegative().optional(),
   estimatedShipping: z.coerce.number().nonnegative().optional(),
+  factoryUnitCost: z.coerce.number().nonnegative().optional(),
+  moq: z.coerce.number().int().positive().optional(),
+  landedCost: z.coerce.number().nonnegative().optional(),
+  landedCostBreakdown: z.record(z.unknown()).optional(),
   scores: candidateScorePayloadSchema.partial().optional(),
   confidence: z.enum(['low', 'medium', 'high']).default('low'),
   risks: z.array(z.string().min(1)).default([]),
@@ -139,6 +176,6 @@ export type NormalizedResearchSourceInput = z.infer<typeof normalizedResearchSou
 export type ProviderEvidenceMetrics = z.infer<typeof providerEvidenceMetricsSchema>;
 export type ResearchCandidateDraft = z.infer<typeof researchCandidateDraftSchema>;
 export type ResearchGeneration = z.infer<typeof researchGenerationSchema>;
-export type StartResearchRunInput = z.infer<typeof startResearchRunSchema>;
-export type CreateResearchProjectInput = z.infer<typeof createResearchProjectSchema>;
+export type StartResearchRunInput = z.input<typeof startResearchRunSchema>;
+export type CreateResearchProjectInput = z.input<typeof createResearchProjectSchema>;
 export type SelectResearchCandidateInput = z.infer<typeof selectResearchCandidateSchema>;

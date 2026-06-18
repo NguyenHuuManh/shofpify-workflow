@@ -17,13 +17,16 @@ import type {
 } from '@/types/research.types';
 
 const DEFAULT_WEIGHTS: CandidateScoringWeights = {
-  demand: 0.22,
-  trend: 0.14,
-  competition: 0.12,
-  margin: 0.18,
-  supplier: 0.12,
-  creativePotential: 0.14,
-  risk: 0.08,
+  demand: 0.2,
+  trend: 0.12,
+  competition: 0.1,
+  margin: 0.17,
+  supplier: 0.04,
+  sourcing: 0.1,
+  factoryCost: 0.08,
+  logistics: 0.07,
+  creativePotential: 0.08,
+  risk: 0.04,
 };
 
 export class CandidateScoringService {
@@ -47,6 +50,18 @@ export class CandidateScoringService {
         : Math.round(marginMetrics.grossMarginPercent * 1.4),
     );
     const supplierScore = this.scoreOrDefault(parsed.supplierScore, 50);
+    const sourcingScore = this.scoreOrDefault(
+      parsed.sourcingScore,
+      parsed.supplierScore ?? 50,
+    );
+    const factoryCostScore = this.scoreOrDefault(
+      parsed.factoryCostScore,
+      marginScore,
+    );
+    const logisticsScore = this.scoreOrDefault(
+      parsed.logisticsScore,
+      parsed.sourcingScore ?? parsed.supplierScore ?? 50,
+    );
     const creativePotentialScore = this.scoreOrDefault(
       parsed.creativePotentialScore,
       50,
@@ -59,6 +74,9 @@ export class CandidateScoringService {
         competitionScore * this.weights.competition +
         marginScore * this.weights.margin +
         supplierScore * this.weights.supplier +
+        sourcingScore * this.weights.sourcing +
+        factoryCostScore * this.weights.factoryCost +
+        logisticsScore * this.weights.logistics +
         creativePotentialScore * this.weights.creativePotential +
         (100 - riskScore) * this.weights.risk,
     );
@@ -69,6 +87,9 @@ export class CandidateScoringService {
       competitionScore,
       marginScore,
       supplierScore,
+      sourcingScore,
+      factoryCostScore,
+      logisticsScore,
       creativePotentialScore,
       riskScore,
       winningScore: this.clampScore(winningScore),
@@ -78,14 +99,15 @@ export class CandidateScoringService {
 
   private calculateMargin(input: ScoreCandidateInput): Pick<
     CandidateScoreResult,
-    'estimatedGrossProfit' | 'grossMarginPercent' | 'breakEvenRoas'
+    'landedCost' | 'estimatedGrossProfit' | 'grossMarginPercent' | 'breakEvenRoas'
   > {
     const price = input.recommendedPrice;
     if (!price || price <= 0) {
       return {};
     }
 
-    const totalCost = (input.estimatedCOGS ?? 0) + (input.estimatedShipping ?? 0);
+    const totalCost =
+      input.landedCost ?? (input.estimatedCOGS ?? 0) + (input.estimatedShipping ?? 0);
     const estimatedGrossProfit = Math.round((price - totalCost) * 100) / 100;
     const grossMarginPercent =
       Math.round((estimatedGrossProfit / price) * 10000) / 100;
@@ -95,6 +117,7 @@ export class CandidateScoringService {
         : undefined;
 
     return {
+      landedCost: input.landedCost,
       estimatedGrossProfit,
       grossMarginPercent,
       breakEvenRoas,
@@ -119,6 +142,9 @@ export class CandidateScoringService {
       competition: weights.competition / total,
       margin: weights.margin / total,
       supplier: weights.supplier / total,
+      sourcing: weights.sourcing / total,
+      factoryCost: weights.factoryCost / total,
+      logistics: weights.logistics / total,
       creativePotential: weights.creativePotential / total,
       risk: weights.risk / total,
     };

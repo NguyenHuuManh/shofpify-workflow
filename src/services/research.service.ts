@@ -41,6 +41,7 @@ import type {
   NormalizedResearchSourceInput,
   ProviderEvidenceMetrics,
   ResearchCandidateDraft,
+  ResearchRunConfig,
   CreateResearchProjectInput,
   ResearchRunConfigInput,
 } from '@/schemas/research.schema';
@@ -144,6 +145,10 @@ export class ResearchService {
           recommendedPrice: draft.recommendedPrice,
           estimatedCOGS: draft.estimatedCOGS,
           estimatedShipping: draft.estimatedShipping,
+          factoryUnitCost: draft.factoryUnitCost,
+          moq: draft.moq,
+          landedCost: draft.landedCost,
+          landedCostBreakdown: draft.landedCostBreakdown,
         },
         evidenceSources,
       );
@@ -159,9 +164,13 @@ export class ResearchService {
         positioning: draft.positioning,
         targetMarket: draft.targetMarket ?? config.targetMarket,
         sellingAngle: draft.sellingAngle,
-        recommendedPrice: draft.recommendedPrice,
-        estimatedCOGS: draft.estimatedCOGS,
-        estimatedShipping: draft.estimatedShipping,
+        recommendedPrice: evidenceAdjustedScoreInput.recommendedPrice,
+        estimatedCOGS: evidenceAdjustedScoreInput.estimatedCOGS,
+        estimatedShipping: evidenceAdjustedScoreInput.estimatedShipping,
+        factoryUnitCost: evidenceAdjustedScoreInput.factoryUnitCost,
+        moq: evidenceAdjustedScoreInput.moq,
+        landedCost: evidenceAdjustedScoreInput.landedCost,
+        landedCostBreakdown: evidenceAdjustedScoreInput.landedCostBreakdown as Prisma.InputJsonValue | undefined,
         estimatedGrossProfit: score.estimatedGrossProfit,
         grossMarginPercent: score.grossMarginPercent,
         breakEvenRoas: score.breakEvenRoas,
@@ -170,6 +179,9 @@ export class ResearchService {
         competitionScore: score.competitionScore,
         marginScore: score.marginScore,
         supplierScore: score.supplierScore,
+        sourcingScore: score.sourcingScore,
+        factoryCostScore: score.factoryCostScore,
+        logisticsScore: score.logisticsScore,
         creativePotentialScore: score.creativePotentialScore,
         riskScore: score.riskScore,
         winningScore: score.winningScore,
@@ -645,17 +657,20 @@ export class ResearchService {
   ): ResearchCandidateDraft[] {
     const parsedConfig = validate(researchRunConfigSchema, config);
     const priority = (source: NormalizedResearchSourceInput): number => {
-      if (source.type === 'MARKETPLACE') {
+      if (source.type === 'SOURCING') {
         return 0;
       }
-      if (source.type === 'SEARCH') {
+      if (source.type === 'MARKETPLACE') {
         return 1;
       }
-      return 2;
+      if (source.type === 'SEARCH') {
+        return 2;
+      }
+      return 3;
     };
     const candidateSources = sources
       .filter((source) => source.type !== 'AI_ESTIMATE')
-      .filter((source) => source.type === 'MARKETPLACE' || source.type === 'SEARCH')
+      .filter((source) => ['SOURCING', 'MARKETPLACE', 'SEARCH'].includes(source.type))
       .filter((source) => source.title || source.externalId)
       .sort((a, b) => {
         const priorityDelta = priority(a) - priority(b);
@@ -676,6 +691,7 @@ export class ResearchService {
       }
 
       const metrics = this.extractEvidenceMetrics(source);
+      const landedCost = this.calculateLandedCost(metrics, parsedConfig);
       seen.add(dedupeKey);
       candidates.push({
         name,
@@ -689,8 +705,12 @@ export class ResearchService {
           1000,
         ),
         recommendedPrice: metrics.price,
-        estimatedCOGS: metrics.productCost,
+        estimatedCOGS: landedCost.landedCost ?? metrics.productCost,
         estimatedShipping: metrics.shippingCost,
+        factoryUnitCost: metrics.factoryUnitCost ?? metrics.productCost,
+        moq: metrics.moq,
+        landedCost: landedCost.landedCost,
+        landedCostBreakdown: landedCost.breakdown,
         scores: {
           demandScore:
             metrics.demandSignal ??
@@ -699,6 +719,9 @@ export class ResearchService {
           trendScore: metrics.trendSignal,
           competitionScore: metrics.competitionSignal,
           supplierScore: metrics.supplierSignal,
+          sourcingScore: metrics.sourcingSignal,
+          factoryCostScore: metrics.factoryCostSignal,
+          logisticsScore: metrics.logisticsSignal,
           creativePotentialScore: metrics.creativeSignal,
           riskScore: metrics.riskSignal,
         },
@@ -710,6 +733,7 @@ export class ResearchService {
           sourceProvider: source.provider,
           sourceUrl: source.url,
           sourceExternalId: source.externalId,
+          sourcing: source.type === 'SOURCING' ? landedCost.breakdown : undefined,
         },
       });
 
@@ -811,11 +835,18 @@ export class ResearchService {
       competitionScore?: number;
       marginScore?: number;
       supplierScore?: number;
+      sourcingScore?: number;
+      factoryCostScore?: number;
+      logisticsScore?: number;
       creativePotentialScore?: number;
       riskScore?: number;
       recommendedPrice?: number;
       estimatedCOGS?: number;
       estimatedShipping?: number;
+      factoryUnitCost?: number;
+      moq?: number;
+      landedCost?: number;
+      landedCostBreakdown?: Record<string, unknown>;
     },
     sources: NormalizedResearchSourceInput[],
   ) {
@@ -849,6 +880,18 @@ export class ResearchService {
         base.supplierScore,
         average(metrics.map((metric) => metric.supplierSignal)),
       ]),
+      sourcingScore: average([
+        base.sourcingScore,
+        average(metrics.map((metric) => metric.sourcingSignal)),
+      ]),
+      factoryCostScore: average([
+        base.factoryCostScore,
+        average(metrics.map((metric) => metric.factoryCostSignal)),
+      ]),
+      logisticsScore: average([
+        base.logisticsScore,
+        average(metrics.map((metric) => metric.logisticsSignal)),
+      ]),
       creativePotentialScore: average([
         base.creativePotentialScore,
         average(metrics.map((metric) => metric.creativeSignal)),
@@ -858,8 +901,73 @@ export class ResearchService {
         average(metrics.map((metric) => metric.riskSignal)),
       ]),
       recommendedPrice: base.recommendedPrice ?? first(metrics.map((metric) => metric.price)),
-      estimatedCOGS: base.estimatedCOGS ?? first(metrics.map((metric) => metric.productCost)),
+      estimatedCOGS: base.estimatedCOGS ?? first(metrics.map((metric) => metric.landedCost ?? metric.productCost)),
       estimatedShipping: base.estimatedShipping ?? first(metrics.map((metric) => metric.shippingCost)),
+      factoryUnitCost: base.factoryUnitCost ?? first(metrics.map((metric) => metric.factoryUnitCost ?? metric.productCost)),
+      moq: base.moq ?? first(metrics.map((metric) => metric.moq)),
+      landedCost: base.landedCost ?? first(metrics.map((metric) => metric.landedCost)),
+      landedCostBreakdown: base.landedCostBreakdown,
+    };
+  }
+
+  private calculateLandedCost(
+    metrics: ProviderEvidenceMetrics,
+    config: ResearchRunConfig,
+  ): { landedCost?: number; breakdown?: Record<string, unknown> } {
+    const factoryUnitCost = metrics.factoryUnitCost ?? metrics.productCost;
+    if (factoryUnitCost === undefined) {
+      return {};
+    }
+
+    const assumptions = config.sourcing.landedCostAssumptions;
+    const domesticChinaShipping = metrics.shippingCost ?? 0;
+    const internationalFreightEstimate = assumptions.internationalFreightPerUnit ?? 0;
+    const agentFeeEstimate = assumptions.agentFeePercent
+      ? Math.round(factoryUnitCost * (assumptions.agentFeePercent / 100) * 100) / 100
+      : 0;
+    const customsDutyEstimate = assumptions.customsDutyPercent
+      ? Math.round(factoryUnitCost * (assumptions.customsDutyPercent / 100) * 100) / 100
+      : 0;
+    const packagingEstimate = assumptions.packagingPerUnit ?? 0;
+    const qcEstimate = assumptions.qcPerUnit ?? 0;
+    const landedCost =
+      Math.round(
+        (
+          factoryUnitCost +
+          domesticChinaShipping +
+          internationalFreightEstimate +
+          agentFeeEstimate +
+          customsDutyEstimate +
+          packagingEstimate +
+          qcEstimate
+        ) *
+          100,
+      ) / 100;
+
+    const missingAssumptions = [
+      assumptions.internationalFreightPerUnit === undefined
+        ? 'internationalFreightPerUnit'
+        : undefined,
+      assumptions.agentFeePercent === undefined ? 'agentFeePercent' : undefined,
+      assumptions.customsDutyPercent === undefined ? 'customsDutyPercent' : undefined,
+      assumptions.packagingPerUnit === undefined ? 'packagingPerUnit' : undefined,
+      assumptions.qcPerUnit === undefined ? 'qcPerUnit' : undefined,
+    ].filter(Boolean);
+
+    return {
+      landedCost,
+      breakdown: {
+        factoryUnitCost,
+        moq: metrics.moq,
+        domesticChinaShipping,
+        internationalFreightEstimate,
+        agentFeeEstimate,
+        customsDutyEstimate,
+        packagingEstimate,
+        qcEstimate,
+        landedCost,
+        missingAssumptions,
+      },
     };
   }
 

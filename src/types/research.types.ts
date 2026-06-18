@@ -15,6 +15,7 @@ import type {
   ProviderEvidenceMetrics,
   ResearchCandidateDraft,
   ResearchRunConfig,
+  ResearchRunConfigInput,
   SupplementalProviderName,
 } from '@/schemas/research.schema';
 
@@ -24,9 +25,13 @@ export interface CandidateScoreResult {
   competitionScore: number;
   marginScore: number;
   supplierScore: number;
+  sourcingScore: number;
+  factoryCostScore: number;
+  logisticsScore: number;
   creativePotentialScore: number;
   riskScore: number;
   winningScore: number;
+  landedCost?: number;
   estimatedGrossProfit?: number;
   grossMarginPercent?: number;
   breakEvenRoas?: number;
@@ -38,6 +43,9 @@ export interface CandidateScoringWeights {
   competition: number;
   margin: number;
   supplier: number;
+  sourcing: number;
+  factoryCost: number;
+  logistics: number;
   creativePotential: number;
   risk: number;
 }
@@ -72,7 +80,7 @@ export interface RunResearchInput {
   researchProjectId?: string;
   productId?: string;
   productIdea: string;
-  config?: Partial<ResearchRunConfig>;
+  config?: ResearchRunConfigInput;
 }
 
 export interface RunResearchResult {

@@ -258,7 +258,7 @@ Initial provider categories:
 - Trend Provider: demand trend, seasonality, regional interest
 - Keyword Provider: search volume, keyword difficulty, CPC estimates
 - Ads Signal Provider: active ad examples, creative angles, saturation signals
-- Supplier Provider: product cost, shipping cost, processing time, supplier reliability
+- Sourcing Provider: factory unit cost, MOQ, tiered prices, domestic supplier shipping, lead time, supplier reliability, and factory/trader signals
 - Social Listening Provider: customer pain points, objections, emotional language
 
 Provider output must be normalized before persistence.
@@ -274,7 +274,26 @@ families include:
   or marketplace data providers
 - Trend and keyword intelligence via DataForSEO trend/keyword APIs or SerpAPI
 - Ads signal intelligence via approved ads libraries or ads intelligence providers
-- Supplier intelligence via supplier marketplace APIs or approved supplier providers
+- Factory sourcing intelligence via 1688, Alibaba-family sourcing APIs, or
+  approved scraper/API providers that expose public sourcing evidence
+
+1688 is the primary target source for factory cost intelligence. A 1688
+provider must be implemented as a Research Provider, not as a Shopify,
+workflow, agent, or UI integration. It must normalize product search and detail
+responses into source evidence before the Research Service performs scoring,
+candidate creation, landed cost calculation, or persistence.
+
+1688 evidence should include, when available:
+
+- Offer ID and product URL
+- Product title, images, variants, and SKU attributes
+- Factory unit cost and tiered price breaks
+- MOQ
+- Domestic China shipping cost
+- Supplier/shop name, location, years active, badges, and transaction signals
+- Factory/trader signal when available
+- Lead time or processing time
+- Raw response payload for auditability
 
 All provider evidence must be persisted as ResearchSource records with provider,
 URL or external identifier when available, extracted signal, confidence, rawData,
@@ -297,7 +316,7 @@ Derive Product Candidates From External Evidence
     ↓
 Normalize Evidence
     ↓
-Estimate Cost and Profit
+Estimate Sourcing Cost, Landed Cost, and Profit
     ↓
 Score Candidates
     ↓
@@ -311,10 +330,15 @@ Promote Candidate to Product Workflow
 ```
 
 Product candidates must be derived from external provider evidence such as
-search, marketplace, supplier, trend, keyword, social, or ads signals. If
+search, marketplace, sourcing, trend, keyword, social, or ads signals. If
 providers are unavailable or return no usable evidence, Product Research must
 return an empty shortlist or fail visibly; it must not fall back to
 AI-generated product candidates.
+
+Sourcing evidence can create product candidates directly when it represents a
+specific product opportunity, such as a 1688 offer or factory listing. The
+Research Service must not limit candidate creation to marketplace or search
+evidence only.
 
 ---
 
@@ -326,12 +350,20 @@ Each product candidate receives a score breakdown:
 - Trend Score
 - Competition Score
 - Margin Score
-- Supplier Score
+- Sourcing Score
+- Factory Cost Score
+- Logistics Score
 - Creative Potential Score
 - Risk Score
 - Winning Score
 
 The Winning Score is a weighted aggregate. The scoring weights must be configurable in the service layer or settings.
+
+Margin scoring must use landed cost when available. Landed cost is an estimate
+derived from factory unit cost, MOQ, tiered price, domestic supplier shipping,
+international freight assumptions, agent fee assumptions, packaging/QC cost,
+customs/duty assumptions, and payment fees. Missing landed-cost components must
+be explicitly marked as assumptions or unknowns, not silently treated as zero.
 
 ---
 
@@ -341,9 +373,9 @@ The Product Research page must support:
 
 - Ranked product candidate list
 - Score breakdown per candidate
-- Cost and margin analysis
+- Factory sourcing, landed cost, and margin analysis
 - Source evidence panel
-- Competitor and supplier summaries
+- Competitor and sourcing summaries
 - Risk flags
 - Candidate selection action
 - Candidate promotion action that creates Product and starts Workflow at Content

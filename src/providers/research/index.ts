@@ -19,6 +19,7 @@ import { AdsSignalResearchProvider } from './ads-signal.provider';
 import { KeywordResearchProvider } from './keyword.provider';
 import { MarketplaceResearchProvider } from './marketplace.provider';
 import { SearchResearchProvider } from './search.provider';
+import { Sourcing1688ResearchProvider } from './sourcing-1688.provider';
 import { SupplierResearchProvider } from './supplier.provider';
 import { TrendResearchProvider } from './trend.provider';
 
@@ -26,6 +27,7 @@ export { AdsSignalResearchProvider } from './ads-signal.provider';
 export { KeywordResearchProvider } from './keyword.provider';
 export { MarketplaceResearchProvider } from './marketplace.provider';
 export { SearchResearchProvider } from './search.provider';
+export { Sourcing1688ResearchProvider } from './sourcing-1688.provider';
 export { SupplierResearchProvider } from './supplier.provider';
 export { TrendResearchProvider } from './trend.provider';
 
@@ -33,6 +35,7 @@ export function createDefaultResearchProviders(): ResearchProvider[] {
   return [
     new SearchResearchProvider(),
     new MarketplaceResearchProvider(),
+    new Sourcing1688ResearchProvider(),
     new TrendResearchProvider(),
     new KeywordResearchProvider(),
     new AdsSignalResearchProvider(),

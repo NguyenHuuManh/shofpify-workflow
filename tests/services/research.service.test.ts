@@ -224,6 +224,132 @@ describe('ResearchService', () => {
     expect(aiProvider.generateText).not.toHaveBeenCalled();
   });
 
+  it('should create candidates directly from 1688 sourcing evidence', async () => {
+    const run = {
+      id: 'run_sourcing',
+      researchProjectId: null,
+      productId: null,
+      workflowId: null,
+      input: {},
+      summary: null,
+      recommendation: null,
+      providerCosts: null,
+      startedAt: new Date('2026-01-01'),
+      completedAt: null,
+      createdAt: new Date('2026-01-01'),
+    };
+    const completedRun = {
+      ...run,
+      summary: 'Collected 1 external source signals (SOURCING) for "Portable Blender" and produced 1 provider-backed product candidates.',
+      completedAt: new Date('2026-01-01'),
+    };
+    const candidateRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: 'cand_sourcing',
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const sourceRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: 'src_sourcing',
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const sourcingSource = {
+      type: 'SOURCING',
+      provider: '1688',
+      url: 'https://detail.1688.com/offer/offer_001.html',
+      externalId: 'offer_001',
+      title: 'USB Portable Blender Factory Listing',
+      extractedSignal: '1688 offer with MOQ 100 and factory unit cost 22.5',
+      rawData: {
+        metrics: {
+          productCost: 22.5,
+          factoryUnitCost: 22.5,
+          shippingCost: 2.5,
+          moq: 100,
+          sourcingSignal: 80,
+          factoryCostSignal: 78,
+          logisticsSignal: 75,
+        },
+      },
+      confidence: 0.74,
+      capturedAt: new Date('2026-01-01'),
+    };
+    const service = new ResearchService(
+      {
+        create: vi.fn().mockResolvedValue(run),
+        updateCompleted: vi.fn().mockResolvedValue(completedRun),
+      } as never,
+      {} as never,
+      candidateRepo as never,
+      sourceRepo as never,
+      {} as never,
+      {} as never,
+      {
+        create: vi.fn().mockResolvedValue({ id: 'audit_001' }),
+      } as never,
+      new CandidateScoringService(),
+      [
+        {
+          name: 'Sourcing1688ResearchProvider',
+          providerType: 'sourcing',
+          collect: vi.fn().mockResolvedValue([sourcingSource]),
+        },
+      ],
+    );
+
+    const result = await service.run({
+      productIdea: 'Portable Blender',
+      config: {
+        sourcing: {
+          targetSource: '1688',
+          targetCurrency: 'USD',
+          landedCostAssumptions: {
+            agentFeePercent: 8,
+            internationalFreightPerUnit: 8,
+            customsDutyPercent: 5,
+            packagingPerUnit: 1.5,
+            qcPerUnit: 0.75,
+          },
+        },
+      },
+    });
+
+    expect(result.candidates).toHaveLength(1);
+    expect(candidateRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'USB Portable Blender Factory Listing',
+        estimatedCOGS: 38.18,
+        factoryUnitCost: 22.5,
+        moq: 100,
+        landedCost: 38.18,
+        sourcingScore: 80,
+        factoryCostScore: 78,
+        logisticsScore: 75,
+        metadata: expect.objectContaining({
+          evidence: expect.objectContaining({
+            sourceTypes: ['SOURCING'],
+            backedByExternalEvidence: true,
+          }),
+        }),
+      }),
+    );
+    expect(sourceRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        candidateId: 'cand_sourcing',
+        type: 'SOURCING',
+        provider: '1688',
+      }),
+    );
+  });
+
   it('should hide AI estimate sources from public research detail reads', async () => {
     const project = {
       id: 'project_001',

@@ -87,6 +87,7 @@ enum AssetType {
 enum ResearchSourceType {
   SEARCH
   MARKETPLACE
+  SOURCING
   TREND
   KEYWORD
   ADS_SIGNAL
@@ -217,6 +218,10 @@ model ProductCandidate {
   recommendedPrice       Decimal?                @db.Decimal(10, 2)
   estimatedCOGS          Decimal?                @db.Decimal(10, 2)
   estimatedShipping      Decimal?                @db.Decimal(10, 2)
+  factoryUnitCost        Decimal?                @db.Decimal(10, 2)
+  moq                    Int?
+  landedCost             Decimal?                @db.Decimal(10, 2)
+  landedCostBreakdown    Json?
   estimatedGrossProfit   Decimal?                @db.Decimal(10, 2)
   grossMarginPercent     Decimal?                @db.Decimal(5, 2)
   breakEvenRoas          Decimal?                @db.Decimal(6, 2)
@@ -225,6 +230,9 @@ model ProductCandidate {
   competitionScore       Int?
   marginScore            Int?
   supplierScore          Int?
+  sourcingScore          Int?
+  factoryCostScore       Int?
+  logisticsScore         Int?
   creativePotentialScore Int?
   riskScore              Int?
   winningScore           Int?
