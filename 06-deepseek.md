@@ -210,6 +210,24 @@ Research providers are responsible for normalizing external responses. Research 
 Never call 1688, scraper APIs, sourcing APIs, or provider SDKs directly from
 Research Agent, API routes, workflow nodes, repositories, or UI code.
 
+The approved 1688 sourcing vendor chain is DajiSaaS primary with Apify backup.
+Failover must remain inside the Research Provider layer and must be sequential:
+
+```text
+Sourcing1688ResearchProvider
+    ↓
+DajiSaaS adapter
+    ↓ only on unavailable/error/rate-limit/timeout/invalid-or-empty evidence
+Apify adapter
+    ↓ invalid-or-empty evidence
+Return empty evidence or visible failure
+```
+
+Do not invoke DajiSaaS and Apify in parallel for the same sourcing collection.
+Do not invoke Apify when DajiSaaS has returned usable normalized evidence, and
+do not combine both vendor result sets during automatic fallback. Failure of
+both vendors must never cross into an AI candidate-generation path.
+
 Sourcing providers must normalize public sourcing evidence into ResearchSource
 records before scoring. Required evidence includes offer ID or external ID,
 source URL, product title, MOQ, tiered pricing, factory unit cost, domestic

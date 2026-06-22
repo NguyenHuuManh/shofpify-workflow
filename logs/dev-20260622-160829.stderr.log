@@ -1,0 +1,69 @@
+ ⨯ src\app\dashboard\product-research\[projectId]\page.tsx (206:24) @ extractProductImage
+ ⨯ ReferenceError: extractProductImage is not defined
+    at CandidateCard (./src/app/dashboard/product-research/[projectId]/page.tsx:403:26)
+    at stringify (<anonymous>)
+digest: "806963584"
+[0m [90m 204 |[39m   isPromoted[33m:[39m boolean[33m;[39m[0m
+[0m [90m 205 |[39m })[33m:[39m [33mReact[39m[33m.[39m[33mReactElement[39m {[0m
+[0m[31m[1m>[22m[39m[90m 206 |[39m   [36mconst[39m productImage [33m=[39m extractProductImage(sources)[33m;[39m[0m
+[0m [90m     |[39m                        [31m[1m^[22m[39m[0m
+[0m [90m 207 |[39m   [36mconst[39m productUrl [33m=[39m extractProductUrl(sources)[33m;[39m[0m
+[0m [90m 208 |[39m[0m
+[0m [90m 209 |[39m   [36mreturn[39m ([0m
+ ⨯ src\app\dashboard\product-research\[projectId]\page.tsx (206:24) @ extractProductImage
+ ⨯ ReferenceError: extractProductImage is not defined
+    at CandidateCard (./src/app/dashboard/product-research/[projectId]/page.tsx:403:26)
+    at stringify (<anonymous>)
+digest: "806963584"
+[0m [90m 204 |[39m   isPromoted[33m:[39m boolean[33m;[39m[0m
+[0m [90m 205 |[39m })[33m:[39m [33mReact[39m[33m.[39m[33mReactElement[39m {[0m
+[0m[31m[1m>[22m[39m[90m 206 |[39m   [36mconst[39m productImage [33m=[39m extractProductImage(sources)[33m;[39m[0m
+[0m [90m     |[39m                        [31m[1m^[22m[39m[0m
+[0m [90m 207 |[39m   [36mconst[39m productUrl [33m=[39m extractProductUrl(sources)[33m;[39m[0m
+[0m [90m 208 |[39m[0m
+[0m [90m 209 |[39m   [36mreturn[39m ([0m
+ ⨯ src\app\dashboard\product-research\[projectId]\page.tsx (206:24) @ extractProductImage
+ ⨯ ReferenceError: extractProductImage is not defined
+    at CandidateCard (./src/app/dashboard/product-research/[projectId]/page.tsx:403:26)
+    at stringify (<anonymous>)
+digest: "806963584"
+[0m [90m 204 |[39m   isPromoted[33m:[39m boolean[33m;[39m[0m
+[0m [90m 205 |[39m })[33m:[39m [33mReact[39m[33m.[39m[33mReactElement[39m {[0m
+[0m[31m[1m>[22m[39m[90m 206 |[39m   [36mconst[39m productImage [33m=[39m extractProductImage(sources)[33m;[39m[0m
+[0m [90m     |[39m                        [31m[1m^[22m[39m[0m
+[0m [90m 207 |[39m   [36mconst[39m productUrl [33m=[39m extractProductUrl(sources)[33m;[39m[0m
+[0m [90m 208 |[39m[0m
+[0m [90m 209 |[39m   [36mreturn[39m ([0m
+ ⨯ src\app\dashboard\product-research\[projectId]\page.tsx (206:24) @ extractProductImage
+ ⨯ ReferenceError: extractProductImage is not defined
+    at CandidateCard (./src/app/dashboard/product-research/[projectId]/page.tsx:403:26)
+    at stringify (<anonymous>)
+digest: "806963584"
+[0m [90m 204 |[39m   isPromoted[33m:[39m boolean[33m;[39m[0m
+[0m [90m 205 |[39m })[33m:[39m [33mReact[39m[33m.[39m[33mReactElement[39m {[0m
+[0m[31m[1m>[22m[39m[90m 206 |[39m   [36mconst[39m productImage [33m=[39m extractProductImage(sources)[33m;[39m[0m
+[0m [90m     |[39m                        [31m[1m^[22m[39m[0m
+[0m [90m 207 |[39m   [36mconst[39m productUrl [33m=[39m extractProductUrl(sources)[33m;[39m[0m
+[0m [90m 208 |[39m[0m
+[0m [90m 209 |[39m   [36mreturn[39m ([0m
+ ⨯ src\app\dashboard\product-research\[projectId]\page.tsx (206:24) @ extractProductImage
+ ⨯ ReferenceError: extractProductImage is not defined
+    at CandidateCard (./src/app/dashboard/product-research/[projectId]/page.tsx:403:26)
+    at stringify (<anonymous>)
+digest: "806963584"
+[0m [90m 204 |[39m   isPromoted[33m:[39m boolean[33m;[39m[0m
+[0m [90m 205 |[39m })[33m:[39m [33mReact[39m[33m.[39m[33mReactElement[39m {[0m
+[0m[31m[1m>[22m[39m[90m 206 |[39m   [36mconst[39m productImage [33m=[39m extractProductImage(sources)[33m;[39m[0m
+[0m [90m     |[39m                        [31m[1m^[22m[39m[0m
+[0m [90m 207 |[39m   [36mconst[39m productUrl [33m=[39m extractProductUrl(sources)[33m;[39m[0m
+[0m [90m 208 |[39m[0m
+[0m [90m 209 |[39m   [36mreturn[39m ([0m
+(node:18916) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 unpipe listeners added to [SyncWriteStream]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18916) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [SyncWriteStream]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:18916) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 close listeners added to [SyncWriteStream]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:18916) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 finish listeners added to [SyncWriteStream]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:18916) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 unpipe listeners added to [SyncWriteStream]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:18916) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 error listeners added to [SyncWriteStream]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:18916) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 close listeners added to [SyncWriteStream]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(node:18916) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 finish listeners added to [SyncWriteStream]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit

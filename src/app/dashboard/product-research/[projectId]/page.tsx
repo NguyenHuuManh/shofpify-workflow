@@ -4,6 +4,7 @@
  * Server Component for reviewing candidates, scores, economics, risks, and sources.
  */
 
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Badge, Button, Card, Table } from '@/components/ui';
 import { researchService } from '@/services/research.service';
@@ -55,37 +56,32 @@ export default async function ProductResearchDetailPage({
 
   return (
     <div>
-      <div
+      <a
+        href="/dashboard/product-research"
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: '16px',
-          marginBottom: '24px',
+          color: '#64748b',
+          fontSize: '13px',
+          fontWeight: 600,
+          textDecoration: 'none',
+          display: 'inline-block',
+          marginBottom: '12px',
         }}
       >
-        <div>
-          <a
-            href="/dashboard/product-research"
-            style={{
-              color: '#64748b',
-              fontSize: '13px',
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
-          >
-            Back to Product Research
-          </a>
-          <h2 style={{ fontSize: '24px', fontWeight: 700, margin: '8px 0 0', color: '#0f172a' }}>
+        ← Back to Product Research
+      </a>
+
+      <div style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
             {detail.project.query}
           </h2>
-          <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>
-            {detail.project.summary ?? 'Research project details and candidate evidence.'}
-          </p>
+          <Badge variant={projectStatusVariant[detail.project.status]}>
+            {detail.project.status}
+          </Badge>
         </div>
-        <Badge variant={projectStatusVariant[detail.project.status]}>
-          {detail.project.status}
-        </Badge>
+        <p style={{ color: '#64748b', margin: '8px 0 0', fontSize: '14px', lineHeight: '22px' }}>
+          {detail.project.summary ?? 'Research project details and candidate evidence.'}
+        </p>
       </div>
 
       <div
@@ -203,28 +199,88 @@ function CandidateCard({
   isSelected: boolean;
   isPromoted: boolean;
 }): React.ReactElement {
+  const productImage = extractProductImage(sources);
+  const productUrl = extractProductUrl(sources);
+
   return (
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <h3 style={{ color: '#0f172a', fontSize: '18px', fontWeight: 700, margin: 0 }}>
-              {candidate.name}
-            </h3>
-            <Badge variant={candidateStatusVariant[candidate.status]}>
-              {candidate.status}
-            </Badge>
-            {isSelected && <Badge variant="success">Selected</Badge>}
-            {isPromoted && <Badge variant="success">Promoted</Badge>}
-          </div>
-          <p style={{ color: '#334155', fontSize: '14px', lineHeight: '22px', margin: 0 }}>
-            {candidate.positioning}
-          </p>
-          {candidate.sellingAngle && (
-            <p style={{ color: '#64748b', fontSize: '13px', lineHeight: '20px', margin: '8px 0 0' }}>
-              {candidate.sellingAngle}
-            </p>
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flex: 1 }}>
+          {productImage && (
+            <div
+              style={{
+                width: '120px',
+                height: '120px',
+                flexShrink: 0,
+                borderRadius: '8px',
+                overflow: 'hidden',
+                border: '1px solid #e2e8f0',
+                background: '#f8fafc',
+              }}
+            >
+              <Image
+                src={productImage}
+                alt={candidate.name}
+                width={120}
+                height={120}
+                unoptimized
+                style={{
+                  objectFit: 'contain',
+                }}
+              />
+            </div>
           )}
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <h3 style={{ color: '#0f172a', fontSize: '18px', fontWeight: 700, margin: 0 }}>
+                {candidate.name}
+              </h3>
+              <Badge variant={candidateStatusVariant[candidate.status]}>
+                {candidate.status}
+              </Badge>
+              {isSelected && <Badge variant="success">Selected</Badge>}
+              {isPromoted && <Badge variant="success">Promoted</Badge>}
+            </div>
+            <p style={{ color: '#334155', fontSize: '14px', lineHeight: '22px', margin: 0 }}>
+              {candidate.positioning}
+            </p>
+            {candidate.sellingAngle && (
+              <p style={{ color: '#64748b', fontSize: '13px', lineHeight: '20px', margin: '8px 0 0' }}>
+                {candidate.sellingAngle}
+              </p>
+            )}
+            {productUrl && (
+              <div style={{ marginTop: '10px' }}>
+                <a
+                  href={productUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #e2e8f0',
+                    background: '#fff',
+                    color: '#0f172a',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    textDecoration: 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <title>External link</title>
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                  View Product
+                </a>
+              </div>
+            )}
+          </div>
         </div>
         <CandidateActions
           candidate={candidate}
@@ -448,6 +504,34 @@ function SourceTitle({ source }: { source: ResearchSource }): React.ReactElement
       <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>{source.provider}</div>
     </div>
   );
+}
+
+function extractProductImage(sources: ResearchSource[]): string | null {
+  for (const source of sources) {
+    const raw = source.rawData as Record<string, unknown> | null;
+    if (!raw) continue;
+
+    // Check for single image from keyword search
+    if (typeof raw.imageUrl === 'string' && raw.imageUrl.length > 0) {
+      return raw.imageUrl;
+    }
+
+    // Check for image array from product detail
+    if (Array.isArray(raw.images) && raw.images.length > 0) {
+      const img = raw.images[0];
+      if (typeof img === 'string' && img.length > 0) return img;
+    }
+  }
+  return null;
+}
+
+function extractProductUrl(sources: ResearchSource[]): string | null {
+  for (const source of sources) {
+    if (source.url && source.url.length > 0) {
+      return source.url;
+    }
+  }
+  return null;
 }
 
 function formatMoney(value: ProductCandidate['recommendedPrice']): string {

@@ -30,10 +30,12 @@ function createPrismaClient(): PrismaClient {
         : [{ emit: 'event', level: 'error' }],
   });
 
-  // Log queries in development
+  // Log query shape and timing in development. Parameters may contain secrets
+  // or large provider payloads (for example SerpAPI raw responses), so they
+  // must never be written to application logs.
   if (process.env.NODE_ENV === 'development') {
-    client.$on('query', (e: { query: string; params: string; duration: number }) => {
-      logger.debug({ query: e.query, params: e.params, duration: e.duration }, 'Prisma query');
+    client.$on('query', (e: { query: string; duration: number }) => {
+      logger.debug({ query: e.query, duration: e.duration }, 'Prisma query');
     });
   }
 

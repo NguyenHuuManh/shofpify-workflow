@@ -11,10 +11,7 @@
  * - Research provider implementations
  */
 
-import type {
-  ResearchProvider,
-  ResearchProviderCollectInput,
-} from '@/types/research.types';
+import type { ResearchProvider, ResearchProviderCollectInput } from '@/types/research.types';
 import { AdsSignalResearchProvider } from './ads-signal.provider';
 import { KeywordResearchProvider } from './keyword.provider';
 import { MarketplaceResearchProvider } from './marketplace.provider';
@@ -24,6 +21,8 @@ import { SupplierResearchProvider } from './supplier.provider';
 import { TrendResearchProvider } from './trend.provider';
 
 export { AdsSignalResearchProvider } from './ads-signal.provider';
+export { Apify1688Provider } from './apify-1688.provider';
+export { DajiSaasProvider } from './dajisaas.provider';
 export { KeywordResearchProvider } from './keyword.provider';
 export { MarketplaceResearchProvider } from './marketplace.provider';
 export { SearchResearchProvider } from './search.provider';

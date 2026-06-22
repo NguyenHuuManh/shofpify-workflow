@@ -120,6 +120,25 @@ not use AI-generated candidate fallback when external providers are missing,
 failing, or returning no usable evidence. In that case it must return an empty
 shortlist or surface a visible failure state.
 
+The 1688 sourcing provider chain must use DajiSaaS as primary and Apify as the
+sequential backup. The fallback policy is mandatory:
+
+- Call DajiSaaS first.
+- Call Apify only when DajiSaaS is not configured, unavailable, rejected,
+  rate-limited, timed out, fails response validation, or returns no usable
+  normalized `SOURCING` evidence.
+- Do not call Apify when DajiSaaS returns at least one usable source.
+- Do not call both vendors in parallel and do not merge their results during
+  automatic failover.
+- If both vendors fail or return no usable evidence, return an empty shortlist
+  or visible failure; never generate AI fallback candidates.
+- Log the selected vendor, failover reason, request outcome, and evidence count
+  without logging credentials or full sensitive request data.
+
+DajiSaaS and Apify credentials must use separate explicit environment
+variables. Normalized `ResearchSource.provider` values must preserve vendor
+provenance rather than labeling both vendors only as `1688`.
+
 Supplemental research providers should map external data into these source types:
 
 - SEARCH for competitor pages, reviews, discussions, and comparison pages

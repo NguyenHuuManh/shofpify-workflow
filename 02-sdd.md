@@ -283,6 +283,24 @@ workflow, agent, or UI integration. It must normalize product search and detail
 responses into source evidence before the Research Service performs scoring,
 candidate creation, landed cost calculation, or persistence.
 
+The selected 1688 vendor strategy is:
+
+```text
+DajiSaaS (primary)
+    ↓ only when unavailable, failed, rate-limited, timed out, or no usable evidence
+Apify (backup)
+    ↓ no usable evidence
+Empty shortlist or visible research failure
+```
+
+DajiSaaS and Apify must be invoked sequentially, never in parallel for the same
+sourcing request. Apify must not be called when DajiSaaS returns at least one
+valid normalized `SOURCING` source. Results from the two vendors must not be
+merged during automatic failover. Both adapters must normalize into the same
+Research Provider contract, while preserving the actual vendor name and raw
+1688 payload for provenance and auditability. Failure of both vendors must not
+trigger AI-generated candidates or source evidence.
+
 1688 evidence should include, when available:
 
 - Offer ID and product URL

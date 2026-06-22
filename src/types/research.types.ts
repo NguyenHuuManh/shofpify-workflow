@@ -102,3 +102,29 @@ export interface ResearchProjectSummary {
 }
 
 export type ScoreCandidateInput = CandidateScorePayload;
+
+// ---------------------------------------------------------------------------
+// 1688 Sourcing Provider Adapter types
+// ---------------------------------------------------------------------------
+
+export type SourcingProviderVendor = 'dajiSaas' | 'apify';
+
+export interface SourcingProviderAdapter {
+  readonly vendor: SourcingProviderVendor;
+  readonly name: string;
+
+  /** Whether this adapter is configured with usable credentials. */
+  isConfigured(): boolean;
+
+  /**
+   * Collect normalized SOURCING evidence from the vendor.
+   * Must return an empty array when no usable evidence is found.
+   */
+  collect(input: ResearchProviderCollectInput): Promise<NormalizedResearchSourceInput[]>;
+}
+
+export interface SourcingFailoverResult {
+  sources: NormalizedResearchSourceInput[];
+  selectedVendor: SourcingProviderVendor | null;
+  failoverReason: string | null;
+}

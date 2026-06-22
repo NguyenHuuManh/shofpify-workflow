@@ -18,13 +18,9 @@ import { z } from 'zod';
 /**
  * Preprocess: turn empty strings into undefined so .optional() works correctly.
  */
-const emptyStringToUndefined = (val: unknown): unknown =>
-  val === '' ? undefined : val;
+const emptyStringToUndefined = (val: unknown): unknown => (val === '' ? undefined : val);
 
-const optionalUrl = z.preprocess(
-  emptyStringToUndefined,
-  z.string().url().optional(),
-);
+const optionalUrl = z.preprocess(emptyStringToUndefined, z.string().url().optional());
 
 const optionalString = z.preprocess(emptyStringToUndefined, z.string().optional());
 
@@ -79,6 +75,21 @@ const envSchema = z.object({
   SOURCING_1688_PROVIDER: z.enum(['generic', 'apify', 'oxylabs', 'brightdata']).default('generic'),
   SOURCING_1688_API_KEY: optionalString,
   SOURCING_1688_ENDPOINT: optionalUrl,
+
+  // 1688 Sourcing — DajiSaaS (primary)
+  SOURCING_1688_DAJISAAS_API_KEY: optionalString,
+  SOURCING_1688_DAJISAAS_API_SECRET: optionalString,
+  SOURCING_1688_DAJISAAS_ENDPOINT: optionalUrl,
+  SOURCING_1688_DAJISAAS_COUNTRY: optionalString,
+  SOURCING_1688_CNY_TO_USD_RATE: z.preprocess(
+    emptyStringToUndefined,
+    z.coerce.number().positive().optional(),
+  ),
+
+  // 1688 Sourcing — Apify (sequential backup)
+  SOURCING_1688_APIFY_API_TOKEN: optionalString,
+  SOURCING_1688_APIFY_ACTOR_ID: optionalString,
+  SOURCING_1688_APIFY_ENDPOINT: optionalUrl,
 
   // Monitoring
   SENTRY_DSN: optionalUrl,

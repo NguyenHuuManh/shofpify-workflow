@@ -236,8 +236,13 @@ dropshipping model.
 
 Primary source:
 - 1688 is the target source for factory cost and supplier discovery evidence.
-- The first implementation may use an approved 1688 scraper/API provider if
-  official 1688/Alibaba Open Platform access is not available.
+- DajiSaaS is the selected primary 1688 API provider.
+- Apify is the selected sequential backup provider and must be called only when
+  DajiSaaS is unavailable, fails, times out, is rate-limited, fails validation,
+  or returns no usable evidence.
+- DajiSaaS and Apify must not be called in parallel or merged during automatic
+  failover. If both return no usable evidence, Product Research must return an
+  empty shortlist or visible failure without AI-generated fallback candidates.
 - The provider must be replaceable behind the Research Provider interface.
 
 Tasks:
@@ -265,8 +270,15 @@ Tasks:
   summary, landed cost breakdown, MOQ, factory/source URL, and source evidence.
 - [x] Add focused tests for 1688 provider normalization, sourcing candidate
   creation, landed cost calculation, scoring, and API response shape.
-- [ ] Add real provider-specific response adapters once the selected 1688 data
-  provider is chosen and sample payloads are available.
+- [x] Select the production vendor chain: DajiSaaS primary and Apify backup.
+- [x] Add a DajiSaaS adapter for signed keyword-search and product-detail
+  responses, including response validation and 1688 evidence normalization.
+- [x] Add an Apify adapter behind the same normalized sourcing contract.
+- [x] Add sequential failover orchestration with structured reason logging,
+  vendor provenance, and no parallel or merged automatic provider results.
+- [x] Add provider-specific response fixtures and tests for success, invalid
+  payload, timeout, rate limit, empty evidence, fallback success, and total
+  provider failure.
 - [ ] Add sourcing verification workflow for human supplier validation before
   purchase/order decisions.
 
@@ -302,9 +314,14 @@ Current status:
   `SOURCING` evidence, explicit 1688 env variables, a
   `Sourcing1688ResearchProvider`, landed-cost calculation, sourcing/factory
   scoring, sourcing-backed candidate creation, and dashboard sourcing fields.
-- The implementation is provider-wrapper ready, not yet connected to a chosen
-  real 1688 data vendor. `SOURCING_1688_ENDPOINT` must point to an approved
-  API/scraper wrapper that returns compatible listing payloads.
+- The implementation is provider-wrapper ready. ✅ DajiSaaS primary adapter,
+  Apify sequential backup adapter, and failover orchestration have been
+  implemented (2026-06-22).
+- Temporary operational status (2026-06-22): the DajiSaaS application is still
+  pending vendor activation, so its credentials are intentionally not
+  configured. Apify is therefore the active 1688 sourcing provider for now.
+  This does not change the target architecture: once DajiSaaS is activated and
+  passes a live smoke test, it returns to primary and Apify returns to backup.
 - `SUPPLIER_PROVIDER_*` remains for legacy generic supplier evidence. New
   1688-specific work must use `SOURCING_1688_*`.
 
@@ -313,20 +330,29 @@ Implemented Phase 7d files:
   `prisma/migrations/20260618120000_add_1688_sourcing_intelligence/migration.sql`
   — `SOURCING` source type and candidate sourcing fields.
 - `.env.example` and `src/lib/env.ts` — `SOURCING_1688_PROVIDER`,
-  `SOURCING_1688_API_KEY`, and `SOURCING_1688_ENDPOINT`.
+  `SOURCING_1688_API_KEY`, `SOURCING_1688_ENDPOINT`, plus
+  `SOURCING_1688_DAJISAAS_*` and `SOURCING_1688_APIFY_*` credentials.
 - `src/schemas/research.schema.ts` and `src/types/research.types.ts` —
-  sourcing config, landed-cost assumptions, source metrics, and score outputs.
-- `src/providers/research/sourcing-1688.provider.ts` and
-  `src/providers/research/index.ts` — 1688 provider implementation and registry
-  wiring.
+  sourcing config, landed-cost assumptions, source metrics, score outputs,
+  DajiSaaS response validation schemas, and `SourcingProviderAdapter` interface.
+- `src/providers/research/sourcing-1688.provider.ts` — failover orchestrator
+  with sequential DajiSaaS → Apify (no parallel, no merge, no AI fallback).
+- `src/providers/research/dajisaas.provider.ts` — DajiSaaS signed adapter
+  with documented MD5 parameter signing, GET keyword-search, product-detail
+  enrichment, request timeouts, and explicit CNY preservation/conversion.
+- `src/providers/research/apify-1688.provider.ts` — Apify adapter with
+  actor run lifecycle (start → poll → fetch dataset).
+- `src/providers/research/index.ts` — exports DajiSaasProvider, Apify1688Provider.
 - `src/services/research.service.ts` — direct candidate creation from
   `SOURCING` evidence and landed-cost calculation.
 - `src/services/candidate-scoring.service.ts` — sourcing, factory cost, and
   logistics scoring.
 - `src/app/dashboard/product-research/[projectId]/page.tsx` — candidate detail
   display for factory cost, MOQ, landed cost, and sourcing scores.
-- `tests/providers/research/sourcing-1688.provider.test.ts`,
-  `tests/services/research.service.test.ts`, and related provider/agent tests
+- `tests/providers/research/sourcing-1688.provider.test.ts` — failover orchestration tests (9 tests).
+- `tests/providers/research/dajisaas.provider.test.ts` — DajiSaaS contract tests (5 tests).
+- `tests/providers/research/apify-1688.provider.test.ts` — Apify adapter tests (15 tests).
+- `tests/services/research.service.test.ts`, and related provider/agent tests
   — focused coverage for the new sourcing path.
 
 Before continuing Phase 7c/7d, the next session must read:
@@ -342,20 +368,32 @@ Before continuing Phase 7c/7d, the next session must read:
   provider and scoring behavior.
 
 Next implementation order:
-1. Choose the real 1688 data provider or wrapper and collect representative
-   search/detail payload samples.
-2. Adapt `Sourcing1688ResearchProvider` normalization to the selected payload
-   shape, keeping all external calls inside `src/providers/research/`.
-3. Add provider-specific tests for that payload shape, including bad/missing
-   field cases.
-4. Run the new Prisma migration in the target environment before using
+1. Run the new Prisma migration in the target environment before using
    `SOURCING` data in persistent research runs.
-5. Configure `.env` with `SOURCING_1688_PROVIDER`,
-   `SOURCING_1688_API_KEY`, and `SOURCING_1688_ENDPOINT`.
-6. Run an end-to-end Product Research test with a real or recorded 1688
-   response and verify candidates, sources, landed cost, and dashboard output.
-7. Add a supplier verification/review step before purchase decisions if the
+2. Configure separate DajiSaaS and Apify credentials plus an explicit
+   CNY-to-USD conversion rate in `.env`; never reuse one vendor's credential
+   fields for the other.
+3. Run an end-to-end Product Research test with a real DajiSaaS response and
+   verify candidates, sources, CNY provenance, converted cost, landed cost, and
+   dashboard output.
+4. Validate the configured Apify actor input/output against a recorded dataset
+   before relying on it as the production backup.
+5. Force a DajiSaaS failure in a staging run and verify that Apify is called
+   once, its evidence is persisted with `provider=apify`, and no vendor results
+   are merged.
+6. Add a supplier verification/review step before purchase decisions if the
    product direction moves beyond research into procurement.
+
+DajiSaaS activation follow-up:
+- [ ] Confirm the DajiSaaS 1688 application status is active.
+- [ ] Configure `SOURCING_1688_DAJISAAS_API_KEY`,
+  `SOURCING_1688_DAJISAAS_API_SECRET`, endpoint, country, and the explicit
+  CNY-to-USD conversion rate without committing secrets.
+- [ ] Run a live Chinese-keyword search and product-detail smoke test.
+- [ ] Verify persisted sources use `provider=dajiSaas`, preserve raw CNY values,
+  and expose converted factory/landed cost correctly.
+- [ ] Reconfirm Apify is only called after a documented DajiSaaS failure or
+  empty/invalid evidence response.
 
 Approval gate:
 - Do not add purchase/order automation, inventory sync, warehouse logic, 3PL

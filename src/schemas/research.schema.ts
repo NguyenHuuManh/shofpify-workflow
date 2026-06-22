@@ -61,16 +61,18 @@ export const researchRunConfigSchema = z.object({
       targetCurrency: 'USD',
       landedCostAssumptions: {},
     }),
-  supplementalProviders: z.array(supplementalProviderSchema).default([
-    'search',
-    'marketplace',
-    'sourcing',
-    'trend',
-    'keyword',
-    'adsSignal',
-    'supplier',
-    'social',
-  ]),
+  supplementalProviders: z
+    .array(supplementalProviderSchema)
+    .default([
+      'search',
+      'marketplace',
+      'sourcing',
+      'trend',
+      'keyword',
+      'adsSignal',
+      'supplier',
+      'social',
+    ]),
 });
 
 export const candidateScorePayloadSchema = z.object({
@@ -167,6 +169,191 @@ export const selectResearchCandidateSchema = z.object({
   reviewerId: z.string().min(1, 'Reviewer ID is required'),
   comment: z.string().max(2000).optional(),
 });
+
+// ---------------------------------------------------------------------------
+// 1688 Sourcing Provider — vendor response schemas
+// ---------------------------------------------------------------------------
+
+export const dajiSaasKeywordSearchItemSchema = z
+  .object({
+    offerId: z.union([z.number(), z.string()]),
+    imageUrl: z.string().optional(),
+    subject: z.string().min(1),
+    subjectTrans: z.string().optional(),
+    isJxhy: z.boolean().optional(),
+    priceInfo: z
+      .object({
+        price: z.union([z.number(), z.string()]),
+        jxhyPrice: z.union([z.number(), z.string()]).nullish(),
+        pfJxhyPrice: z.union([z.number(), z.string()]).nullish(),
+        consignPrice: z.union([z.number(), z.string()]).nullish(),
+      })
+      .passthrough(),
+    repurchaseRate: z.string().optional(),
+    monthSold: z.number().int().nonnegative().optional(),
+    traceInfo: z.string().optional(),
+    isOnePsale: z.boolean().optional(),
+    sellerIdentities: z.array(z.string()).optional(),
+  })
+  .passthrough();
+
+export const dajiSaasSearchResponseSchema = z
+  .object({
+    code: z.number(),
+    message: z.string(),
+    data: z.object({
+      totalRecords: z.number().int().nonnegative().optional(),
+      totalPage: z.number().int().nonnegative().optional(),
+      pageSize: z.number().int().positive().optional(),
+      currentPage: z.number().int().positive().optional(),
+      data: z.array(dajiSaasKeywordSearchItemSchema),
+    }),
+    timestamp: z.number().optional(),
+    traceId: z.string().optional(),
+  })
+  .passthrough();
+
+const dajiSaasPriceRangeSchema = z
+  .object({
+    startQuantity: z.union([z.number(), z.string()]),
+    price: z.union([z.number(), z.string()]),
+    promotionPrice: z.union([z.number(), z.string()]).nullish(),
+  })
+  .passthrough();
+
+export const dajiSaasProductDetailSchema = z
+  .object({
+    code: z.number(),
+    message: z.string(),
+    data: z
+      .object({
+        offerId: z.union([z.number(), z.string()]),
+        categoryId: z.union([z.number(), z.string()]).optional(),
+        categoryName: z.string().nullish(),
+        subject: z.string().optional(),
+        subjectTrans: z.string().optional(),
+        description: z.string().optional(),
+        productImage: z
+          .object({ images: z.array(z.string()) })
+          .partial()
+          .optional(),
+        productAttribute: z.array(z.record(z.unknown())).optional(),
+        productSkuInfos: z.array(z.record(z.unknown())).optional(),
+        productSaleInfo: z
+          .object({
+            priceRangeList: z.array(dajiSaasPriceRangeSchema).optional(),
+            amountOnSale: z.number().int().nonnegative().optional(),
+            quoteType: z.number().int().optional(),
+            consignPrice: z.union([z.number(), z.string()]).nullish(),
+          })
+          .passthrough()
+          .optional(),
+        productShippingInfo: z
+          .object({
+            sendGoodsAddressText: z.string().optional(),
+            weight: z.union([z.number(), z.string()]).nullish(),
+            width: z.union([z.number(), z.string()]).nullish(),
+            height: z.union([z.number(), z.string()]).nullish(),
+            length: z.union([z.number(), z.string()]).nullish(),
+            shippingTimeGuarantee: z.string().optional(),
+            skuShippingDetails: z.array(z.record(z.unknown())).optional(),
+          })
+          .passthrough()
+          .optional(),
+        minOrderQuantity: z.union([z.number(), z.string()]).optional(),
+        sellerOpenId: z.string().optional(),
+        tagInfoList: z.array(z.record(z.unknown())).optional(),
+        sellerDataInfo: z.record(z.unknown()).optional(),
+        soldOut: z.number().int().nonnegative().optional(),
+        sellerIdentities: z.array(z.string()).optional(),
+      })
+      .passthrough(),
+    timestamp: z.number().optional(),
+    traceId: z.string().optional(),
+  })
+  .passthrough();
+
+export const apify1688DatasetItemSchema = z
+  .object({
+    offerId: z.union([z.number(), z.string()]).optional(),
+    offer_id: z.union([z.number(), z.string()]).optional(),
+    id: z.union([z.number(), z.string()]).optional(),
+    title: z.string().optional(),
+    name: z.string().optional(),
+    subject: z.string().optional(),
+    price: z
+      .union([
+        z.number(),
+        z.string(),
+        z
+          .object({
+            min: z.union([z.number(), z.string()]).optional(),
+            max: z.union([z.number(), z.string()]).optional(),
+            currency: z.string().optional(),
+            priceType: z.string().optional(),
+          })
+          .passthrough(),
+      ])
+      .optional(),
+    moq: z.union([z.number(), z.string()]).optional(),
+    minOrderQuantity: z.union([z.number(), z.string()]).optional(),
+    min_order_quantity: z.union([z.number(), z.string()]).optional(),
+    url: z.string().optional(),
+    productUrl: z.string().optional(),
+    product_url: z.string().optional(),
+    detailUrl: z.string().optional(),
+    detail_url: z.string().optional(),
+    shopName: z.string().optional(),
+    shop_name: z.string().optional(),
+    supplier: z
+      .union([
+        z.string(),
+        z
+          .object({
+            companyName: z.string().optional(),
+            legalCompanyName: z.string().optional(),
+            shopUrl: z.string().optional(),
+          })
+          .passthrough(),
+      ])
+      .optional(),
+    seller: z.string().optional(),
+    location: z.string().optional(),
+    province: z.string().optional(),
+    city: z.string().optional(),
+    leadTime: z.string().optional(),
+    lead_time: z.string().optional(),
+    shippingCost: z.union([z.number(), z.string()]).optional(),
+    domesticChinaShipping: z.union([z.number(), z.string()]).optional(),
+    shipping: z
+      .union([
+        z.number(),
+        z.string(),
+        z
+          .object({
+            postFee: z.union([z.number(), z.string()]).optional(),
+            deliveryDays: z.union([z.number(), z.string()]).optional(),
+            deliveryHours: z.union([z.number(), z.string()]).optional(),
+            location: z.string().optional(),
+          })
+          .passthrough(),
+      ])
+      .optional(),
+    tieredPrices: z.array(z.record(z.unknown())).optional(),
+    tiered_prices: z.array(z.record(z.unknown())).optional(),
+    quantityPrices: z.array(z.record(z.unknown())).optional(),
+  })
+  .passthrough()
+  .refine(
+    (item) =>
+      Boolean(item.offerId ?? item.offer_id ?? item.id) &&
+      Boolean(item.title ?? item.name ?? item.subject),
+    { message: 'Apify item requires an external ID and title' },
+  );
+
+export type DajiSaasSearchItem = z.infer<typeof dajiSaasKeywordSearchItemSchema>;
+export type DajiSaasSearchResponse = z.infer<typeof dajiSaasSearchResponseSchema>;
+export type DajiSaasProductDetail = z.infer<typeof dajiSaasProductDetailSchema>;
 
 export type ResearchRunConfigInput = z.input<typeof researchRunConfigSchema>;
 export type ResearchRunConfig = z.output<typeof researchRunConfigSchema>;

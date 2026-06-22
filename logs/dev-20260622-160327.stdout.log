@@ -1,0 +1,18 @@
+
+> shopify-autonomous-store@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1875ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1450ms (480 modules)
+ GET / 200 in 1589ms
+ GET / 200 in 39ms
+   Reload env: .env
+ ✓ Compiled in 101ms (238 modules)
+   Reload env: .env
+ ✓ Compiled in 53ms (238 modules)
