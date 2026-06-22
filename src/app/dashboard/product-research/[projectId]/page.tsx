@@ -200,7 +200,8 @@ function CandidateCard({
   isPromoted: boolean;
 }): React.ReactElement {
   const productImage = extractProductImage(sources);
-  const productUrl = extractProductUrl(sources);
+  const storeUrl = extractSourceUrl(sources, 'MARKETPLACE');
+  const sourcing1688Url = extractSourceUrl(sources, 'SOURCING');
 
   return (
     <Card>
@@ -249,35 +250,12 @@ function CandidateCard({
                 {candidate.sellingAngle}
               </p>
             )}
-            {productUrl && (
-              <div style={{ marginTop: '10px' }}>
-                <a
-                  href={productUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '6px 14px',
-                    borderRadius: '8px',
-                    border: '1px solid #e2e8f0',
-                    background: '#fff',
-                    color: '#0f172a',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <title>External link</title>
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    <polyline points="15 3 21 3 21 9" />
-                    <line x1="10" y1="14" x2="21" y2="3" />
-                  </svg>
-                  View Product
-                </a>
+            {(storeUrl || sourcing1688Url) && (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+                {storeUrl && <ExternalSourceLink href={storeUrl} label="View on Store" />}
+                {sourcing1688Url && (
+                  <ExternalSourceLink href={sourcing1688Url} label="View on 1688" accent />
+                )}
               </div>
             )}
           </div>
@@ -345,6 +323,55 @@ function CandidateCard({
         </div>
       )}
     </Card>
+  );
+}
+
+function ExternalSourceLink({
+  href,
+  label,
+  accent = false,
+}: {
+  href: string;
+  label: string;
+  accent?: boolean;
+}): React.ReactElement {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '6px 14px',
+        borderRadius: '8px',
+        border: accent ? '1px solid #f97316' : '1px solid #e2e8f0',
+        background: accent ? '#fff7ed' : '#fff',
+        color: accent ? '#c2410c' : '#0f172a',
+        fontSize: '13px',
+        fontWeight: 600,
+        textDecoration: 'none',
+        transition: 'all 0.15s ease',
+      }}
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+        <polyline points="15 3 21 3 21 9" />
+        <line x1="10" y1="14" x2="21" y2="3" />
+      </svg>
+      {label}
+    </a>
   );
 }
 
@@ -525,13 +552,11 @@ function extractProductImage(sources: ResearchSource[]): string | null {
   return null;
 }
 
-function extractProductUrl(sources: ResearchSource[]): string | null {
-  for (const source of sources) {
-    if (source.url && source.url.length > 0) {
-      return source.url;
-    }
-  }
-  return null;
+function extractSourceUrl(
+  sources: ResearchSource[],
+  type: ResearchSource['type'],
+): string | null {
+  return sources.find((source) => source.type === type && Boolean(source.url))?.url ?? null;
 }
 
 function formatMoney(value: ProductCandidate['recommendedPrice']): string {
