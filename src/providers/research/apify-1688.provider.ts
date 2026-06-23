@@ -55,6 +55,11 @@ interface ApifyDatasetItem {
   title?: string;
   name?: string;
   subject?: string;
+  image?: string;
+  imageUrl?: string;
+  image_url?: string;
+  thumbnail?: string;
+  images?: string[];
   price?: number | string | { min?: number | string; max?: number | string; currency?: string };
   moq?: number | string;
   minOrderQuantity?: number | string;
@@ -347,6 +352,14 @@ export class Apify1688Provider implements SourcingProviderAdapter {
       this.validUrl(item.product_url) ??
       this.validUrl(item.detailUrl) ??
       this.validUrl(item.detail_url);
+    const imageUrl =
+      this.validUrl(item.imageUrl) ??
+      this.validUrl(item.image_url) ??
+      this.validUrl(item.image) ??
+      this.validUrl(item.thumbnail);
+    const images = Array.isArray(item.images)
+      ? item.images.filter((image): image is string => Boolean(this.validUrl(image)))
+      : [];
 
     const shopName =
       this.stringOrUndefined(item.shopName) ??
@@ -429,6 +442,8 @@ export class Apify1688Provider implements SourcingProviderAdapter {
         sourceTieredPricesCny: sourceTieredPrices,
         sourceDomesticChinaShippingCny: sourceDomesticShippingCny,
         offerId,
+        imageUrl,
+        images,
         shopName,
         location,
         moq,

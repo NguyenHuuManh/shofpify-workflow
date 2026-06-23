@@ -85,6 +85,7 @@ User
 
 ResearchProject
  │
+ ├── ResearchDiscoveryJob
  ├── ResearchRun
  ├── ProductCandidate
  └── ResearchSource
@@ -282,6 +283,22 @@ ARCHIVED
 
 ---
 
+## ResearchDiscoveryJobStatus
+
+```text
+PENDING
+
+RUNNING
+
+COMPLETED
+
+FAILED
+
+CANCELLED
+```
+
+---
+
 # 5. User
 
 Represents platform users.
@@ -402,11 +419,53 @@ model ResearchProject {
 
   updatedAt           DateTime @updatedAt
 
+  discoveryJobs       ResearchDiscoveryJob[]
+
   researchRuns        ResearchRun[]
 
   candidates          ProductCandidate[]
 }
 ```
+
+---
+
+# 7aa. ResearchDiscoveryJob
+
+Represents one autonomous discovery job that expands a broad brief into multiple
+provider-backed Product Research runs.
+
+```prisma
+model ResearchDiscoveryJob {
+  id                String   @id @default(cuid())
+
+  researchProjectId String
+
+  status            ResearchDiscoveryJobStatus @default(PENDING)
+
+  input             Json
+
+  queryPlan         Json?
+
+  result            Json?
+
+  errorMessage      String?
+
+  startedAt         DateTime?
+
+  completedAt       DateTime?
+
+  createdAt         DateTime @default(now())
+
+  updatedAt         DateTime @updatedAt
+
+  researchProject   ResearchProject @relation(fields: [researchProjectId], references: [id])
+}
+```
+
+The `queryPlan` stores AI-planned or deterministic fallback queries. It must not
+store generated product candidates. Product candidates and source evidence must
+remain in ProductCandidate and ResearchSource records created by ResearchRun
+execution.
 
 ---
 

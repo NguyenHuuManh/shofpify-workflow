@@ -152,7 +152,9 @@ PUT /workflow/:id/landing
 Creates a product research project and runs the Research Product Intelligence Module.
 The same configuration is used by the dashboard Product Research form. Brief
 constraints are applied to provider-backed candidates after evidence collection;
-they do not enable AI-generated fallback candidates.
+they do not enable AI-generated fallback candidates. The initial run discovers
+product candidates from demand/store evidence only; 1688 supplier lookup and
+factory-cost enrichment are run later per candidate.
 
 Request:
 
@@ -198,6 +200,83 @@ Response:
 ### GET /product-research
 
 Returns research projects with latest candidate summary.
+
+---
+
+### POST /product-research/discovery-jobs
+
+Starts an autonomous product discovery job. The user may provide a broad brief
+and constraints without a specific keyword. AI may generate the query plan only;
+ProductCandidate and ResearchSource records must still come from provider-backed
+Product Research runs.
+
+Request:
+
+```json
+{
+  "seedQuery": "home organization",
+  "targetMarket": "US",
+  "priceBand": {
+    "min": 25,
+    "max": 80
+  },
+  "targetMarginPercent": 40,
+  "riskTolerance": "medium",
+  "excludedCategories": ["fragile", "regulated", "trademark"],
+  "maxQueries": 6,
+  "sourcing": {
+    "targetSource": "1688",
+    "targetCurrency": "USD",
+    "maxMoq": 500,
+    "landedCostAssumptions": {
+      "agentFeePercent": 8,
+      "internationalFreightPerUnit": 8,
+      "customsDutyPercent": 5,
+      "packagingPerUnit": 1.5,
+      "qcPerUnit": 0.75
+    }
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "researchProjectId": "research-project-id",
+  "discoveryJobId": "discovery-job-id",
+  "status": "PENDING"
+}
+```
+
+---
+
+### GET /product-research/discovery-jobs
+
+Returns recent autonomous discovery jobs and their linked research projects.
+
+Response:
+
+```json
+{
+  "jobs": [
+    {
+      "id": "discovery-job-id",
+      "researchProjectId": "research-project-id",
+      "status": "COMPLETED",
+      "queryPlan": {
+        "queries": ["pet travel accessories", "car interior organizers"]
+      },
+      "result": {
+        "queryCount": 2,
+        "runCount": 2,
+        "candidateCount": 5,
+        "topCandidates": []
+      }
+    }
+  ]
+}
+```
 
 ---
 
@@ -267,6 +346,35 @@ Response:
 ### GET /product-research/candidates/:candidateId
 
 Returns full candidate detail, including cost analysis, landed cost breakdown, competitor summary, sourcing summary, risk flags, and linked source evidence.
+
+---
+
+### POST /product-research/candidates/:candidateId/sourcing
+
+Runs candidate-level 1688 supplier research after a ProductCandidate already
+exists. The request may include a user-supplied 1688 URL or let the sourcing
+provider search from the candidate title/query. This endpoint must not create
+new candidates.
+
+Request:
+
+```json
+{
+  "mode": "manual_url",
+  "sourcingUrl": "https://detail.1688.com/offer/123456789.html",
+  "query": "portable blender"
+}
+```
+
+Response:
+
+```json
+{
+  "candidateId": "candidate-id",
+  "status": "ENRICHED",
+  "sourceCount": 2
+}
+```
 
 ---
 

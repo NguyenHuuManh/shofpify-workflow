@@ -46,6 +46,42 @@ export class ResearchSourceRepository extends BaseRepository {
     });
   }
 
+  async findByIds(
+    ids: string[],
+    tx?: TransactionClient,
+  ): Promise<ResearchSource[]> {
+    const client = tx ?? this.db;
+    return client.researchSource.findMany({
+      where: { id: { in: ids } },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async findByCandidateScope(
+    candidateId: string,
+    sourceIds: string[],
+    tx?: TransactionClient,
+  ): Promise<ResearchSource[]> {
+    const client = tx ?? this.db;
+    const candidate = await client.productCandidate.findUnique({
+      where: { id: candidateId },
+      select: { researchRunId: true },
+    });
+
+    if (!candidate) {
+      return [];
+    }
+
+    return client.researchSource.findMany({
+      where: {
+        id: { in: sourceIds },
+        researchRunId: candidate.researchRunId,
+        OR: [{ candidateId }, { candidateId: null }],
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
   async deleteByResearchProjectId(
     researchProjectId: string,
     tx?: TransactionClient,

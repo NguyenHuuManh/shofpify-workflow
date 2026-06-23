@@ -23,6 +23,10 @@
 import { Worker } from 'bullmq';
 import { getQueues, QUEUE_NAMES } from './queue-registry';
 import { processWorkflowStep } from './workflow-job';
+import {
+  PRODUCT_DISCOVERY_JOB_NAME,
+  processProductDiscoveryJob,
+} from './product-discovery-job';
 import { logger } from '@/lib/logger';
 import { loadEnv } from '@/lib/env';
 import type { QueueName } from './queue-registry';
@@ -42,6 +46,12 @@ function createWorker(queueName: QueueName): Worker {
         { queue: queueName, jobId: job.id, attempt: job.attemptsMade },
         'Worker processing job',
       );
+      if (job.name === PRODUCT_DISCOVERY_JOB_NAME) {
+        await processProductDiscoveryJob(
+          job as { data: Parameters<typeof processProductDiscoveryJob>[0]['data'] },
+        );
+        return;
+      }
       await processWorkflowStep(job as { data: Parameters<typeof processWorkflowStep>[0]['data'] });
     },
     {

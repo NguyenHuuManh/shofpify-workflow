@@ -14,7 +14,13 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
+import { candidateSourcingService } from '@/services/candidate-sourcing.service';
+import { sourcingVerificationService } from '@/services/sourcing-verification.service';
 import { researchService } from '@/services/research.service';
+import { discoveryJobService } from '@/services/discovery-job.service';
+import { sourceMatchingService } from '@/services/source-matching.service';
+import { enqueueProductDiscoveryJob } from '@/jobs/job-producer';
 
 export async function createResearchProject(formData: FormData): Promise<void> {
   const query = String(formData.get('query') ?? '').trim();
@@ -55,6 +61,55 @@ export async function createResearchProject(formData: FormData): Promise<void> {
       },
     },
   });
+
+  redirect('/dashboard/product-research');
+}
+
+export async function startDiscoveryJob(formData: FormData): Promise<void> {
+  const seedQuery = String(formData.get('seedQuery') ?? '').trim();
+  const priceMin = optionalNumber(formData.get('discoveryPriceMin'));
+  const priceMax = optionalNumber(formData.get('discoveryPriceMax'));
+  const maxMoq = optionalNumber(formData.get('discoveryMaxMoq'));
+  const internationalFreightPerUnit = optionalNumber(
+    formData.get('discoveryInternationalFreightPerUnit'),
+  );
+  const targetMarginPercent =
+    optionalNumber(formData.get('discoveryTargetMarginPercent')) ?? 40;
+  const maxQueries = optionalNumber(formData.get('maxQueries')) ?? 6;
+
+  const result = await discoveryJobService.start({
+    seedQuery: seedQuery || undefined,
+    targetMarket: String(formData.get('discoveryTargetMarket') ?? 'US'),
+    objective: 'autonomous_discovery',
+    priceBand:
+      priceMin !== undefined || priceMax !== undefined
+        ? {
+            min: priceMin ?? 0,
+            max: priceMax ?? priceMin ?? 0,
+          }
+        : undefined,
+    targetMarginPercent,
+    riskTolerance: parseRiskTolerance(formData.get('discoveryRiskTolerance')),
+    excludedCategories: formData
+      .getAll('discoveryExcludedCategories')
+      .map((value) => String(value).trim())
+      .filter(Boolean),
+    maxQueries,
+    sourcing: {
+      targetSource: '1688',
+      targetCurrency: 'USD',
+      maxMoq,
+      landedCostAssumptions: {
+        agentFeePercent: optionalNumber(formData.get('discoveryAgentFeePercent')),
+        internationalFreightPerUnit,
+        customsDutyPercent: optionalNumber(formData.get('discoveryCustomsDutyPercent')),
+        packagingPerUnit: optionalNumber(formData.get('discoveryPackagingPerUnit')),
+        qcPerUnit: optionalNumber(formData.get('discoveryQcPerUnit')),
+      },
+    },
+  });
+
+  await enqueueProductDiscoveryJob(result.discoveryJob.id);
 
   redirect('/dashboard/product-research');
 }
@@ -105,4 +160,90 @@ export async function promoteCandidate(formData: FormData): Promise<void> {
   );
 
   redirect(`/dashboard/workflows/${result.workflowId}`);
+}
+
+export async function runSourceMatchReview(formData: FormData): Promise<void> {
+  const candidateId = String(formData.get('candidateId') ?? '');
+  const projectId = String(formData.get('projectId') ?? '');
+  const sourceIds = formData
+    .getAll('sourceIds')
+    .map((value) => String(value))
+    .filter(Boolean);
+
+  await sourceMatchingService.reviewCandidateSources(candidateId, {
+    sourceIds,
+    reviewerMode: 'draft',
+  });
+
+  revalidatePath(`/dashboard/product-research/${projectId}`);
+}
+
+export async function decideSourceMatch(formData: FormData): Promise<void> {
+  const candidateId = String(formData.get('candidateId') ?? '');
+  const projectId = String(formData.get('projectId') ?? '');
+  const matchId = String(formData.get('matchId') ?? '');
+  const decision = String(formData.get('decision') ?? '');
+
+  if (
+    decision !== 'CONFIRMED_MATCH' &&
+    decision !== 'REJECTED_MATCH' &&
+    decision !== 'NEEDS_BETTER_SOURCE'
+  ) {
+    return;
+  }
+
+  await sourceMatchingService.decideSourceMatch(candidateId, matchId, {
+    decision,
+    reviewerId: 'dashboard',
+    comment: 'Reviewed from Product Research workspace',
+  });
+
+  revalidatePath(`/dashboard/product-research/${projectId}`);
+}
+
+export async function enrichCandidateSourcing(formData: FormData): Promise<void> {
+  const candidateId = String(formData.get('candidateId') ?? '');
+  const projectId = String(formData.get('projectId') ?? '');
+  const sourcingUrl = String(formData.get('sourcingUrl') ?? '').trim();
+  const query = String(formData.get('sourcingQuery') ?? '').trim();
+  const mode = sourcingUrl ? 'manual_url' : 'agent_search';
+
+  await candidateSourcingService.enrichCandidate(candidateId, {
+    mode,
+    sourcingUrl: sourcingUrl || undefined,
+    query: query || undefined,
+  });
+
+  revalidatePath(`/dashboard/product-research/${projectId}`);
+}
+
+export async function applySourcingVerification(formData: FormData): Promise<void> {
+  const candidateId = String(formData.get('candidateId') ?? '');
+  const projectId = String(formData.get('projectId') ?? '');
+  const status = String(formData.get('verificationStatus') ?? '');
+
+  if (
+    status !== 'VERIFIED' &&
+    status !== 'REJECTED' &&
+    status !== 'NEEDS_MORE_INFO' &&
+    status !== 'PENDING_VERIFICATION'
+  ) {
+    return;
+  }
+
+  const notes = String(formData.get('notes') ?? '').trim() || undefined;
+
+  await sourcingVerificationService.applyDecision(candidateId, {
+    status,
+    reviewerId: 'dashboard',
+    notes,
+    factoryExists: formData.get('factoryExists') === 'on',
+    moqConfirmed: formData.get('moqConfirmed') === 'on',
+    priceReasonable: formData.get('priceReasonable') === 'on',
+    sampleAvailable: formData.get('sampleAvailable') === 'on',
+    shippingFeasible: formData.get('shippingFeasible') === 'on',
+    supplierResponsive: formData.get('supplierResponsive') === 'on',
+  });
+
+  revalidatePath(`/dashboard/product-research/${projectId}`);
 }

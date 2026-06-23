@@ -83,6 +83,7 @@ export const ErrorCodes = {
   // General
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   CONFIGURATION_ERROR: 'CONFIGURATION_ERROR',
+  CONFLICT: 'CONFLICT',
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];

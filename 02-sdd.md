@@ -154,6 +154,8 @@ This page acts as an independent research workbench and provides:
 - Candidate shortlist status and selected candidate summary when available
 - Candidate comparison snapshot for top shortlisted products
 - Candidate promotion into a product creation workflow
+- Autonomous discovery job controls for starting a provider-backed winning
+  product search from broad market constraints without requiring a keyword
 
 ---
 
@@ -247,6 +249,62 @@ External Research APIs
 ```
 
 The Research Agent must not call external research APIs, Prisma, Redis, Shopify APIs, or provider SDKs directly. Workflow execution should consume only a selected/promoted candidate snapshot and should not run Product Research as a mandatory workflow step.
+
+---
+
+## Autonomous Product Discovery Job
+
+Autonomous discovery is a background Product Research job that expands a broad
+brief into multiple provider-backed research runs.
+
+The job follows this flow:
+
+```text
+Dashboard / API
+    ↓
+Discovery Job Service
+    ↓
+ResearchDiscoveryJob Repository
+    ↓
+BullMQ research-queue
+    ↓
+Discovery Job Worker
+    ↓
+Discovery Job Service
+    ↓
+AI Provider Interface (query planning only)
+    ↓
+Research Service
+    ↓
+Research Provider Interfaces
+    ↓
+External Research APIs
+```
+
+The AI planning step may generate niche hypotheses, keyword batches, and
+research angles. It must not create ProductCandidate records, supplier records,
+source URLs, prices, MOQ, landed cost, or source evidence. Every candidate
+created by the job must come from the underlying ResearchService provider
+evidence pipeline.
+
+The job creates one ResearchProject and then runs multiple ResearchRun records
+under that project. Each run uses one planned query and the same validated
+research constraints. The project candidate list remains the review surface for
+selecting and promoting a winner.
+
+Job statuses:
+
+```text
+PENDING
+RUNNING
+COMPLETED
+FAILED
+CANCELLED
+```
+
+Provider failure or missing credentials must produce an empty shortlist or a
+visible failed/empty job result. It must not cross into AI-generated fallback
+candidate creation.
 
 ---
 
@@ -454,5 +512,7 @@ The Product Research page must support:
 - Risk flags
 - Candidate selection action
 - Candidate promotion action that creates Product and starts Workflow at Content
+- Autonomous discovery job list with status, query count, run count, candidate
+  count, and top provider-backed candidates
 
 Starting the production workflow requires selecting a candidate. The selected candidate becomes the input context for Content generation.

@@ -18,7 +18,9 @@ import { getQueue } from './queue-registry';
 import { QUEUE_NAMES } from './queue-registry';
 import type { QueueName } from './queue-registry';
 import { logger } from '@/lib/logger';
+import { PRODUCT_DISCOVERY_JOB_NAME } from './product-discovery-job';
 import type { WorkflowStepType } from '@prisma/client';
+import type { ProductDiscoveryJobData } from '@/types/research.types';
 
 /**
  * Maps each workflow step to its corresponding BullMQ queue.
@@ -92,5 +94,23 @@ export async function enqueueNextStep(
   logger.info(
     { workflowId, step, jobId: job.id, queue: queueName },
     'Next workflow step enqueued',
+  );
+}
+
+/**
+ * Enqueue an autonomous Product Research discovery job.
+ */
+export async function enqueueProductDiscoveryJob(
+  discoveryJobId: string,
+): Promise<void> {
+  const queue = getQueue(QUEUE_NAMES.RESEARCH);
+
+  const job = await queue.add(PRODUCT_DISCOVERY_JOB_NAME, {
+    discoveryJobId,
+  } satisfies ProductDiscoveryJobData);
+
+  logger.info(
+    { discoveryJobId, jobId: job.id, queue: QUEUE_NAMES.RESEARCH },
+    'Autonomous product discovery job enqueued',
   );
 }

@@ -110,6 +110,22 @@ enum ResearchProjectStatus {
   ARCHIVED
 }
 
+enum ResearchDiscoveryJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum SourcingVerificationStatus {
+  UNVERIFIED
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+  NEEDS_MORE_INFO
+}
+
 // =============================================================================
 // Core Domain Models
 // =============================================================================
@@ -123,9 +139,10 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  products  Product[]
-  workflows Workflow[]
-  approvals Approval[]
+  products             Product[]
+  workflows            Workflow[]
+  approvals            Approval[]
+  sourcingVerifications SourcingVerification[]
 }
 
 model Product {
@@ -175,9 +192,30 @@ model ResearchProject {
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
 
+  discoveryJobs ResearchDiscoveryJob[]
   researchRuns ResearchRun[]
   candidates   ProductCandidate[]
 
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ResearchDiscoveryJob {
+  id                String                     @id @default(cuid())
+  researchProjectId String
+  status            ResearchDiscoveryJobStatus @default(PENDING)
+  input             Json
+  queryPlan         Json?
+  result            Json?
+  errorMessage      String?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+
+  researchProject ResearchProject @relation(fields: [researchProjectId], references: [id])
+
+  @@index([researchProjectId])
   @@index([status])
   @@index([createdAt])
 }
@@ -246,6 +284,7 @@ model ProductCandidate {
   researchProject ResearchProject? @relation(fields: [researchProjectId], references: [id])
   product         Product?         @relation(fields: [productId], references: [id])
   sources         ResearchSource[]
+  sourcingVerification SourcingVerification?
 
   @@index([researchRunId])
   @@index([researchProjectId])
@@ -275,6 +314,32 @@ model ResearchSource {
   @@index([researchRunId])
   @@index([candidateId])
   @@index([type])
+}
+
+model SourcingVerification {
+  id          String                     @id @default(cuid())
+  candidateId String                     @unique
+  reviewerId  String?
+  status      SourcingVerificationStatus @default(UNVERIFIED)
+  notes       String?
+  verifiedAt  DateTime?
+  createdAt   DateTime                   @default(now())
+  updatedAt   DateTime                   @updatedAt
+
+  // Verification checklist — human confirms each item
+  factoryExists      Boolean @default(false)
+  moqConfirmed       Boolean @default(false)
+  priceReasonable    Boolean @default(false)
+  sampleAvailable    Boolean @default(false)
+  shippingFeasible   Boolean @default(false)
+  supplierResponsive Boolean @default(false)
+
+  candidate ProductCandidate @relation(fields: [candidateId], references: [id])
+  reviewer  User?            @relation(fields: [reviewerId], references: [id])
+
+  @@index([candidateId])
+  @@index([status])
+  @@index([reviewerId])
 }
 
 model ProductContent {

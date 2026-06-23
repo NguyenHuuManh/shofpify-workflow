@@ -263,9 +263,9 @@ Tasks:
   names such as `SOURCING_1688_PROVIDER`, `SOURCING_1688_API_KEY`, and
   `SOURCING_1688_ENDPOINT`. Do not continue expanding generic
   `SUPPLIER_PROVIDER_*` names for 1688-specific behavior.
-- [x] Update `ResearchService` candidate discovery so `SOURCING` evidence can
-  create product candidates directly; do not restrict candidate generation to
-  marketplace/search sources.
+- [x] Add the original `SOURCING` evidence path and candidate cost fields.
+  This foundation is retained, but the current Product Research flow no longer
+  calls 1688 during initial candidate discovery.
 - [x] Update cost analysis to calculate landed cost from factory unit cost, MOQ,
   tiered prices, domestic China shipping, international freight assumptions,
   agent fee, packaging/QC, customs/duty, and payment fees.
@@ -284,18 +284,24 @@ Tasks:
 - [x] Add provider-specific response fixtures and tests for success, invalid
   payload, timeout, rate limit, empty evidence, fallback success, and total
   provider failure.
-- [ ] Add sourcing verification workflow for human supplier validation before
+- [x] Add sourcing verification workflow for human supplier validation before
   purchase/order decisions.
 
 Deliverables:
-- [x] Product Research can produce 1688-backed product candidates even when
-  marketplace/search evidence is not the source of the candidate.
-- [x] Each 1688-backed recommendation has persisted `SOURCING` ResearchSource
+- [x] Product Research has first-class `SOURCING` evidence support for
+  candidate-level enrichment after a candidate exists.
+- [x] Each enriched recommendation has persisted `SOURCING` ResearchSource
   evidence.
 - [x] Candidate detail shows factory cost, MOQ, landed cost assumptions, margin, and
   sourcing risk.
 - [x] 1688 evidence is clearly labeled as unverified sourcing evidence until a human
   or approved sourcing verification workflow confirms supplier quality.
+- [x] Sourcing verification workflow with human checklist (factory exists, MOQ,
+  price, samples, shipping, supplier responsiveness) and status tracking
+  (UNVERIFIED, PENDING_VERIFICATION, VERIFIED, REJECTED, NEEDS_MORE_INFO).
+- [x] SourcingVerification model with dedicated Prisma migration, repository,
+  service, API routes, and dashboard UI.
+- [x] Audit trail for all verification actions and candidate metadata sync.
 
 Out of scope for Phase 7d:
 - Purchase order automation
@@ -459,22 +465,64 @@ External AI Provider
 ```
 
 Tasks:
-- [ ] Add source match review types for `LIKELY_MATCH`, `POTENTIAL_MATCH`,
+- [x] Add source match review types for `LIKELY_MATCH`, `POTENTIAL_MATCH`,
   `WEAK_MATCH`, `NOT_A_MATCH`, and `INSUFFICIENT_EVIDENCE`.
-- [ ] Add Zod schemas for source match review request, structured AI output,
+- [x] Add Zod schemas for source match review request, structured AI output,
   and human decision payloads.
-- [ ] Add SourceMatchingService to build evidence bundles from persisted
+- [x] Add SourceMatchingService to build evidence bundles from persisted
   ResearchSource records and candidate metadata.
-- [ ] Add an AI Provider prompt contract that returns only structured JSON with
+- [x] Add an AI Provider prompt contract that returns only structured JSON with
   match status, confidence score, reasons, warnings, and recommended action.
-- [ ] Persist initial source match results in `ProductCandidate.metadata` or
+- [x] Persist initial source match results in `ProductCandidate.metadata` or
   add a first-class model if query/reporting requirements justify a migration.
-- [ ] Add dashboard candidate-detail UI for match confidence, reasons,
+- [x] Add dashboard candidate-detail UI for match confidence, reasons,
   warnings, and reviewer actions.
-- [ ] Add API routes for running a source match review and persisting a human
+- [x] Add API routes for running a source match review and persisting a human
   decision.
-- [ ] Add tests for likely match, potential match, weak match, not a match,
+- [x] Add tests for likely match, potential match, weak match, not a match,
   insufficient evidence, and provider failure without AI-generated fallback.
+
+Current status:
+- Phase 7e source match foundation has been implemented (2026-06-23).
+- `SourceMatchingService` compares only persisted `ResearchSource` records and
+  candidate metadata, calls AI through the AI Provider interface, and persists
+  auditable source match results in `ProductCandidate.metadata.sourceMatches`.
+- API routes now exist for running reviews and persisting human decisions:
+  `/api/product-research/candidates/:candidateId/source-matches/review` and
+  `/api/product-research/candidates/:candidateId/source-matches/:matchId/decision`.
+- The Product Research candidate detail dashboard now shows source match status,
+  confidence, reasons, warnings, recommended action, and reviewer decision
+  buttons.
+- No Prisma migration was added for Phase 7e. Keep using metadata storage until
+  querying/reporting requirements justify a first-class `ResearchSourceMatch`
+  model.
+- Local Node is currently `v16.14.0`, which fails Vitest startup because Vite
+  needs `crypto.getRandomValues`. Verification was run successfully with Node 20.
+
+Implemented Phase 7e files:
+- `src/types/research.types.ts` — source match status, action, decision, and
+  persisted result types.
+- `src/schemas/research.schema.ts` — review request, AI output, result, and
+  human decision schemas.
+- `src/repositories/product-candidate.repository.ts` — metadata update method.
+- `src/repositories/research-source.repository.ts` — scoped source lookup for a
+  candidate review.
+- `src/services/source-matching.service.ts` — evidence bundle construction,
+  AI structured review, metadata persistence, and reviewer decision persistence.
+- `src/app/api/product-research/candidates/[candidateId]/source-matches/review/route.ts`
+  — source match review endpoint.
+- `src/app/api/product-research/candidates/[candidateId]/source-matches/[matchId]/decision/route.ts`
+  — human source match decision endpoint.
+- `src/app/dashboard/product-research/actions.ts` and
+  `src/app/dashboard/product-research/[projectId]/page.tsx` — dashboard source
+  match actions and candidate detail panel.
+- `tests/services/source-matching.service.test.ts` — focused service coverage.
+
+Verification already run after Phase 7e implementation:
+- `npm run type-check`
+- `npx prisma validate`
+- `git diff --check`
+- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run`
 
 Implementation order:
 1. Types and schemas: `src/types/research.types.ts`,
@@ -506,6 +554,149 @@ Guardrails:
 - The AI prompt must explicitly reject missing data instead of guessing.
 - Provider failure or weak source evidence must produce an auditable failure or
   `INSUFFICIENT_EVIDENCE`, never an AI-generated candidate or source.
+
+---
+
+### Phase 7f Autonomous Product Discovery Job
+
+Goal:
+- Allow the user to start a Product Research job without entering a specific
+  keyword.
+- Use AI to plan research directions only, then run provider-backed Product
+  Research for each planned query.
+- Preserve the current guardrail that ProductCandidate, supplier, cost, MOQ,
+  landed cost, source URL, and source evidence must come from persisted
+  provider evidence, not AI fallback output.
+
+Architecture flow:
+
+```text
+Dashboard / API
+    ↓
+DiscoveryJobService
+    ↓
+ResearchDiscoveryJobRepository / ResearchProjectRepository
+    ↓
+BullMQ research-queue
+    ↓
+Discovery job worker
+    ↓
+DiscoveryJobService
+    ↓
+AI Provider Interface (query planning only)
+    ↓
+ResearchService
+    ↓
+Research Provider Interfaces
+    ↓
+External Research APIs
+```
+
+Tasks:
+- [x] Add discovery job types for status, query plan, job input, and job result.
+- [x] Add Zod schemas for autonomous discovery brief and AI query-plan output.
+- [x] Add Prisma model and migration for `ResearchDiscoveryJob`.
+- [x] Add `ResearchDiscoveryJobRepository`.
+- [x] Add `DiscoveryJobService` for creating jobs, planning queries, running
+  multiple `ResearchService.run()` calls, and persisting final job result.
+- [x] Add BullMQ producer and worker handling for discovery jobs on the
+  research queue.
+- [x] Add Product Research API routes for starting/listing discovery jobs.
+- [x] Add Product Research dashboard controls and job status display.
+- [x] Add focused service tests for AI-planned queries, deterministic fallback,
+  provider-empty outcomes, and no AI-generated candidate fallback.
+
+Current status:
+- Phase 7f autonomous discovery foundation has been implemented (2026-06-23).
+- `ResearchDiscoveryJob` persists job input, status, AI/fallback query plan,
+  result summary, and failure message.
+- Product Research dashboard now has an AI Discovery Job form where keyword is
+  optional; the job can start from market, price, margin, MOQ, risk, and
+  excluded-category constraints.
+- Discovery jobs run on `research-queue` using the `product-discovery-job`
+  BullMQ job name.
+- `DiscoveryJobService` uses AI only for query planning. If no usable AI
+  provider is configured or the AI output is invalid, it uses deterministic
+  query planning. Product candidates still come only from `ResearchService`
+  provider-backed runs.
+
+Implemented Phase 7f files:
+- `prisma/schema.prisma` and
+  `prisma/migrations/20260623120000_add_autonomous_discovery_jobs/migration.sql`
+  — `ResearchDiscoveryJobStatus` enum and `ResearchDiscoveryJob` model.
+- `src/schemas/research.schema.ts` and `src/types/research.types.ts` —
+  autonomous discovery input, query plan, result, summary, and queue payload
+  contracts.
+- `src/repositories/research-discovery-job.repository.ts` — repository-only
+  persistence operations for discovery jobs.
+- `src/services/discovery-job.service.ts` — job creation, query planning,
+  provider-backed research execution, result persistence, and audit logging.
+- `src/jobs/product-discovery-job.ts`, `src/jobs/job-producer.ts`, and
+  `src/jobs/worker.ts` — BullMQ enqueue and processing support.
+- `src/app/api/product-research/discovery-jobs/route.ts` — list/start
+  discovery job API.
+- `src/components/dashboard/research-form.tsx`,
+  `src/app/dashboard/product-research/actions.ts`, and
+  `src/app/dashboard/product-research/page.tsx` — dashboard start form and job
+  status table.
+- `tests/services/discovery-job.service.test.ts` — focused service coverage.
+
+Verification already run after Phase 7f implementation:
+- `npm run db:generate`
+- `npm run type-check`
+- `npx prisma validate`
+- `git diff --check`
+- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/discovery-job.service.test.ts`
+- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run`
+
+Guardrails:
+- AI planner output can contain only research queries, angles, and rationale.
+- The service must ignore any planner-provided product, supplier, price, MOQ,
+  URL, or cost claims.
+- Each discovery query must flow through `ResearchService`.
+- Provider failures or empty evidence must produce an empty/failed job result,
+  never an AI-created candidate.
+
+---
+
+### Phase 7g Candidate-Level Sourcing Enrichment
+
+Product Research flow was updated on 2026-06-23 to split winning-product
+discovery from factory sourcing:
+
+- Initial Product Research and autonomous discovery runs collect candidate
+  evidence from demand/store providers only by default.
+- `ResearchService` filters providers through `supplementalProviders`; the
+  default provider set excludes `sourcing` and legacy `supplier`.
+- Candidate creation ignores `SOURCING` evidence. 1688 sourcing must enrich an
+  existing ProductCandidate rather than creating a new one.
+- Each candidate detail view exposes a Supplier / 1688 Sourcing action.
+- The user may paste a 1688 URL or leave the URL blank and let the sourcing
+  provider search from the candidate title/query.
+- Candidate-level sourcing persists `SOURCING` ResearchSource rows with
+  `candidateId`, updates factory cost, MOQ, landed cost, sourcing/factory/
+  logistics scores, and stores enrichment status in candidate metadata.
+- Manual 1688 URLs are saved as evidence even when provider detail data is not
+  available; cost fields are updated only from provider-backed metrics.
+
+Implemented Phase 7g files:
+- `src/schemas/research.schema.ts` — candidate sourcing request schema.
+- `src/repositories/product-candidate.repository.ts` — sourcing analysis update
+  method.
+- `src/services/candidate-sourcing.service.ts` — candidate-level 1688 enrichment
+  orchestration.
+- `src/services/research.service.ts` — default discovery excludes sourcing and
+  candidate creation is limited to marketplace/search evidence.
+- `src/app/dashboard/product-research/actions.ts` and
+  `src/app/dashboard/product-research/[projectId]/page.tsx` — dashboard
+  candidate sourcing form and revalidation.
+
+Guardrails:
+- Do not call 1688 providers from API routes, dashboard actions, agents, or
+  workflow nodes directly.
+- Do not create ProductCandidate records from the candidate sourcing action.
+- Do not invent supplier URLs, factory costs, MOQ, or landed-cost metrics when
+  the provider/manual evidence does not contain them.
 
 ---
 

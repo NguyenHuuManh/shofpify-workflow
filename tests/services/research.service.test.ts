@@ -232,7 +232,7 @@ describe('ResearchService', () => {
     expect(aiProvider.generateText).not.toHaveBeenCalled();
   });
 
-  it('should create candidates directly from 1688 sourcing evidence', async () => {
+  it('should not create candidates directly from 1688 sourcing evidence during discovery', async () => {
     const run = {
       id: 'run_sourcing',
       researchProjectId: null,
@@ -248,7 +248,7 @@ describe('ResearchService', () => {
     };
     const completedRun = {
       ...run,
-      summary: 'Collected 1 external source signals (SOURCING) for "Portable Blender" and produced 1 provider-backed product candidates.',
+      summary: 'No discovery candidates.',
       completedAt: new Date('2026-01-01'),
     };
     const candidateRepo = {
@@ -330,32 +330,9 @@ describe('ResearchService', () => {
       },
     });
 
-    expect(result.candidates).toHaveLength(1);
-    expect(candidateRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: 'USB Portable Blender Factory Listing',
-        estimatedCOGS: 38.18,
-        factoryUnitCost: 22.5,
-        moq: 100,
-        landedCost: 38.18,
-        sourcingScore: 80,
-        factoryCostScore: 78,
-        logisticsScore: 75,
-        metadata: expect.objectContaining({
-          evidence: expect.objectContaining({
-            sourceTypes: ['SOURCING'],
-            backedByExternalEvidence: true,
-          }),
-        }),
-      }),
-    );
-    expect(sourceRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        candidateId: 'cand_sourcing',
-        type: 'SOURCING',
-        provider: '1688',
-      }),
-    );
+    expect(result.candidates).toEqual([]);
+    expect(candidateRepo.create).not.toHaveBeenCalled();
+    expect(sourceRepo.create).not.toHaveBeenCalled();
   });
 
   it('should filter provider-backed candidates by research brief constraints', async () => {
@@ -441,7 +418,7 @@ describe('ResearchService', () => {
     expect(result.summary).toContain('max MOQ 500');
   });
 
-  it('should not link marketplace and 1688 sources to the same candidate when they are different items', async () => {
+  it('should not create or link 1688 sources as candidates during discovery', async () => {
     const run = {
       id: 'run_source_linking',
       researchProjectId: null,
@@ -458,7 +435,7 @@ describe('ResearchService', () => {
     const candidateRepo = {
       create: vi.fn().mockImplementation((input) =>
         Promise.resolve({
-          id: input.metadata.sourceType === 'SOURCING' ? 'cand_sourcing' : 'cand_marketplace',
+          id: 'cand_marketplace',
           createdAt: new Date('2026-01-01'),
           ...input,
         }),
@@ -529,7 +506,7 @@ describe('ResearchService', () => {
       [
         {
           name: 'MixedResearchProvider',
-          providerType: 'sourcing',
+          providerType: 'marketplace',
           collect: vi.fn().mockResolvedValue([marketplaceSource, sourcingSource]),
         },
       ],
@@ -539,17 +516,7 @@ describe('ResearchService', () => {
       productIdea: 'Portable Blender',
     });
 
-    expect(candidateRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: 'Portable Blender Factory Listing',
-        metadata: expect.objectContaining({
-          sourceType: 'SOURCING',
-          sourceProvider: '1688',
-          sourceUrl: 'https://detail.1688.com/offer/source_001.html',
-          sourceExternalId: 'source_001',
-        }),
-      }),
-    );
+    expect(candidateRepo.create).toHaveBeenCalledTimes(1);
     expect(sourceRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
         candidateId: 'cand_marketplace',
@@ -559,7 +526,7 @@ describe('ResearchService', () => {
     );
     expect(sourceRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        candidateId: 'cand_sourcing',
+        candidateId: undefined,
         type: 'SOURCING',
         url: 'https://detail.1688.com/offer/source_001.html',
       }),

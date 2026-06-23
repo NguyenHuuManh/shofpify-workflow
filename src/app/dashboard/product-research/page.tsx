@@ -6,9 +6,17 @@
 
 import { Badge, Button, Card, Table } from '@/components/ui';
 import { DeleteResearchProjectButton } from '@/components/dashboard/delete-research-project-button';
-import { ResearchForm } from '@/components/dashboard/research-form';
+import {
+  DiscoveryJobForm,
+  ResearchForm,
+} from '@/components/dashboard/research-form';
+import { discoveryJobService } from '@/services/discovery-job.service';
 import { researchService } from '@/services/research.service';
-import type { ProductCandidate, ResearchProjectStatus } from '@prisma/client';
+import type {
+  ProductCandidate,
+  ResearchDiscoveryJobStatus,
+  ResearchProjectStatus,
+} from '@prisma/client';
 import {
   promoteCandidate,
   selectCandidate,
@@ -21,11 +29,25 @@ const statusBadgeVariant: Record<ResearchProjectStatus, 'warning' | 'info' | 'da
   ARCHIVED: 'default',
 };
 
+const discoveryStatusBadgeVariant: Record<ResearchDiscoveryJobStatus, 'warning' | 'info' | 'danger' | 'success' | 'default'> = {
+  PENDING: 'warning',
+  RUNNING: 'info',
+  COMPLETED: 'success',
+  FAILED: 'danger',
+  CANCELLED: 'default',
+};
+
 export default async function ProductResearchPage(): Promise<React.ReactElement> {
-  const projects = await researchService.listProjects();
+  const [projects, discoveryJobs] = await Promise.all([
+    researchService.listProjects(),
+    discoveryJobService.list({ take: 10 }),
+  ]);
   const selectedCount = projects.filter((item) => item.project.status === 'SELECTED').length;
   const promotedCount = projects.filter((item) => item.project.status === 'PROMOTED').length;
   const candidateCount = projects.reduce((sum, item) => sum + item.candidates.length, 0);
+  const runningDiscoveryCount = discoveryJobs.filter(
+    (item) => item.job.status === 'PENDING' || item.job.status === 'RUNNING',
+  ).length;
 
   return (
     <div>
@@ -48,6 +70,7 @@ export default async function ProductResearchPage(): Promise<React.ReactElement>
         </div>
       </div>
 
+      <DiscoveryJobForm />
       <ResearchForm />
 
       <div
@@ -62,7 +85,48 @@ export default async function ProductResearchPage(): Promise<React.ReactElement>
         <MetricCard label="Candidates" value={candidateCount} />
         <MetricCard label="Selected" value={selectedCount} />
         <MetricCard label="Promoted" value={promotedCount} />
+        <MetricCard label="Discovery Jobs" value={runningDiscoveryCount} />
       </div>
+
+      <Card style={{ padding: 0, overflow: 'hidden', marginBottom: '24px' }}>
+        <Table
+          headers={['Discovery Job', 'Status', 'Plan', 'Result', 'Actions']}
+          rows={discoveryJobs.map((item) => [
+            <div key="job">
+              <div style={{ color: '#0f172a', fontWeight: 600 }}>
+                {item.project.query}
+              </div>
+              <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '2px' }}>
+                {item.job.id}
+              </div>
+            </div>,
+            <Badge key="status" variant={discoveryStatusBadgeVariant[item.job.status]}>
+              {item.job.status}
+            </Badge>,
+            <DiscoveryPlanSummary key="plan" value={item.job.queryPlan} />,
+            <DiscoveryResultSummary key="result" value={item.job.result} error={item.job.errorMessage} />,
+            <a
+              key="details"
+              href={`/dashboard/product-research/${item.project.id}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '6px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '8px',
+                color: '#0f172a',
+                fontSize: '13px',
+                fontWeight: 600,
+                textDecoration: 'none',
+                lineHeight: '20px',
+              }}
+            >
+              Open Project
+            </a>,
+          ])}
+        />
+      </Card>
 
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         <Table
@@ -100,6 +164,67 @@ export default async function ProductResearchPage(): Promise<React.ReactElement>
       </Card>
     </div>
   );
+}
+
+function DiscoveryPlanSummary({
+  value,
+}: {
+  value: unknown;
+}): React.ReactElement {
+  const queries = readQueryCount(value);
+  return (
+    <span style={{ color: '#0f172a', fontWeight: 600 }}>
+      {queries === 0 ? 'Waiting' : `${queries} queries`}
+    </span>
+  );
+}
+
+function DiscoveryResultSummary({
+  value,
+  error,
+}: {
+  value: unknown;
+  error: string | null;
+}): React.ReactElement {
+  if (error) {
+    return <span style={{ color: '#b91c1c', fontWeight: 600 }}>Failed</span>;
+  }
+
+  const result = readDiscoveryResult(value);
+  if (!result) {
+    return <span style={{ color: '#94a3b8' }}>No result yet</span>;
+  }
+
+  return (
+    <span style={{ color: '#0f172a', fontWeight: 600 }}>
+      {result.candidateCount} candidates · {result.sourceCount} sources
+    </span>
+  );
+}
+
+function readQueryCount(value: unknown): number {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return 0;
+  }
+
+  const queries = (value as { queries?: unknown }).queries;
+  return Array.isArray(queries) ? queries.length : 0;
+}
+
+function readDiscoveryResult(
+  value: unknown,
+): { candidateCount: number; sourceCount: number } | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const candidateCount = (value as { candidateCount?: unknown }).candidateCount;
+  const sourceCount = (value as { sourceCount?: unknown }).sourceCount;
+  if (typeof candidateCount !== 'number' || typeof sourceCount !== 'number') {
+    return null;
+  }
+
+  return { candidateCount, sourceCount };
 }
 
 function MetricCard({

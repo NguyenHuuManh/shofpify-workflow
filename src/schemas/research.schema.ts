@@ -66,11 +66,9 @@ export const researchRunConfigSchema = z.object({
     .default([
       'search',
       'marketplace',
-      'sourcing',
       'trend',
       'keyword',
       'adsSignal',
-      'supplier',
       'social',
     ]),
 });
@@ -165,9 +163,144 @@ export const createResearchProjectSchema = researchRunConfigSchema.partial().ext
   query: z.string().min(1, 'Research query is required').max(255).trim(),
 });
 
+export const discoveryQueryPlanItemSchema = z.object({
+  query: z.string().min(2).max(120),
+  angle: z.string().min(1).max(240),
+  rationale: z.string().min(1).max(500),
+});
+
+export const discoveryQueryPlanSchema = z.object({
+  queries: z.array(discoveryQueryPlanItemSchema).min(1).max(12),
+});
+
+export const autonomousDiscoveryJobSchema = researchRunConfigSchema.extend({
+  seedQuery: z.string().trim().min(2).max(255).optional(),
+  maxQueries: z.coerce.number().int().min(1).max(12).default(6),
+});
+
+export const discoveryJobResultSchema = z.object({
+  queryCount: z.number().int().nonnegative(),
+  runCount: z.number().int().nonnegative(),
+  candidateCount: z.number().int().nonnegative(),
+  sourceCount: z.number().int().nonnegative(),
+  topCandidates: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        winningScore: z.number().int().nullable(),
+        researchRunId: z.string(),
+      }),
+    )
+    .default([]),
+});
+
 export const selectResearchCandidateSchema = z.object({
   reviewerId: z.string().min(1, 'Reviewer ID is required'),
   comment: z.string().max(2000).optional(),
+});
+
+export const sourceMatchStatusSchema = z.enum([
+  'LIKELY_MATCH',
+  'POTENTIAL_MATCH',
+  'WEAK_MATCH',
+  'NOT_A_MATCH',
+  'INSUFFICIENT_EVIDENCE',
+]);
+
+export const sourceMatchRecommendedActionSchema = z.enum([
+  'LINK_AS_SOURCING_MATCH',
+  'REVIEW_BEFORE_LINKING',
+  'KEEP_SEPARATE',
+  'FIND_BETTER_SOURCING_MATCH',
+]);
+
+export const sourceMatchReviewerDecisionSchema = z.enum([
+  'CONFIRMED_MATCH',
+  'REJECTED_MATCH',
+  'NEEDS_BETTER_SOURCE',
+]);
+
+export const sourceMatchReviewRequestSchema = z.object({
+  sourceIds: z.array(z.string().min(1)).min(2).max(8),
+  reviewerMode: z.enum(['draft', 'final']).default('draft'),
+});
+
+export const sourceMatchAiMatchSchema = z.object({
+  sourceId: z.string().min(1),
+  matchedSourceId: z.string().min(1),
+  matchStatus: sourceMatchStatusSchema,
+  confidenceScore: z.coerce.number().int().min(0).max(100),
+  reasons: z.array(z.string().min(1).max(500)).default([]),
+  warnings: z.array(z.string().min(1).max(500)).default([]),
+  recommendedAction: sourceMatchRecommendedActionSchema,
+});
+
+export const sourceMatchAiOutputSchema = z.object({
+  matches: z.array(sourceMatchAiMatchSchema).default([]),
+});
+
+export const sourceMatchResultSchema = sourceMatchAiMatchSchema.extend({
+  id: z.string().min(1),
+  reviewerDecision: sourceMatchReviewerDecisionSchema.nullable().default(null),
+  reviewerId: z.string().min(1).optional(),
+  reviewerComment: z.string().max(2000).optional(),
+  reviewedAt: z.string().datetime(),
+  decidedAt: z.string().datetime().optional(),
+});
+
+export const sourceMatchDecisionSchema = z.object({
+  decision: sourceMatchReviewerDecisionSchema,
+  reviewerId: z.string().min(1, 'Reviewer ID is required'),
+  comment: z.string().max(2000).optional(),
+});
+
+export const candidateSourcingModeSchema = z.enum(['agent_search', 'manual_url']);
+
+export const candidateSourcingRequestSchema = z
+  .object({
+    mode: candidateSourcingModeSchema.default('agent_search'),
+    sourcingUrl: z.string().url().optional(),
+    query: z.string().trim().min(1).max(255).optional(),
+  })
+  .refine((value) => value.mode !== 'manual_url' || Boolean(value.sourcingUrl), {
+    message: 'sourcingUrl is required when mode is manual_url',
+    path: ['sourcingUrl'],
+  })
+  .refine(
+    (value) =>
+      !value.sourcingUrl ||
+      /^https?:\/\/([^/]+\.)?1688\.com\/|^https?:\/\/detail\.1688\.com\//iu.test(
+        value.sourcingUrl,
+      ),
+    {
+      message: 'sourcingUrl must be a 1688 URL',
+      path: ['sourcingUrl'],
+    },
+  );
+
+// ---------------------------------------------------------------------------
+// Sourcing Verification Workflow schemas
+// ---------------------------------------------------------------------------
+
+export const sourcingVerificationStatusSchema = z.enum([
+  'UNVERIFIED',
+  'PENDING_VERIFICATION',
+  'VERIFIED',
+  'REJECTED',
+  'NEEDS_MORE_INFO',
+]);
+
+export const sourcingVerificationUpdateSchema = z.object({
+  status: sourcingVerificationStatusSchema,
+  reviewerId: z.string().min(1, 'Reviewer ID is required'),
+  notes: z.string().max(2000).optional(),
+  factoryExists: z.boolean().optional(),
+  moqConfirmed: z.boolean().optional(),
+  priceReasonable: z.boolean().optional(),
+  sampleAvailable: z.boolean().optional(),
+  shippingFeasible: z.boolean().optional(),
+  supplierResponsive: z.boolean().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -365,4 +498,18 @@ export type ResearchCandidateDraft = z.infer<typeof researchCandidateDraftSchema
 export type ResearchGeneration = z.infer<typeof researchGenerationSchema>;
 export type StartResearchRunInput = z.input<typeof startResearchRunSchema>;
 export type CreateResearchProjectInput = z.input<typeof createResearchProjectSchema>;
+export type DiscoveryQueryPlan = z.infer<typeof discoveryQueryPlanSchema>;
+export type DiscoveryQueryPlanItem = z.infer<typeof discoveryQueryPlanItemSchema>;
+export type AutonomousDiscoveryJobInput = z.input<typeof autonomousDiscoveryJobSchema>;
+export type AutonomousDiscoveryJobConfig = z.output<typeof autonomousDiscoveryJobSchema>;
+export type DiscoveryJobResult = z.infer<typeof discoveryJobResultSchema>;
 export type SelectResearchCandidateInput = z.infer<typeof selectResearchCandidateSchema>;
+export type SourceMatchReviewRequestInput = z.input<typeof sourceMatchReviewRequestSchema>;
+export type SourceMatchAiOutput = z.infer<typeof sourceMatchAiOutputSchema>;
+export type SourceMatchResult = z.infer<typeof sourceMatchResultSchema>;
+export type SourceMatchDecisionInput = z.infer<typeof sourceMatchDecisionSchema>;
+export type CandidateSourcingRequestInput = z.input<typeof candidateSourcingRequestSchema>;
+export type CandidateSourcingRequest = z.output<typeof candidateSourcingRequestSchema>;
+export type SourcingVerificationStatus = z.infer<typeof sourcingVerificationStatusSchema>;
+export type SourcingVerificationUpdateInput = z.input<typeof sourcingVerificationUpdateSchema>;
+export type SourcingVerificationUpdate = z.output<typeof sourcingVerificationUpdateSchema>;

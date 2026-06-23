@@ -116,6 +116,30 @@ export class ProductCandidateRepository extends BaseRepository {
     });
   }
 
+  async updateMetadata(
+    id: string,
+    metadata: Prisma.InputJsonValue,
+    tx?: TransactionClient,
+  ): Promise<ProductCandidate> {
+    const client = tx ?? this.db;
+    return client.productCandidate.update({
+      where: { id },
+      data: { metadata },
+    });
+  }
+
+  async updateSourcingAnalysis(
+    id: string,
+    data: Prisma.ProductCandidateUncheckedUpdateInput,
+    tx?: TransactionClient,
+  ): Promise<ProductCandidate> {
+    const client = tx ?? this.db;
+    return client.productCandidate.update({
+      where: { id },
+      data,
+    });
+  }
+
   async deleteByResearchProjectId(
     researchProjectId: string,
     tx?: TransactionClient,

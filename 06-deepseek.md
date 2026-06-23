@@ -252,6 +252,13 @@ fallback candidates/source evidence. API routes, agents, workflow nodes,
 repositories, and UI code must not call the AI provider directly for source
 matching.
 
+Autonomous discovery jobs must stay in the service and jobs layers. API routes
+and dashboard actions may create/enqueue a discovery job only. The job service
+may call the AI Provider interface to generate a query plan, then must call
+ResearchService to collect provider-backed evidence. AI planner output must
+never be persisted as ProductCandidate, ResearchSource, supplier URL, cost,
+MOQ, landed cost, or marketplace evidence.
+
 ---
 
 # Shopify Integration Rules

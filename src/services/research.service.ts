@@ -662,20 +662,17 @@ export class ResearchService {
   ): ResearchCandidateDraft[] {
     const parsedConfig = validate(researchRunConfigSchema, config);
     const priority = (source: NormalizedResearchSourceInput): number => {
-      if (source.type === 'SOURCING') {
+      if (source.type === 'MARKETPLACE') {
         return 0;
       }
-      if (source.type === 'MARKETPLACE') {
+      if (source.type === 'SEARCH') {
         return 1;
       }
-      if (source.type === 'SEARCH') {
-        return 2;
-      }
-      return 3;
+      return 2;
     };
     const candidateSources = sources
       .filter((source) => source.type !== 'AI_ESTIMATE')
-      .filter((source) => ['SOURCING', 'MARKETPLACE', 'SEARCH'].includes(source.type))
+      .filter((source) => ['MARKETPLACE', 'SEARCH'].includes(source.type))
       .filter((source) => source.title || source.externalId)
       .sort((a, b) => {
         const priorityDelta = priority(a) - priority(b);
@@ -839,10 +836,13 @@ export class ResearchService {
     candidates: ResearchCandidateDraft[],
   ): Promise<NormalizedResearchSourceInput[]> {
     const parsedConfig = validate(researchRunConfigSchema, config);
+    const enabledProviders = new Set(parsedConfig.supplementalProviders);
     const results = await Promise.all(
-      this.providers.map((provider) =>
-        provider.collect({ productIdea, config: parsedConfig, candidates }),
-      ),
+      this.providers
+        .filter((provider) => !provider.providerType || enabledProviders.has(provider.providerType))
+        .map((provider) =>
+          provider.collect({ productIdea, config: parsedConfig, candidates }),
+        ),
     );
 
     return results

@@ -118,7 +118,10 @@ structured warning log with the provider name and missing configuration key.
 Product Research candidate discovery must be provider-first. The service must
 not use AI-generated candidate fallback when external providers are missing,
 failing, or returning no usable evidence. In that case it must return an empty
-shortlist or surface a visible failure state.
+shortlist or surface a visible failure state. The initial discovery run must
+not call 1688/sourcing providers by default; 1688 supplier lookup, factory cost,
+MOQ, and landed-cost analysis happen through candidate-level sourcing
+enrichment after a candidate already exists.
 
 The 1688 sourcing provider chain must use DajiSaaS as primary and Apify as the
 sequential backup. The fallback policy is mandatory:
@@ -154,9 +157,10 @@ must be treated as unverified sourcing evidence until a human or approved
 sourcing verification workflow confirms supplier quality, MOQ, lead time,
 sample availability, and production suitability.
 
-Candidate creation must allow provider-backed sourcing evidence to create a
-candidate directly when the evidence represents a specific product opportunity.
-Do not restrict candidate discovery to marketplace or search evidence.
+Candidate creation for the current Product Research flow must come from
+demand/store evidence such as marketplace and search sources. `SOURCING`
+evidence is attached to an existing candidate during enrichment and must not
+create a new ProductCandidate in that step.
 
 AI-assisted source matching is allowed only as an evidence reviewer. It may
 compare persisted ResearchSource records and candidate metadata to estimate
@@ -169,6 +173,12 @@ Source match reviews that influence final recommendation, source linking, or
 candidate promotion must be persisted or embedded in candidate metadata so the
 decision remains auditable. Uncertain matches require human confirmation before
 they affect the final output.
+
+Autonomous product discovery jobs may use AI only to plan research angles,
+niche hypotheses, and query batches. The job service must persist the query
+plan and then call ResearchService for each planned query. ProductCandidate,
+ResearchSource, supplier, cost, MOQ, landed-cost, and source URL data must come
+from approved providers and repositories, not from AI planner output.
 
 ---
 

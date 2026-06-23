@@ -5,11 +5,15 @@
 
 import type {
   ProductCandidate,
+  ResearchDiscoveryJob,
   ResearchProject,
   ResearchRun,
   ResearchSource,
 } from '@prisma/client';
 import type {
+  AutonomousDiscoveryJobConfig,
+  DiscoveryJobResult,
+  DiscoveryQueryPlan,
   CandidateScorePayload,
   NormalizedResearchSourceInput,
   ProviderEvidenceMetrics,
@@ -103,6 +107,70 @@ export interface ResearchProjectSummary {
 
 export type ScoreCandidateInput = CandidateScorePayload;
 
+export interface DiscoveryJobSummary {
+  job: ResearchDiscoveryJob;
+  project: ResearchProject;
+}
+
+export interface StartDiscoveryJobResult {
+  researchProject: ResearchProject;
+  discoveryJob: ResearchDiscoveryJob;
+}
+
+export interface ProductDiscoveryJobData {
+  discoveryJobId: string;
+}
+
+export interface DiscoveryJobRunContext {
+  job: ResearchDiscoveryJob;
+  project: ResearchProject;
+  config: AutonomousDiscoveryJobConfig;
+  queryPlan: DiscoveryQueryPlan;
+}
+
+export interface DiscoveryJobRunResult {
+  job: ResearchDiscoveryJob;
+  result: DiscoveryJobResult;
+}
+
+// ---------------------------------------------------------------------------
+// AI-Assisted Source Match Review types
+// ---------------------------------------------------------------------------
+
+export type SourceMatchStatus =
+  | 'LIKELY_MATCH'
+  | 'POTENTIAL_MATCH'
+  | 'WEAK_MATCH'
+  | 'NOT_A_MATCH'
+  | 'INSUFFICIENT_EVIDENCE';
+
+export type SourceMatchRecommendedAction =
+  | 'LINK_AS_SOURCING_MATCH'
+  | 'REVIEW_BEFORE_LINKING'
+  | 'KEEP_SEPARATE'
+  | 'FIND_BETTER_SOURCING_MATCH';
+
+export type SourceMatchReviewerDecision =
+  | 'CONFIRMED_MATCH'
+  | 'REJECTED_MATCH'
+  | 'NEEDS_BETTER_SOURCE';
+
+export interface SourceMatchReviewResult {
+  id: string;
+  sourceId: string;
+  matchedSourceId: string;
+  matchStatus: SourceMatchStatus;
+  confidenceScore: number;
+  reasons: string[];
+  warnings: string[];
+  recommendedAction: SourceMatchRecommendedAction;
+  reviewerDecision: SourceMatchReviewerDecision | null;
+  reviewerId?: string;
+  reviewerComment?: string;
+  reviewedAt: string;
+  decidedAt?: string;
+}
+
 // ---------------------------------------------------------------------------
 // 1688 Sourcing Provider Adapter types
 // ---------------------------------------------------------------------------
@@ -127,4 +195,34 @@ export interface SourcingFailoverResult {
   sources: NormalizedResearchSourceInput[];
   selectedVendor: SourcingProviderVendor | null;
   failoverReason: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Sourcing Verification Workflow types
+// ---------------------------------------------------------------------------
+
+export type SourcingVerificationStatus =
+  | 'UNVERIFIED'
+  | 'PENDING_VERIFICATION'
+  | 'VERIFIED'
+  | 'REJECTED'
+  | 'NEEDS_MORE_INFO';
+
+export interface SourcingVerificationResult {
+  id: string;
+  candidateId: string;
+  reviewerId: string | null;
+  status: SourcingVerificationStatus;
+  notes: string | null;
+  verifiedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+
+  // Verification checklist
+  factoryExists: boolean;
+  moqConfirmed: boolean;
+  priceReasonable: boolean;
+  sampleAvailable: boolean;
+  shippingFeasible: boolean;
+  supplierResponsive: boolean;
 }

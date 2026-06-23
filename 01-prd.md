@@ -178,6 +178,41 @@ The module output must include:
 
 ---
 
+### Autonomous Product Discovery Job
+
+Product Research must support an autonomous discovery job for finding winning
+product opportunities without requiring the user to provide a specific keyword.
+
+The job must:
+
+* Start from a broad discovery brief such as target market, objective, price
+  band, margin target, maximum MOQ, risk tolerance, excluded categories, and
+  optional seed query
+* Use AI only to generate a research plan, niche hypotheses, and keyword/query
+  batches
+* Execute multiple provider-backed Product Research runs from the generated
+  query plan
+* Create product candidates only from persisted external provider evidence
+* Rank discovered candidates by demand, trend, competition, sourcing,
+  landed-cost feasibility, margin, creative potential, and risk
+* Persist job status, generated query plan, run summaries, candidate counts,
+  top candidates, failure reason, and audit trail
+* Return an empty shortlist or visible failure when providers return no usable
+  evidence instead of generating AI fallback products, suppliers, URLs, costs,
+  MOQ, or source evidence
+
+The autonomous job output must include:
+
+* Discovery project
+* Query plan used by the job
+* Research runs created by each query
+* Ranked provider-backed candidate shortlist
+* Source evidence and sourcing cost analysis inherited from the underlying
+  Product Research runs
+* Job status and failure diagnostics
+
+---
+
 ### Content Generation
 
 The system must generate:
@@ -354,6 +389,17 @@ The review must:
   a reliable match decision
 * Require human confirmation before uncertain matches affect the final
   candidate recommendation
+
+---
+
+## FR-003h
+
+The system shall support autonomous product discovery jobs that start from a
+broad discovery brief instead of a required keyword.
+
+The job shall use AI to create a query plan only. Product candidates, suppliers,
+costs, MOQ, landed cost, source URLs, and source evidence shall come from
+approved provider integrations and persisted ResearchSource records.
 
 ---
 

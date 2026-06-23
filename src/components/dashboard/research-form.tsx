@@ -9,7 +9,10 @@
 import { useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button, Card, Spinner } from '@/components/ui';
-import { createResearchProject } from '@/app/dashboard/product-research/actions';
+import {
+  createResearchProject,
+  startDiscoveryJob,
+} from '@/app/dashboard/product-research/actions';
 
 function SubmitButton(): React.ReactElement {
   const { pending } = useFormStatus();
@@ -25,6 +28,171 @@ function SubmitButton(): React.ReactElement {
         'Run Research'
       )}
     </Button>
+  );
+}
+
+function DiscoverySubmitButton(): React.ReactElement {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? (
+        <>
+          <Spinner size={16} />
+          Starting...
+        </>
+      ) : (
+        'Start AI Discovery Job'
+      )}
+    </Button>
+  );
+}
+
+export function DiscoveryJobForm(): React.ReactElement {
+  const formRef = useRef<HTMLFormElement>(null);
+
+  return (
+    <Card style={{ marginBottom: '24px' }}>
+      <form
+        ref={formRef}
+        action={startDiscoveryJob}
+        style={{
+          display: 'grid',
+          gap: '18px',
+        }}
+      >
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+            gap: '12px',
+            alignItems: 'end',
+          }}
+        >
+          <TextField
+            id="seedQuery"
+            name="seedQuery"
+            label="Optional seed"
+            placeholder="home organization, pet travel..."
+          />
+          <TextField
+            id="discoveryTargetMarket"
+            name="discoveryTargetMarket"
+            label="Market"
+            defaultValue="US"
+          />
+          <TextField
+            id="maxQueries"
+            name="maxQueries"
+            label="Query count"
+            type="number"
+            defaultValue="6"
+          />
+          <SelectField
+            id="discoveryRiskTolerance"
+            name="discoveryRiskTolerance"
+            label="Risk"
+            defaultValue="medium"
+            options={[
+              ['low', 'Low'],
+              ['medium', 'Medium'],
+              ['high', 'High'],
+            ]}
+          />
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+            gap: '12px',
+            alignItems: 'end',
+          }}
+        >
+          <TextField
+            id="discoveryPriceMin"
+            name="discoveryPriceMin"
+            label="Min price"
+            type="number"
+            placeholder="25"
+          />
+          <TextField
+            id="discoveryPriceMax"
+            name="discoveryPriceMax"
+            label="Max price"
+            type="number"
+            placeholder="80"
+          />
+          <TextField
+            id="discoveryTargetMarginPercent"
+            name="discoveryTargetMarginPercent"
+            label="Margin %"
+            type="number"
+            defaultValue="40"
+          />
+          <TextField
+            id="discoveryMaxMoq"
+            name="discoveryMaxMoq"
+            label="Max MOQ"
+            type="number"
+            placeholder="500"
+          />
+          <TextField
+            id="discoveryInternationalFreightPerUnit"
+            name="discoveryInternationalFreightPerUnit"
+            label="Freight"
+            type="number"
+            step="0.01"
+            placeholder="8"
+          />
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '16px',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            {[
+              ['fragile', 'Fragile'],
+              ['electronics', 'Electronics'],
+              ['regulated', 'Regulated'],
+              ['oversized', 'Oversized'],
+              ['trademark', 'Trademark risk'],
+            ].map(([value, label]) => (
+              <label
+                key={value}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  color: '#334155',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  name="discoveryExcludedCategories"
+                  value={value}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+          <DiscoverySubmitButton />
+        </div>
+
+        <input type="hidden" name="discoveryAgentFeePercent" value="8" />
+        <input type="hidden" name="discoveryCustomsDutyPercent" value="5" />
+        <input type="hidden" name="discoveryPackagingPerUnit" value="1.5" />
+        <input type="hidden" name="discoveryQcPerUnit" value="0.75" />
+      </form>
+    </Card>
   );
 }
 
