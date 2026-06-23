@@ -702,6 +702,8 @@ describe('ResearchService', () => {
       deletedRuns: 1,
       deletedCandidates: 2,
       deletedSources: 3,
+      deletedDiscoveryJobs: 0,
+      deletedVerifications: 0,
     });
     expect(calls).toEqual(['sources', 'candidates', 'runs', 'project']);
   });

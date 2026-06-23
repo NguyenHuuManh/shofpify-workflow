@@ -207,6 +207,42 @@ export class SourcingVerificationRepository extends BaseRepository {
       orderBy: { updatedAt: 'desc' },
     });
   }
+
+  /**
+   * Delete the verification record for a candidate.
+   * Returns the deleted record or null if none existed.
+   * Must be called before deleting the parent ProductCandidate.
+   */
+  async deleteByCandidateId(
+    candidateId: string,
+    tx?: TransactionClient,
+  ): Promise<SourcingVerification | null> {
+    const client = tx ?? this.db;
+    const existing = await client.sourcingVerification.findUnique({
+      where: { candidateId },
+    });
+    if (!existing) return null;
+
+    await client.sourcingVerification.delete({ where: { candidateId } });
+    return existing;
+  }
+
+  /**
+   * Delete all verification records for candidates in a research project.
+   * Returns the count of deleted records.
+   */
+  async deleteByResearchProjectId(
+    projectId: string,
+    tx?: TransactionClient,
+  ): Promise<number> {
+    const client = tx ?? this.db;
+    const result = await client.sourcingVerification.deleteMany({
+      where: {
+        candidate: { researchProjectId: projectId },
+      },
+    });
+    return result.count;
+  }
 }
 
 export const sourcingVerificationRepository = new SourcingVerificationRepository();

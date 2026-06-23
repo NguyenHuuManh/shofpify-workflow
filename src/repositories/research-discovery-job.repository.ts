@@ -131,6 +131,22 @@ export class ResearchDiscoveryJobRepository extends BaseRepository {
       },
     });
   }
+
+  /**
+   * Delete all discovery jobs for a research project.
+   * Returns the count of deleted records.
+   * Must be called before deleting the parent ResearchProject.
+   */
+  async deleteByResearchProjectId(
+    projectId: string,
+    tx?: TransactionClient,
+  ): Promise<number> {
+    const client = tx ?? this.db;
+    const result = await client.researchDiscoveryJob.deleteMany({
+      where: { researchProjectId: projectId },
+    });
+    return result.count;
+  }
 }
 
 export const researchDiscoveryJobRepository = new ResearchDiscoveryJobRepository();

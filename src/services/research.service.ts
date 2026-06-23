@@ -21,6 +21,8 @@ import { researchProjectRepository } from '@/repositories/research-project.repos
 import { productCandidateRepository } from '@/repositories/product-candidate.repository';
 import { researchRunRepository } from '@/repositories/research-run.repository';
 import { researchSourceRepository } from '@/repositories/research-source.repository';
+import { researchDiscoveryJobRepository } from '@/repositories/research-discovery-job.repository';
+import { sourcingVerificationRepository } from '@/repositories/sourcing-verification.repository';
 import { workflowRepository } from '@/repositories/workflow.repository';
 import { auditLogRepository } from '@/repositories/audit-log.repository';
 import { BaseRepository } from '@/repositories/base.repository';
@@ -57,6 +59,8 @@ import type { ResearchProjectRepository } from '@/repositories/research-project.
 import type { ProductCandidateRepository } from '@/repositories/product-candidate.repository';
 import type { ResearchRunRepository } from '@/repositories/research-run.repository';
 import type { ResearchSourceRepository } from '@/repositories/research-source.repository';
+import type { ResearchDiscoveryJobRepository } from '@/repositories/research-discovery-job.repository';
+import type { SourcingVerificationRepository } from '@/repositories/sourcing-verification.repository';
 import type { WorkflowRepository } from '@/repositories/workflow.repository';
 import type { AuditLogRepository } from '@/repositories/audit-log.repository';
 
@@ -74,6 +78,8 @@ export class ResearchService {
     _aiProvider?: AIProvider,
     private readonly productSvc: ProductService = productService,
     private readonly workflowSvc: WorkflowService = workflowService,
+    private readonly discoveryJobRepo: ResearchDiscoveryJobRepository = researchDiscoveryJobRepository,
+    private readonly verificationRepo: SourcingVerificationRepository = sourcingVerificationRepository,
   ) {}
 
   async createProjectAndRun(
@@ -422,13 +428,24 @@ export class ResearchService {
     deletedRuns: number;
     deletedCandidates: number;
     deletedSources: number;
+    deletedDiscoveryJobs: number;
+    deletedVerifications: number;
   }> {
     const project = await this.projectRepo.findByIdOrThrow(projectId);
 
     const deleted = await BaseRepository.transaction(async (tx) => {
+      // 1. Delete discovery jobs first (they have a required FK to project)
+      const deletedDiscoveryJobs = await this.discoveryJobRepo.deleteByResearchProjectId(projectId, tx);
+
+      // 2. Delete sourcing verifications (they reference candidates via FK)
+      const deletedVerifications = await this.verificationRepo.deleteByResearchProjectId(projectId, tx);
+
+      // 3. Delete sources, candidates, runs
       const deletedSources = await this.sourceRepo.deleteByResearchProjectId(projectId, tx);
       const deletedCandidates = await this.candidateRepo.deleteByResearchProjectId(projectId, tx);
       const deletedRuns = await this.runRepo.deleteByResearchProjectId(projectId, tx);
+
+      // 4. Delete the project itself
       const deletedProject = await this.projectRepo.delete(projectId, tx);
 
       return {
@@ -436,6 +453,8 @@ export class ResearchService {
         deletedRuns,
         deletedCandidates,
         deletedSources,
+        deletedDiscoveryJobs,
+        deletedVerifications,
       };
     });
 
@@ -451,6 +470,8 @@ export class ResearchService {
         deletedRuns: deleted.deletedRuns,
         deletedCandidates: deleted.deletedCandidates,
         deletedSources: deleted.deletedSources,
+        deletedDiscoveryJobs: deleted.deletedDiscoveryJobs,
+        deletedVerifications: deleted.deletedVerifications,
       },
     });
 
@@ -460,6 +481,8 @@ export class ResearchService {
         deletedRuns: deleted.deletedRuns,
         deletedCandidates: deleted.deletedCandidates,
         deletedSources: deleted.deletedSources,
+        deletedDiscoveryJobs: deleted.deletedDiscoveryJobs,
+        deletedVerifications: deleted.deletedVerifications,
       },
       'Research project deleted',
     );
