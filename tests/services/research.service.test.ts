@@ -64,7 +64,14 @@ describe('ResearchService', () => {
     };
     const projectRepo = {};
     const candidateRepo = {
-      create: vi.fn().mockResolvedValue(candidate),
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          ...candidate,
+          ...input,
+          id: candidate.id,
+          createdAt: candidate.createdAt,
+        }),
+      ),
     };
     const sourceRepo = {
       create: vi.fn().mockImplementation((input) =>
@@ -129,7 +136,8 @@ describe('ResearchService', () => {
     });
 
     expect(result.researchRun.id).toBe('run_001');
-    expect(result.candidates).toEqual([candidate]);
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates.at(0)?.id).toBe('cand_001');
     expect(result.recommendation.bestCandidateId).toBe('cand_001');
     expect(aiProvider.generateText).not.toHaveBeenCalled();
     expect(runRepo.create).toHaveBeenCalledWith(
@@ -346,6 +354,214 @@ describe('ResearchService', () => {
         candidateId: 'cand_sourcing',
         type: 'SOURCING',
         provider: '1688',
+      }),
+    );
+  });
+
+  it('should filter provider-backed candidates by research brief constraints', async () => {
+    const run = {
+      id: 'run_constraints',
+      researchProjectId: null,
+      productId: null,
+      workflowId: null,
+      input: {},
+      summary: null,
+      recommendation: null,
+      providerCosts: null,
+      startedAt: new Date('2026-01-01'),
+      completedAt: null,
+      createdAt: new Date('2026-01-01'),
+    };
+    const candidateRepo = {
+      create: vi.fn(),
+    };
+    const highMoqSource = {
+      type: 'SOURCING',
+      provider: '1688',
+      url: 'https://detail.1688.com/offer/high-moq.html',
+      externalId: 'high_moq',
+      title: 'High MOQ Portable Blender',
+      extractedSignal: '1688 offer with MOQ 2000 and factory unit cost 12',
+      rawData: {
+        metrics: {
+          productCost: 12,
+          factoryUnitCost: 12,
+          moq: 2000,
+        },
+      },
+      confidence: 0.8,
+      capturedAt: new Date('2026-01-01'),
+    };
+
+    const service = new ResearchService(
+      {
+        create: vi.fn().mockResolvedValue(run),
+        updateCompleted: vi.fn().mockImplementation((_id, input) =>
+          Promise.resolve({
+            ...run,
+            ...input,
+            completedAt: new Date('2026-01-01'),
+          }),
+        ),
+      } as never,
+      {} as never,
+      candidateRepo as never,
+      {
+        create: vi.fn().mockResolvedValue({ id: 'src_constraints' }),
+      } as never,
+      {} as never,
+      {} as never,
+      {
+        create: vi.fn().mockResolvedValue({ id: 'audit_001' }),
+      } as never,
+      new CandidateScoringService(),
+      [
+        {
+          name: 'Sourcing1688ResearchProvider',
+          providerType: 'sourcing',
+          collect: vi.fn().mockResolvedValue([highMoqSource]),
+        },
+      ],
+    );
+
+    const result = await service.run({
+      productIdea: 'Portable Blender',
+      config: {
+        sourcing: {
+          targetSource: '1688',
+          targetCurrency: 'USD',
+          maxMoq: 500,
+          landedCostAssumptions: {},
+        },
+      },
+    });
+
+    expect(result.candidates).toEqual([]);
+    expect(candidateRepo.create).not.toHaveBeenCalled();
+    expect(result.summary).toContain('max MOQ 500');
+  });
+
+  it('should not link marketplace and 1688 sources to the same candidate when they are different items', async () => {
+    const run = {
+      id: 'run_source_linking',
+      researchProjectId: null,
+      productId: null,
+      workflowId: null,
+      input: {},
+      summary: null,
+      recommendation: null,
+      providerCosts: null,
+      startedAt: new Date('2026-01-01'),
+      completedAt: null,
+      createdAt: new Date('2026-01-01'),
+    };
+    const candidateRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: input.metadata.sourceType === 'SOURCING' ? 'cand_sourcing' : 'cand_marketplace',
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const sourceRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: `src_${sourceRepo.create.mock.calls.length}`,
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const marketplaceSource = {
+      type: 'MARKETPLACE',
+      provider: 'SerpAPI Google Shopping',
+      url: 'https://store.example.com/portable-blender-retail',
+      externalId: 'store_001',
+      title: 'Portable Blender Retail Listing',
+      extractedSignal: 'Retail portable blender listing with reviews',
+      rawData: {
+        metrics: {
+          price: 49,
+          reviewCount: 1000,
+        },
+      },
+      confidence: 0.7,
+      capturedAt: new Date('2026-01-01'),
+    };
+    const sourcingSource = {
+      type: 'SOURCING',
+      provider: '1688',
+      url: 'https://detail.1688.com/offer/source_001.html',
+      externalId: 'source_001',
+      title: 'Portable Blender Factory Listing',
+      extractedSignal: '1688 portable blender offer with MOQ 100 and factory unit cost 12',
+      rawData: {
+        metrics: {
+          productCost: 12,
+          factoryUnitCost: 12,
+          moq: 100,
+        },
+      },
+      confidence: 0.8,
+      capturedAt: new Date('2026-01-01'),
+    };
+    const service = new ResearchService(
+      {
+        create: vi.fn().mockResolvedValue(run),
+        updateCompleted: vi.fn().mockImplementation((_id, input) =>
+          Promise.resolve({
+            ...run,
+            ...input,
+            completedAt: new Date('2026-01-01'),
+          }),
+        ),
+      } as never,
+      {} as never,
+      candidateRepo as never,
+      sourceRepo as never,
+      {} as never,
+      {} as never,
+      {
+        create: vi.fn().mockResolvedValue({ id: 'audit_001' }),
+      } as never,
+      new CandidateScoringService(),
+      [
+        {
+          name: 'MixedResearchProvider',
+          providerType: 'sourcing',
+          collect: vi.fn().mockResolvedValue([marketplaceSource, sourcingSource]),
+        },
+      ],
+    );
+
+    await service.run({
+      productIdea: 'Portable Blender',
+    });
+
+    expect(candidateRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Portable Blender Factory Listing',
+        metadata: expect.objectContaining({
+          sourceType: 'SOURCING',
+          sourceProvider: '1688',
+          sourceUrl: 'https://detail.1688.com/offer/source_001.html',
+          sourceExternalId: 'source_001',
+        }),
+      }),
+    );
+    expect(sourceRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        candidateId: 'cand_marketplace',
+        type: 'MARKETPLACE',
+        url: 'https://store.example.com/portable-blender-retail',
+      }),
+    );
+    expect(sourceRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        candidateId: 'cand_sourcing',
+        type: 'SOURCING',
+        url: 'https://detail.1688.com/offer/source_001.html',
       }),
     );
   });

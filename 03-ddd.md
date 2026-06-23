@@ -554,6 +554,29 @@ The current implementation may initially store some sourcing fields in
 implemented as a first-class provider, these fields should be migrated into the
 model so ranking and UI rendering do not depend on ad hoc JSON parsing.
 
+AI-assisted source match review results may initially be stored in
+`ProductCandidate.metadata.sourceMatches` until match review needs first-class
+querying or reporting. Each entry should preserve the original source IDs and
+AI reviewer output:
+
+```json
+{
+  "sourceId": "marketplace-or-store-source-id",
+  "matchedSourceId": "sourcing-source-id",
+  "matchStatus": "POTENTIAL_MATCH",
+  "confidenceScore": 82,
+  "reasons": ["similar title terms", "compatible product function"],
+  "warnings": ["image evidence unavailable"],
+  "recommendedAction": "REVIEW_BEFORE_LINKING",
+  "reviewerDecision": null,
+  "reviewedAt": "2026-06-23T00:00:00.000Z"
+}
+```
+
+If source matching becomes central to reporting, filtering, or audit workflows,
+promote these records into a dedicated model such as `ResearchSourceMatch` with
+foreign keys to both ResearchSource records and the owning ProductCandidate.
+
 ---
 
 # 7c. ResearchSource

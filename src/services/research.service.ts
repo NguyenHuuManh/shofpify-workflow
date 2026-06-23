@@ -132,7 +132,7 @@ export class ResearchService {
       input.productIdea,
       config,
       providerSources,
-    );
+    ).filter((candidate) => this.candidateMatchesResearchBrief(candidate, config));
 
     const candidates: ProductCandidate[] = [];
     const sources: ResearchSource[] = [];
@@ -231,7 +231,12 @@ export class ResearchService {
         : 'No candidate met the recommendation threshold.',
     };
 
-    const summary = this.buildExternalEvidenceSummary(input.productIdea, providerSources, candidates);
+    const summary = this.buildExternalEvidenceSummary(
+      input.productIdea,
+      config,
+      providerSources,
+      candidates,
+    );
     const completedRun = await this.runRepo.updateCompleted(researchRun.id, {
       summary,
       recommendation,
@@ -761,15 +766,71 @@ export class ResearchService {
 
   private buildExternalEvidenceSummary(
     productIdea: string,
+    config: ResearchRunConfig,
     sources: NormalizedResearchSourceInput[],
     candidates: ProductCandidate[],
   ): string {
+    const constraints = this.describeResearchConstraints(config);
+
     if (sources.length === 0) {
-      return `No external provider evidence was collected for "${productIdea}". Product Research returned no AI-generated candidates.`;
+      return `No external provider evidence was collected for "${productIdea}". Product Research returned no AI-generated candidates.${constraints}`;
     }
 
     const sourceTypes = Array.from(new Set(sources.map((source) => source.type))).join(', ');
-    return `Collected ${sources.length} external source signals (${sourceTypes}) for "${productIdea}" and produced ${candidates.length} provider-backed product candidates.`;
+    return `Collected ${sources.length} external source signals (${sourceTypes}) for "${productIdea}" and produced ${candidates.length} provider-backed product candidates.${constraints}`;
+  }
+
+  private describeResearchConstraints(config: ResearchRunConfig): string {
+    const parts = [
+      config.targetMarket ? `target market ${config.targetMarket}` : undefined,
+      config.priceBand
+        ? `price band $${config.priceBand.min}-$${config.priceBand.max}`
+        : undefined,
+      `target margin ${config.targetMarginPercent}%`,
+      `risk tolerance ${config.riskTolerance}`,
+      config.sourcing.maxMoq ? `max MOQ ${config.sourcing.maxMoq}` : undefined,
+      config.excludedCategories.length > 0
+        ? `excluded ${config.excludedCategories.join(', ')}`
+        : undefined,
+    ].filter(Boolean);
+
+    return parts.length > 0 ? ` Constraints: ${parts.join('; ')}.` : '';
+  }
+
+  private candidateMatchesResearchBrief(
+    candidate: ResearchCandidateDraft,
+    config: ResearchRunConfig,
+  ): boolean {
+    const riskText = [
+      candidate.name,
+      candidate.positioning,
+      candidate.sellingAngle,
+      ...candidate.risks,
+      JSON.stringify(candidate.metadata ?? {}),
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    const hasExcludedCategory = config.excludedCategories.some((category) =>
+      riskText.includes(category.toLowerCase()),
+    );
+
+    if (hasExcludedCategory) {
+      return false;
+    }
+
+    if (config.sourcing.maxMoq && candidate.moq && candidate.moq > config.sourcing.maxMoq) {
+      return false;
+    }
+
+    if (config.priceBand && candidate.recommendedPrice) {
+      return (
+        candidate.recommendedPrice >= config.priceBand.min &&
+        candidate.recommendedPrice <= config.priceBand.max
+      );
+    }
+
+    return true;
   }
 
   private async collectProviderSources(
@@ -793,7 +854,43 @@ export class ResearchService {
     sources: NormalizedResearchSourceInput[],
     candidate: ResearchCandidateDraft,
   ): NormalizedResearchSourceInput[] {
+    const exactSources = sources.filter((source) =>
+      this.sourceMatchesCandidatePrimaryEvidence(source, candidate.metadata),
+    );
+
+    if (exactSources.length > 0) {
+      return exactSources;
+    }
+
     return sources.filter((source) => this.sourceMatchesCandidate(source, candidate.name));
+  }
+
+  private sourceMatchesCandidatePrimaryEvidence(
+    source: NormalizedResearchSourceInput,
+    metadata: ResearchCandidateDraft['metadata'] | ProductCandidate['metadata'],
+  ): boolean {
+    const candidateSourceType = this.metadataString(metadata, 'sourceType');
+    const candidateSourceProvider = this.metadataString(metadata, 'sourceProvider');
+    const candidateSourceUrl = this.metadataString(metadata, 'sourceUrl');
+    const candidateSourceExternalId = this.metadataString(metadata, 'sourceExternalId');
+
+    if (!candidateSourceType || source.type !== candidateSourceType) {
+      return false;
+    }
+
+    if (candidateSourceProvider && source.provider !== candidateSourceProvider) {
+      return false;
+    }
+
+    if (candidateSourceExternalId && source.externalId === candidateSourceExternalId) {
+      return true;
+    }
+
+    if (candidateSourceUrl && source.url === candidateSourceUrl) {
+      return true;
+    }
+
+    return !candidateSourceExternalId && !candidateSourceUrl;
   }
 
   private sourceMatchesCandidate(
@@ -824,8 +921,20 @@ export class ResearchService {
     candidates: ProductCandidate[],
   ): ProductCandidate | undefined {
     return candidates.find((candidate) =>
-      this.sourceMatchesCandidate(source, candidate.name),
+      this.sourceMatchesCandidatePrimaryEvidence(source, candidate.metadata),
     );
+  }
+
+  private metadataString(
+    metadata: ResearchCandidateDraft['metadata'] | ProductCandidate['metadata'],
+    key: string,
+  ): string | undefined {
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+      return undefined;
+    }
+
+    const value = (metadata as Record<string, unknown>)[key];
+    return typeof value === 'string' && value.length > 0 ? value : undefined;
   }
 
   private applyEvidenceToScorePayload(

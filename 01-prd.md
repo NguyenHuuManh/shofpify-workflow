@@ -153,6 +153,9 @@ Product Research must evolve from AI-only market synthesis into a structured pro
 The module must:
 
 * Accept a product idea, niche, or broad opportunity prompt
+* Accept a structured product brief with target market, price band, margin
+  target, MOQ tolerance, sourcing assumptions, risk tolerance, and excluded
+  categories
 * Generate multiple product candidates instead of a single research summary
 * Gather supporting data through approved provider interfaces
 * Persist raw source evidence used for scoring and recommendations
@@ -163,10 +166,13 @@ The module must:
 The module output must include:
 
 * Ranked product candidate list
+* Candidate comparison snapshot for shortlisted products
 * Score breakdown per candidate
 * Sourcing, landed cost, and profit analysis
 * Market research summary
 * Source evidence
+* AI-assisted source match review between demand/store evidence and sourcing
+  evidence, using only persisted provider evidence
 * Risk flags
 * Final recommendation
 
@@ -299,6 +305,10 @@ generating fallback candidates with AI.
 
 The system shall rank product candidates using demand, trend, competition, margin, sourcing and factory fit, creative potential, logistics feasibility, and risk scores.
 
+The system shall use reviewer-supplied research constraints, including price
+band, target margin, maximum MOQ, risk tolerance, and excluded categories, to
+filter or clearly qualify provider-backed candidates before recommendation.
+
 ---
 
 ## FR-003c
@@ -324,6 +334,26 @@ The system shall allow reviewers to select a specific product candidate and prom
 ## FR-003f
 
 The system shall not present AI-generated research conclusions as verified facts unless the conclusion is linked to source evidence or explicitly marked as an AI estimate.
+
+---
+
+## FR-003g
+
+The system shall support AI-assisted source match review between product demand,
+marketplace/store evidence, and sourcing evidence such as 1688 offers.
+
+The review must:
+
+* Use only persisted ResearchSource records and candidate metadata as input
+* Return structured output with match status, confidence score, reasons,
+  warnings, and recommended action
+* Preserve all original source records and source URLs
+* Never fabricate candidates, supplier sources, product URLs, prices, MOQ, or
+  sourcing evidence
+* Return `INSUFFICIENT_EVIDENCE` when the available source data cannot support
+  a reliable match decision
+* Require human confirmation before uncertain matches affect the final
+  candidate recommendation
 
 ---
 

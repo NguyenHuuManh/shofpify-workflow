@@ -192,6 +192,11 @@ Tasks:
 - Refactor workflow entrypoints so Research execution is orchestrated through WorkflowService or WorkflowEngine, not duplicated in API routes or server actions
 - Add API routes for research runs, ranked candidates, candidate detail, candidate selection, and source evidence
 - Add top-level /dashboard/product-research menu page for research-focused workflow navigation
+- Add structured product brief controls for target market, objective, price band,
+  margin target, max MOQ, landed-cost assumptions, risk tolerance, and excluded
+  categories
+- Add top-candidate comparison snapshot with score, economics, sourcing, and
+  evidence quality
 - Decouple Product Research from Workflow so research projects can exist before a Product or Workflow
 - Add candidate promotion flow that creates Product and starts Workflow at Content
 - Upgrade /dashboard/workflows/:id/research into a candidate review page with ranked list, score breakdown, evidence panel, cost analysis, risk flags, approve selected candidate, and reject with feedback
@@ -324,6 +329,11 @@ Current status:
   passes a live smoke test, it returns to primary and Apify returns to backup.
 - `SUPPLIER_PROVIDER_*` remains for legacy generic supplier evidence. New
   1688-specific work must use `SOURCING_1688_*`.
+- The Product Research dashboard now accepts structured product brief
+  constraints and exposes a candidate comparison snapshot. `ResearchService`
+  applies max MOQ, price band, and excluded-category constraints to
+  provider-backed candidates without creating AI fallback replacements
+  (2026-06-23).
 
 Implemented Phase 7d files:
 - `prisma/schema.prisma` and
@@ -348,7 +358,11 @@ Implemented Phase 7d files:
 - `src/services/candidate-scoring.service.ts` — sourcing, factory cost, and
   logistics scoring.
 - `src/app/dashboard/product-research/[projectId]/page.tsx` — candidate detail
-  display for factory cost, MOQ, landed cost, and sourcing scores.
+  display for factory cost, MOQ, landed cost, sourcing scores, research brief,
+  evidence quality, and top-candidate comparison.
+- `src/components/dashboard/research-form.tsx` and
+  `src/app/dashboard/product-research/actions.ts` — structured product brief
+  form and server action mapping into the Product Research run configuration.
 - `tests/providers/research/sourcing-1688.provider.test.ts` — failover orchestration tests (9 tests).
 - `tests/providers/research/dajisaas.provider.test.ts` — DajiSaaS contract tests (5 tests).
 - `tests/providers/research/apify-1688.provider.test.ts` — Apify adapter tests (15 tests).
@@ -373,15 +387,18 @@ Next implementation order:
 2. Configure separate DajiSaaS and Apify credentials plus an explicit
    CNY-to-USD conversion rate in `.env`; never reuse one vendor's credential
    fields for the other.
-3. Run an end-to-end Product Research test with a real DajiSaaS response and
+3. Run an end-to-end Product Research test from the dashboard using product
+   brief constraints and verify filtered candidates, comparison data, sources,
+   and selected/promoted candidate behavior.
+4. Run an end-to-end Product Research test with a real DajiSaaS response and
    verify candidates, sources, CNY provenance, converted cost, landed cost, and
    dashboard output.
-4. Validate the configured Apify actor input/output against a recorded dataset
+5. Validate the configured Apify actor input/output against a recorded dataset
    before relying on it as the production backup.
-5. Force a DajiSaaS failure in a staging run and verify that Apify is called
+6. Force a DajiSaaS failure in a staging run and verify that Apify is called
    once, its evidence is persisted with `provider=apify`, and no vendor results
    are merged.
-6. Add a supplier verification/review step before purchase decisions if the
+7. Add a supplier verification/review step before purchase decisions if the
    product direction moves beyond research into procurement.
 
 DajiSaaS activation follow-up:
@@ -416,6 +433,79 @@ Verification already run after Phase 7d implementation:
 - `npm test`
 - `npx prisma validate`
 - `git diff --check`
+
+---
+
+### Phase 7e AI-Assisted Source Match Review
+
+Goal:
+- Increase confidence that demand/store evidence and sourcing evidence describe
+  the same underlying product before the final Product Research output is used.
+- Keep AI in an advisory reviewer role only. AI must not create product
+  candidates, supplier evidence, source URLs, prices, MOQ, or fallback results.
+
+Architecture flow:
+
+```text
+API Route / Server Action
+    ↓
+SourceMatchingService
+    ↓
+ResearchSourceRepository / ProductCandidateRepository
+    ↓
+AI Provider Interface
+    ↓
+External AI Provider
+```
+
+Tasks:
+- [ ] Add source match review types for `LIKELY_MATCH`, `POTENTIAL_MATCH`,
+  `WEAK_MATCH`, `NOT_A_MATCH`, and `INSUFFICIENT_EVIDENCE`.
+- [ ] Add Zod schemas for source match review request, structured AI output,
+  and human decision payloads.
+- [ ] Add SourceMatchingService to build evidence bundles from persisted
+  ResearchSource records and candidate metadata.
+- [ ] Add an AI Provider prompt contract that returns only structured JSON with
+  match status, confidence score, reasons, warnings, and recommended action.
+- [ ] Persist initial source match results in `ProductCandidate.metadata` or
+  add a first-class model if query/reporting requirements justify a migration.
+- [ ] Add dashboard candidate-detail UI for match confidence, reasons,
+  warnings, and reviewer actions.
+- [ ] Add API routes for running a source match review and persisting a human
+  decision.
+- [ ] Add tests for likely match, potential match, weak match, not a match,
+  insufficient evidence, and provider failure without AI-generated fallback.
+
+Implementation order:
+1. Types and schemas: `src/types/research.types.ts`,
+   `src/schemas/research.schema.ts`
+2. Persistence contract: candidate metadata first, dedicated Prisma model only
+   if needed
+3. Repositories: read/update methods for candidate metadata and source lookup
+4. Service: `src/services/source-matching.service.ts`
+5. Provider contract: AI structured output through the existing AI provider
+   abstraction
+6. API routes under
+   `/api/product-research/candidates/:candidateId/source-matches`
+7. Dashboard candidate-detail source match review panel
+8. Focused service, schema, API, and UI tests
+
+Decision thresholds:
+- `LIKELY_MATCH`: 90-100 confidence, may be shown as a high-confidence sourcing
+  match but must remain source-auditable
+- `POTENTIAL_MATCH`: 75-89 confidence, requires human confirmation before
+  affecting final output
+- `WEAK_MATCH`: 50-74 confidence, keep sources separate by default
+- `NOT_A_MATCH`: below 50 confidence
+- `INSUFFICIENT_EVIDENCE`: source data is too thin to decide
+
+Guardrails:
+- SourceMatchingService must use only persisted sources and candidate metadata.
+- The service must not call DataForSEO, 1688, DajiSaaS, Apify, SerpAPI, Brave,
+  Shopify, or Prisma directly.
+- The AI prompt must explicitly reject missing data instead of guessing.
+- Provider failure or weak source evidence must produce an auditable failure or
+  `INSUFFICIENT_EVIDENCE`, never an AI-generated candidate or source.
 
 ---
 

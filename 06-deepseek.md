@@ -244,6 +244,14 @@ directly when the evidence describes a concrete product opportunity. Do not
 require marketplace/search evidence before a 1688-backed product candidate can
 be ranked.
 
+AI-assisted source matching must stay in the service layer. A
+SourceMatchingService may call the AI Provider interface to compare already
+persisted ResearchSource records and ProductCandidate metadata. It must not
+call external research APIs, provider SDKs, Prisma directly, or generate
+fallback candidates/source evidence. API routes, agents, workflow nodes,
+repositories, and UI code must not call the AI provider directly for source
+matching.
+
 ---
 
 # Shopify Integration Rules

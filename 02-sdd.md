@@ -148,8 +148,11 @@ The dashboard also exposes a top-level Product Research menu at:
 
 This page acts as an independent research workbench and provides:
 - Active and completed research project visibility
-- Product idea or niche search
+- Product brief input for idea/niche, target market, objective, price band,
+  margin target, maximum MOQ, landed-cost assumptions, risk tolerance, and
+  excluded categories
 - Candidate shortlist status and selected candidate summary when available
+- Candidate comparison snapshot for top shortlisted products
 - Candidate promotion into a product creation workflow
 
 ---
@@ -321,12 +324,57 @@ source evidence when providers return no usable data.
 
 ---
 
+## AI-Assisted Source Match Review
+
+Product Research may use AI to review whether two persisted source records
+appear to describe the same underlying product, for example a marketplace/store
+listing and a 1688 sourcing offer.
+
+The review flow is:
+
+```text
+API Route / Server Action
+    ↓
+SourceMatchingService
+    ↓
+AI Provider Interface
+    ↓
+External AI Provider
+```
+
+The SourceMatchingService must build an evidence bundle from existing
+ResearchSource records and ProductCandidate metadata. It must not call external
+research APIs directly, create replacement candidates, or invent missing source
+data. Repositories remain responsible only for reading and writing persisted
+records.
+
+The AI output must be structured:
+
+- `LIKELY_MATCH`: 90-100 confidence, strong title/image/spec/economics overlap
+- `POTENTIAL_MATCH`: 75-89 confidence, plausible match but needs human review
+- `WEAK_MATCH`: 50-74 confidence, do not link automatically
+- `NOT_A_MATCH`: below 50 confidence
+- `INSUFFICIENT_EVIDENCE`: source data is too thin to decide
+
+Each review result must include confidence score, supporting reasons, warnings,
+and a recommended action such as `LINK_AS_SOURCING_MATCH`, `KEEP_SEPARATE`, or
+`FIND_BETTER_SOURCING_MATCH`.
+
+Automatic recommendation logic may use only high-confidence reviewed matches
+that remain traceable to the original sources. `POTENTIAL_MATCH`, `WEAK_MATCH`,
+and `INSUFFICIENT_EVIDENCE` require a visible human decision before they affect
+the final output.
+
+---
+
 ## Research Pipeline
 
 The Research Product Intelligence Module runs the following pipeline:
 
 ```text
 Input Product Idea / Niche
+    ↓
+Apply Research Brief Constraints
     ↓
 Collect External Evidence
     ↓
@@ -352,6 +400,11 @@ search, marketplace, sourcing, trend, keyword, social, or ads signals. If
 providers are unavailable or return no usable evidence, Product Research must
 return an empty shortlist or fail visibly; it must not fall back to
 AI-generated product candidates.
+
+Research brief constraints are applied after provider evidence is normalized and
+candidate drafts are derived. Constraints such as excluded categories, maximum
+MOQ, and price band may remove candidates from the shortlist, but they must not
+trigger AI-generated replacements.
 
 Sourcing evidence can create product candidates directly when it represents a
 specific product opportunity, such as a 1688 offer or factory listing. The
@@ -390,9 +443,13 @@ be explicitly marked as assumptions or unknowns, not silently treated as zero.
 The Product Research page must support:
 
 - Ranked product candidate list
+- Top-candidate comparison table with score, economics, sourcing, and evidence
+  quality
 - Score breakdown per candidate
 - Factory sourcing, landed cost, and margin analysis
 - Source evidence panel
+- AI-assisted source match panel with confidence, reasons, warnings, and human
+  actions for linking or rejecting candidate-source matches
 - Competitor and sourcing summaries
 - Risk flags
 - Candidate selection action

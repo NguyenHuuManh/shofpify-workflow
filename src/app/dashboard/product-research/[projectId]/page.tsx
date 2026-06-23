@@ -50,6 +50,7 @@ export default async function ProductResearchDetailPage({
 
   const selectedCandidate = detail.selectedCandidate;
   const topCandidate = selectedCandidate ?? detail.candidates[0];
+  const runInput = parseResearchRunInput(detail.latestRun?.input);
   const promotedWorkflowUrl = detail.promotedWorkflow
     ? `/dashboard/workflows/${detail.promotedWorkflow.id}`
     : null;
@@ -84,6 +85,37 @@ export default async function ProductResearchDetailPage({
         </p>
       </div>
 
+      {runInput && (
+        <Card style={{ marginBottom: '24px' }}>
+          <div style={{ color: '#64748b', fontSize: '13px', fontWeight: 600, marginBottom: '12px' }}>
+            Research Brief
+          </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+              gap: '12px',
+            }}
+          >
+            <DataPoint label="Market" value={runInput.targetMarket ?? 'US'} />
+            <DataPoint label="Objective" value={runInput.objective ?? 'find_winning_product'} />
+            <DataPoint label="Price Band" value={runInput.priceBand ?? 'N/A'} />
+            <DataPoint label="Target Margin" value={runInput.targetMargin ?? '40%'} />
+            <DataPoint label="Max MOQ" value={runInput.maxMoq ?? 'N/A'} />
+            <DataPoint label="Risk" value={runInput.riskTolerance ?? 'medium'} />
+          </div>
+          {runInput.excludedCategories && (
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+              {runInput.excludedCategories.map((category) => (
+                <Badge key={category} variant="default">
+                  Exclude {category}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
       <div
         style={{
           display: 'grid',
@@ -97,6 +129,14 @@ export default async function ProductResearchDetailPage({
         <MetricCard label="Sources" value={detail.sources.length} />
         <MetricCard label="Latest Run" value={detail.latestRun?.id.slice(-8) ?? 'N/A'} />
       </div>
+
+      {detail.candidates.length > 1 && (
+        <CompareSnapshot
+          candidates={detail.candidates.slice(0, 5)}
+          sources={detail.sources}
+          selectedCandidateId={detail.project.selectedCandidateId}
+        />
+      )}
 
       {selectedCandidate && (
         <Card style={{ marginBottom: '24px' }}>
@@ -200,8 +240,9 @@ function CandidateCard({
   isPromoted: boolean;
 }): React.ReactElement {
   const productImage = extractProductImage(sources);
-  const storeUrl = extractSourceUrl(sources, 'MARKETPLACE');
-  const sourcing1688Url = extractSourceUrl(sources, 'SOURCING');
+  const primarySource = findPrimarySource(candidate, sources);
+  const marketplaceSource = primarySource?.type === 'MARKETPLACE' ? primarySource : null;
+  const sourcingSource = primarySource?.type === 'SOURCING' ? primarySource : null;
 
   return (
     <Card>
@@ -250,11 +291,14 @@ function CandidateCard({
                 {candidate.sellingAngle}
               </p>
             )}
-            {(storeUrl || sourcing1688Url) && (
+            <EvidenceSummary sources={sources} />
+            {(marketplaceSource?.url || sourcingSource?.url) && (
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
-                {storeUrl && <ExternalSourceLink href={storeUrl} label="View on Store" />}
-                {sourcing1688Url && (
-                  <ExternalSourceLink href={sourcing1688Url} label="View on 1688" accent />
+                {marketplaceSource?.url && (
+                  <ExternalSourceLink href={marketplaceSource.url} label="View on Store" />
+                )}
+                {sourcingSource?.url && (
+                  <ExternalSourceLink href={sourcingSource.url} label="View on 1688" accent />
                 )}
               </div>
             )}
@@ -323,6 +367,83 @@ function CandidateCard({
         </div>
       )}
     </Card>
+  );
+}
+
+function CompareSnapshot({
+  candidates,
+  sources,
+  selectedCandidateId,
+}: {
+  candidates: ProductCandidate[];
+  sources: ResearchSource[];
+  selectedCandidateId: string | null;
+}): React.ReactElement {
+  return (
+    <Card style={{ marginBottom: '24px', padding: 0, overflow: 'hidden' }}>
+      <div style={{ padding: '18px 20px 12px' }}>
+        <div style={{ color: '#0f172a', fontSize: '16px', fontWeight: 700 }}>
+          Candidate Compare
+        </div>
+      </div>
+      <Table
+        headers={['Candidate', 'Score', 'Economics', 'Sourcing', 'Evidence']}
+        rows={candidates.map((candidate) => {
+          const candidateSources = sources.filter((source) => source.candidateId === candidate.id);
+          const evidence = summarizeEvidence(candidateSources);
+
+          return [
+            <div key="candidate">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <span style={{ color: '#0f172a', fontWeight: 700 }}>{candidate.name}</span>
+                {candidate.id === selectedCandidateId && <Badge variant="success">Selected</Badge>}
+              </div>
+              <div style={{ color: '#64748b', fontSize: '12px', marginTop: '3px' }}>
+                {candidate.status} · {candidate.confidence ?? 'low'} confidence
+              </div>
+            </div>,
+            <span key="score" style={{ color: '#0f172a', fontWeight: 700 }}>
+              {candidate.winningScore ?? 'N/A'}
+            </span>,
+            <div key="economics" style={{ color: '#334155', fontSize: '13px', lineHeight: '20px' }}>
+              Price {formatMoney(candidate.recommendedPrice)}
+              <br />
+              Landed {formatMoney(candidate.landedCost)}
+              <br />
+              Margin {formatPercent(candidate.grossMarginPercent)}
+            </div>,
+            <div key="sourcing" style={{ color: '#334155', fontSize: '13px', lineHeight: '20px' }}>
+              Factory {formatMoney(candidate.factoryUnitCost)}
+              <br />
+              MOQ {candidate.moq?.toString() ?? 'N/A'}
+              <br />
+              Logistics {candidate.logisticsScore ?? 'N/A'}
+            </div>,
+            <div key="evidence" style={{ color: '#334155', fontSize: '13px', lineHeight: '20px' }}>
+              {evidence.count} sources
+              <br />
+              {evidence.types || 'No linked types'}
+              <br />
+              Avg confidence {evidence.averageConfidence}
+            </div>,
+          ];
+        })}
+      />
+    </Card>
+  );
+}
+
+function EvidenceSummary({ sources }: { sources: ResearchSource[] }): React.ReactElement {
+  const evidence = summarizeEvidence(sources);
+
+  return (
+    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+      <Badge variant={evidence.count > 0 ? 'success' : 'default'}>
+        {evidence.count} source{evidence.count === 1 ? '' : 's'}
+      </Badge>
+      {evidence.types && <Badge variant="default">{evidence.types}</Badge>}
+      <Badge variant="default">Confidence {evidence.averageConfidence}</Badge>
+    </div>
   );
 }
 
@@ -552,11 +673,74 @@ function extractProductImage(sources: ResearchSource[]): string | null {
   return null;
 }
 
-function extractSourceUrl(
+function findPrimarySource(
+  candidate: ProductCandidate,
   sources: ResearchSource[],
-  type: ResearchSource['type'],
-): string | null {
-  return sources.find((source) => source.type === type && Boolean(source.url))?.url ?? null;
+): ResearchSource | null {
+  const sourceType = metadataString(candidate.metadata, 'sourceType');
+  const sourceProvider = metadataString(candidate.metadata, 'sourceProvider');
+  const sourceUrl = metadataString(candidate.metadata, 'sourceUrl');
+  const sourceExternalId = metadataString(candidate.metadata, 'sourceExternalId');
+
+  if (!sourceType) {
+    return sources[0] ?? null;
+  }
+
+  return (
+    sources.find((source) => {
+      if (source.type !== sourceType) {
+        return false;
+      }
+
+      if (sourceProvider && source.provider !== sourceProvider) {
+        return false;
+      }
+
+      if (sourceExternalId && source.externalId === sourceExternalId) {
+        return true;
+      }
+
+      if (sourceUrl && source.url === sourceUrl) {
+        return true;
+      }
+
+      return !sourceExternalId && !sourceUrl;
+    }) ?? null
+  );
+}
+
+function metadataString(metadata: ProductCandidate['metadata'], key: string): string | undefined {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return undefined;
+  }
+
+  const value = (metadata as Record<string, unknown>)[key];
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function summarizeEvidence(sources: ResearchSource[]): {
+  count: number;
+  types: string;
+  averageConfidence: string;
+} {
+  const types = Array.from(new Set(sources.map((source) => source.type))).join(', ');
+  const confidences = sources
+    .map((source) => source.confidence)
+    .filter((confidence): confidence is number => confidence !== null);
+  const averageConfidence =
+    confidences.length === 0
+      ? 'N/A'
+      : `${Math.round(
+          (confidences.reduce((sum, confidence) => sum + confidence, 0) /
+            confidences.length) *
+            100,
+        )}%`;
+
+  return {
+    count: sources.length,
+    types,
+    averageConfidence,
+  };
 }
 
 function formatMoney(value: ProductCandidate['recommendedPrice']): string {
@@ -589,4 +773,53 @@ function formatJsonValue(value: unknown): string {
   }
 
   return JSON.stringify(value, null, 2);
+}
+
+function parseResearchRunInput(input: unknown): {
+  targetMarket?: string;
+  objective?: string;
+  priceBand?: string;
+  targetMargin?: string;
+  maxMoq?: string;
+  riskTolerance?: string;
+  excludedCategories?: string[];
+} | null {
+  if (!input || typeof input !== 'object') {
+    return null;
+  }
+
+  const root = input as Record<string, unknown>;
+  const config =
+    root.config && typeof root.config === 'object'
+      ? (root.config as Record<string, unknown>)
+      : {};
+  const sourcing =
+    config.sourcing && typeof config.sourcing === 'object'
+      ? (config.sourcing as Record<string, unknown>)
+      : {};
+  const priceBand =
+    config.priceBand && typeof config.priceBand === 'object'
+      ? (config.priceBand as Record<string, unknown>)
+      : undefined;
+  const excludedCategories = Array.isArray(config.excludedCategories)
+    ? config.excludedCategories
+        .map((category) => String(category))
+        .filter(Boolean)
+    : undefined;
+
+  return {
+    targetMarket: typeof config.targetMarket === 'string' ? config.targetMarket : undefined,
+    objective: typeof config.objective === 'string' ? config.objective : undefined,
+    priceBand: priceBand
+      ? `$${String(priceBand.min ?? 0)}-$${String(priceBand.max ?? 0)}`
+      : undefined,
+    targetMargin:
+      config.targetMarginPercent === undefined
+        ? undefined
+        : `${String(config.targetMarginPercent)}%`,
+    maxMoq: sourcing.maxMoq === undefined ? undefined : String(sourcing.maxMoq),
+    riskTolerance:
+      typeof config.riskTolerance === 'string' ? config.riskTolerance : undefined,
+    excludedCategories,
+  };
 }

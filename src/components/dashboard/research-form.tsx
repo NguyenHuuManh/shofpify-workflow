@@ -38,56 +38,206 @@ export function ResearchForm(): React.ReactElement {
         action={createResearchProject}
         style={{
           display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) 120px auto',
-          gap: '12px',
-          alignItems: 'end',
+          gap: '18px',
         }}
       >
-        <div>
-          <label
-            htmlFor="query"
-            style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-          >
-            Product idea or niche
-          </label>
-          <input
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+            gap: '12px',
+            alignItems: 'end',
+          }}
+        >
+          <TextField
             id="query"
             name="query"
+            label="Product brief"
             required
-            placeholder="portable kitchen gadgets, pet travel accessories..."
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-            }}
+            placeholder="pet travel accessories for US buyers..."
           />
-        </div>
-        <div>
-          <label
-            htmlFor="targetMarket"
-            style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
-          >
-            Market
-          </label>
-          <input
+          <TextField
             id="targetMarket"
             name="targetMarket"
+            label="Market"
             defaultValue="US"
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              fontSize: '14px',
-              boxSizing: 'border-box',
-            }}
+          />
+          <SelectField
+            id="objective"
+            name="objective"
+            label="Mode"
+            defaultValue="find_winning_product"
+            options={[
+              ['find_winning_product', 'Find winners'],
+              ['deep_sourcing', 'Deep sourcing'],
+              ['validate_product', 'Validate idea'],
+            ]}
           />
         </div>
-        <SubmitButton />
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+            gap: '12px',
+            alignItems: 'end',
+          }}
+        >
+          <TextField id="priceMin" name="priceMin" label="Min price" type="number" placeholder="25" />
+          <TextField id="priceMax" name="priceMax" label="Max price" type="number" placeholder="60" />
+          <TextField
+            id="targetMarginPercent"
+            name="targetMarginPercent"
+            label="Margin %"
+            type="number"
+            defaultValue="40"
+          />
+          <TextField id="maxMoq" name="maxMoq" label="Max MOQ" type="number" placeholder="500" />
+          <TextField
+            id="internationalFreightPerUnit"
+            name="internationalFreightPerUnit"
+            label="Freight"
+            type="number"
+            step="0.01"
+            placeholder="8"
+          />
+          <SelectField
+            id="riskTolerance"
+            name="riskTolerance"
+            label="Risk"
+            defaultValue="medium"
+            options={[
+              ['low', 'Low'],
+              ['medium', 'Medium'],
+              ['high', 'High'],
+            ]}
+          />
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: '16px',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            {[
+              ['fragile', 'Fragile'],
+              ['electronics', 'Electronics'],
+              ['regulated', 'Regulated'],
+              ['oversized', 'Oversized'],
+              ['trademark', 'Trademark risk'],
+            ].map(([value, label]) => (
+              <label
+                key={value}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  color: '#334155',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                }}
+              >
+                <input type="checkbox" name="excludedCategories" value={value} />
+                {label}
+              </label>
+            ))}
+          </div>
+          <SubmitButton />
+        </div>
+
+        <input type="hidden" name="agentFeePercent" value="8" />
+        <input type="hidden" name="customsDutyPercent" value="5" />
+        <input type="hidden" name="packagingPerUnit" value="1.5" />
+        <input type="hidden" name="qcPerUnit" value="0.75" />
       </form>
     </Card>
   );
 }
+
+function TextField({
+  id,
+  name,
+  label,
+  type = 'text',
+  required = false,
+  defaultValue,
+  placeholder,
+  step,
+}: {
+  id: string;
+  name: string;
+  label: string;
+  type?: string;
+  required?: boolean;
+  defaultValue?: string;
+  placeholder?: string;
+  step?: string;
+}): React.ReactElement {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
+      >
+        {label}
+      </label>
+      <input
+        id={id}
+        name={name}
+        type={type}
+        required={required}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+        step={step}
+        style={fieldStyle}
+      />
+    </div>
+  );
+}
+
+function SelectField({
+  id,
+  name,
+  label,
+  defaultValue,
+  options,
+}: {
+  id: string;
+  name: string;
+  label: string;
+  defaultValue: string;
+  options: Array<[string, string]>;
+}): React.ReactElement {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}
+      >
+        {label}
+      </label>
+      <select id={id} name={name} defaultValue={defaultValue} style={fieldStyle}>
+        {options.map(([value, label]) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+const fieldStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '10px 12px',
+  border: '1px solid #e2e8f0',
+  borderRadius: '8px',
+  fontSize: '14px',
+  boxSizing: 'border-box',
+  background: '#fff',
+};

@@ -150,6 +150,9 @@ PUT /workflow/:id/landing
 ### POST /product-research
 
 Creates a product research project and runs the Research Product Intelligence Module.
+The same configuration is used by the dashboard Product Research form. Brief
+constraints are applied to provider-backed candidates after evidence collection;
+they do not enable AI-generated fallback candidates.
 
 Request:
 
@@ -201,6 +204,9 @@ Returns research projects with latest candidate summary.
 ### GET /product-research/:projectId/candidates
 
 Returns ranked product candidates for the latest research run.
+Dashboard clients may use this response together with
+`GET /product-research/:projectId/sources` to render candidate comparison
+snapshots, evidence counts, and evidence-type mixes.
 
 Response:
 
@@ -282,6 +288,77 @@ Response:
 ```json
 {
   "selectedCandidateId": "candidate-id"
+}
+```
+
+---
+
+### POST /product-research/candidates/:candidateId/source-matches/review
+
+Runs AI-assisted source match review for a candidate using persisted source
+evidence only. This endpoint is planned for the Product Research source matching
+upgrade and must not generate candidates or source evidence.
+
+Request:
+
+```json
+{
+  "sourceIds": ["source-id-a", "source-id-b"],
+  "reviewerMode": "draft"
+}
+```
+
+Response:
+
+```json
+{
+  "matches": [
+    {
+      "sourceId": "marketplace-source-id",
+      "matchedSourceId": "sourcing-source-id",
+      "matchStatus": "POTENTIAL_MATCH",
+      "confidenceScore": 82,
+      "reasons": ["similar product function", "compatible price and MOQ"],
+      "warnings": ["image comparison unavailable"],
+      "recommendedAction": "REVIEW_BEFORE_LINKING"
+    }
+  ]
+}
+```
+
+Errors: `404` candidate or source not found, `400` validation error,
+`422` insufficient persisted evidence for review.
+
+---
+
+### POST /product-research/candidates/:candidateId/source-matches/:matchId/decision
+
+Persists a human decision for an AI-assisted source match result.
+
+Request:
+
+```json
+{
+  "decision": "CONFIRMED_MATCH",
+  "reviewerId": "user-id",
+  "comment": "Same product form factor and specs; acceptable sourcing match."
+}
+```
+
+Allowed decisions:
+
+```text
+CONFIRMED_MATCH
+REJECTED_MATCH
+NEEDS_BETTER_SOURCE
+```
+
+Response:
+
+```json
+{
+  "matchId": "match-id",
+  "decision": "CONFIRMED_MATCH"
 }
 ```
 

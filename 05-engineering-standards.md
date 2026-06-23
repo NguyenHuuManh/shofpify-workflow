@@ -158,6 +158,18 @@ Candidate creation must allow provider-backed sourcing evidence to create a
 candidate directly when the evidence represents a specific product opportunity.
 Do not restrict candidate discovery to marketplace or search evidence.
 
+AI-assisted source matching is allowed only as an evidence reviewer. It may
+compare persisted ResearchSource records and candidate metadata to estimate
+whether marketplace/store evidence and sourcing evidence describe the same
+product. It must return structured confidence, reasons, warnings, and an
+action recommendation. It must not generate fallback candidates, supplier
+sources, product URLs, prices, MOQ, or evidence.
+
+Source match reviews that influence final recommendation, source linking, or
+candidate promotion must be persisted or embedded in candidate metadata so the
+decision remains auditable. Uncertain matches require human confirmation before
+they affect the final output.
+
 ---
 
 ## Validation
