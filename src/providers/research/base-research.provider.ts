@@ -25,6 +25,7 @@ import type {
 export interface ResearchHttpRequest {
   url: string;
   init?: RequestInit;
+  metadata?: Record<string, unknown>;
 }
 
 export abstract class HttpResearchProvider implements ResearchProvider {
@@ -59,13 +60,16 @@ export abstract class HttpResearchProvider implements ResearchProvider {
             );
             return undefined;
           }
-          return response.json() as Promise<unknown>;
+          const body = await response.json() as unknown;
+          return { body, metadata: request.metadata };
         }),
       );
 
       return responses
-        .filter((response): response is unknown => response !== undefined)
-        .flatMap((response) => this.normalizeResponse(response, input));
+        .filter((response): response is { body: unknown; metadata: Record<string, unknown> | undefined } =>
+          response !== undefined,
+        )
+        .flatMap((response) => this.normalizeResponse(response.body, input, response.metadata));
     } catch (error) {
       logger.warn(
         { provider: this.name, error },
@@ -88,6 +92,7 @@ export abstract class HttpResearchProvider implements ResearchProvider {
   protected abstract normalizeResponse(
     response: unknown,
     input: ResearchProviderCollectInput,
+    metadata?: Record<string, unknown>,
   ): NormalizedResearchSourceInput[];
 
   protected truncate(value: string, maxLength: number): string {

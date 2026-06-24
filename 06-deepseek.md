@@ -239,10 +239,38 @@ Supplier order placement, purchase orders, inventory sync, warehouse operations,
 and supplier-side fulfillment remain out of scope unless a later approved phase
 explicitly adds them.
 
-Research Services must allow sourcing evidence to create product candidates
-directly when the evidence describes a concrete product opportunity. Do not
-require marketplace/search evidence before a 1688-backed product candidate can
-be ranked.
+Research Services must not allow sourcing evidence to create initial product
+candidates directly. Sourcing evidence is candidate-level enrichment after a
+marketplace-backed candidate exists. Initial discovery must not require 1688
+evidence and must not call sourcing providers by default.
+
+Research Services may run provider-backed query intelligence before marketplace
+candidate discovery. This phase must call only approved Research Provider
+interfaces for `TREND`, `KEYWORD`, and lightweight `SEARCH` evidence. A
+QueryIntelligenceService may extract, rank, deduplicate, and cap derived
+queries from provider responses, but it must not call external APIs directly,
+persist ProductCandidate records, or invent query text. AI may be used only to
+rank/filter/explain provider-backed query candidates; it must not generate
+new keywords that are absent from provider evidence.
+
+The discovery orchestration should be sequential by stage and parallel inside a
+stage:
+
+```text
+Query Intelligence Providers
+    ↓
+QueryIntelligenceService
+    ↓
+Marketplace / Apify candidate discovery using seed query + derived queries
+    ↓
+ProductAggregationService
+    ↓
+Candidate enrichment providers
+```
+
+Every ResearchSource created from a derived query should include query
+provenance in rawData, including `queryUsed`, `querySource`, `queryScore`, and
+`collectionStage`.
 
 AI-assisted source matching must stay in the service layer. A
 SourceMatchingService may call the AI Provider interface to compare already
@@ -258,6 +286,82 @@ may call the AI Provider interface to generate a query plan, then must call
 ResearchService to collect provider-backed evidence. AI planner output must
 never be persisted as ProductCandidate, ResearchSource, supplier URL, cost,
 MOQ, landed cost, or marketplace evidence.
+
+---
+
+# Product Aggregation Constraints
+
+Product candidate discovery is a two-phase pipeline. It must first collect raw
+provider listings, then aggregate multi-source marketplace listings before
+creating individual candidates.
+
+```text
+Raw Provider Listings / Normalized ResearchSource Evidence
+    ↓
+ProductAggregationService (MARKETPLACE evidence)
+    ↓
+AIProvider.generateText (grouping only, no fabrication)
+    ↓
+ProductGroup[] (merged metrics)
+    ↓
+buildCandidatesFromAggregatedGroups()
+    ↓
+Candidate Drafts
+```
+
+AI aggregation must only group provider-backed evidence. It must not generate
+product names, prices, URLs, suppliers, costs, or source evidence. Every input
+listing must be assigned to exactly one group. Uncertain matches go in separate
+groups.
+
+Fallback: when AI is unavailable, the aggregation must use deterministic
+name-based deduplication as the fallback path.
+
+Only `MARKETPLACE` evidence seeds initial ProductCandidate drafts. `SEARCH`,
+`TREND`, `KEYWORD`, `ADS_SIGNAL`, and `SOCIAL` evidence can enrich scoring and
+confidence. `SOURCING` evidence is excluded from initial discovery and can only
+update an existing candidate through CandidateSourcingService.
+
+Do not add a ProductGroup database model for this phase. Product groups are
+transient service-layer outputs and must be persisted only through candidate
+metadata and linked ResearchSource records unless a later approved migration
+adds first-class aggregation review/reporting.
+
+Apify candidate discovery actors are configured in
+`config/apify-candidate-discovery.json`. The Apify candidate discovery provider
+must run only configured actors whose provider type is enabled by the research
+configuration and must normalize dataset items into ResearchSource evidence
+instead of directly creating candidates.
+
+When QueryIntelligenceService selects derived queries, the Apify candidate
+discovery provider may run the same configured actors for each allowed query up
+to the validated query cap. It must preserve the actor ID and query provenance
+on normalized source rawData and must not synthesize missing marketplace
+listings when an actor returns no evidence.
+
+---
+
+# Two-Phase Scoring Constraints
+
+Candidate scoring must run in two phases, never combining market signals with
+unavailable sourcing data into a single score.
+
+Phase 1 (Discovery) — during ResearchService.run():
+
+- Active factors: demand, trend, competition, creativePotential, risk
+- marginScore only when landedCost or COGS data exists
+- Excluded factors: supplier, sourcing, factoryCost, logistics
+- Weights re-normalized for active factors only
+
+Phase 2 (Full) — after CandidateSourcingService.enrichCandidate():
+
+- All ten factors active
+- Sourcing-dependent factors backed by real 1688 evidence
+- Replaces candidate winningScore and all factor scores
+
+Margin constraint: never compute marginScore from price without cost data.
+When COGS and landedCost are both unavailable, marginScore must fallback to 50
+with metadata flag marginEstimated: true.
 
 ---
 

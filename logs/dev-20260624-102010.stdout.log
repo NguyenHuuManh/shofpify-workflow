@@ -1,0 +1,211 @@
+
+> shopify-autonomous-store@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1479ms
+ ✓ Compiled /src/middleware in 196ms (126 modules)
+ ○ Compiling /dashboard/product-research ...
+ ✓ Compiled /dashboard/product-research in 1595ms (918 modules)
+[2026-06-24 10:20:44.170 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 4
+[2026-06-24 10:20:44.186 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 3
+[2026-06-24 10:20:44.195 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 4
+[2026-06-24 10:20:44.201 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 3
+[2026-06-24 10:20:44.209 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 4
+ GET /dashboard/product-research 200 in 3378ms
+ ○ Compiling / ...
+ ✓ Compiled /api/auth/me in 2.5s (1068 modules)
+ GET /api/auth/me 200 in 4452ms
+[2026-06-24 10:20:49.221 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 2
+ GET /login 200 in 4730ms
+ GET / 200 in 5295ms
+ GET /api/auth/me 200 in 74ms
+[2026-06-24 10:20:49.516 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:21:00.244 +0700] [32mINFO[39m (shopify-autonomous-store): [36mAutonomous product discovery job created[39m
+    discoveryJobId: "cmqriahqt0003h28lh0226cqu"
+    researchProjectId: "cmqriahqq0001h28lxafqlniw"
+[2026-06-24 10:21:00.245 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "research-queue"
+[2026-06-24 10:21:00.248 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "content-queue"
+[2026-06-24 10:21:00.248 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "seo-queue"
+[2026-06-24 10:21:00.248 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "landing-queue"
+[2026-06-24 10:21:00.249 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "publish-queue"
+[2026-06-24 10:21:00.234 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:21:00.235 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "BEGIN"
+    duration: 0
+[2026-06-24 10:21:00.237 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"ResearchProject\" (\"id\",\"query\",\"status\",\"createdAt\",\"updatedAt\") VALUES ($1,$2,CAST($3::text AS \"public\".\"ResearchProjectStatus\"),$4,$5) RETURNING \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\""
+    duration: 0
+[2026-06-24 10:21:00.241 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"ResearchDiscoveryJob\" (\"id\",\"researchProjectId\",\"status\",\"input\",\"createdAt\",\"updatedAt\") VALUES ($1,$2,CAST($3::text AS \"public\".\"ResearchDiscoveryJobStatus\"),$4,$5,$6) RETURNING \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\""
+    duration: 1
+[2026-06-24 10:21:00.242 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "COMMIT"
+    duration: 0
+[2026-06-24 10:21:00.244 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"AuditLog\" (\"id\",\"entityType\",\"entityId\",\"action\",\"actorId\",\"metadata\",\"createdAt\") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING \"public\".\"AuditLog\".\"id\", \"public\".\"AuditLog\".\"entityType\", \"public\".\"AuditLog\".\"entityId\", \"public\".\"AuditLog\".\"action\", \"public\".\"AuditLog\".\"actorId\", \"public\".\"AuditLog\".\"metadata\", \"public\".\"AuditLog\".\"createdAt\""
+    duration: 0
+ GET /api/auth/me 401 in 16ms
+ GET /api/auth/me 401 in 15ms
+ ✓ Compiled /api/health in 289ms (761 modules)
+[2026-06-24 10:23:02.319 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis unavailable — queue features disabled[39m
+    error: ""
+[2026-06-24 10:23:02.319 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis connecting...[39m
+    attempt: 1
+    delay: 500
+[2026-06-24 10:23:02.319 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis connection closed[39m
+[2026-06-24 10:23:02.832 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis unavailable — queue features disabled[39m
+    error: ""
+[2026-06-24 10:23:02.832 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis connecting...[39m
+    attempt: 2
+    delay: 1000
+[2026-06-24 10:23:02.832 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis connection closed[39m
+[2026-06-24 10:23:02.310 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:23:02.314 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:23:03.835 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis unavailable — queue features disabled[39m
+    error: ""
+[2026-06-24 10:23:03.835 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis connecting...[39m
+    attempt: 3
+    delay: 1500
+[2026-06-24 10:23:03.835 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis connection closed[39m
+ GET /api/health 503 in 5949ms
+[2026-06-24 10:23:05.341 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis unavailable — queue features disabled[39m
+    error: ""
+[2026-06-24 10:23:05.341 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis unavailable after 3 retries — running without queue[39m
+[2026-06-24 10:23:05.342 +0700] [33mWARN[39m (shopify-autonomous-store): [36mRedis connection closed[39m
+[2026-06-24 10:23:05.342 +0700] [31mERROR[39m (shopify-autonomous-store): [36mRedis health check failed[39m
+    error: {
+      "type": "Error",
+      "message": "Connection is closed.",
+      "stack":
+          Error: Connection is closed.
+              at close (webpack-internal:///(rsc)/./node_modules/ioredis/built/redis/event_handler.js:214:25)
+              at Socket.eval (webpack-internal:///(rsc)/./node_modules/ioredis/built/redis/event_handler.js:190:20)
+              at Object.onceWrapper (node:events:634:26)
+              at Socket.emit (node:events:519:28)
+              at TCP.<anonymous> (node:net:346:12)
+              at TCP.callbackTrampoline (node:internal/async_hooks:130:17)
+    }
+ POST /dashboard/product-research 303 in 378967ms
+[2026-06-24 10:27:18.914 +0700] [32mINFO[39m (shopify-autonomous-store): [36mAutonomous product discovery job enqueued[39m
+    discoveryJobId: "cmqriahqt0003h28lh0226cqu"
+    jobId: "1"
+    queue: "research-queue"
+[2026-06-24 10:27:19.072 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:27:19.072 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:27:19.078 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 2
+[2026-06-24 10:27:19.079 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 2
+[2026-06-24 10:27:19.084 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 3
+[2026-06-24 10:27:19.084 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 3
+[2026-06-24 10:27:19.100 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE \"public\".\"ResearchProject\".\"id\" IN ($1,$2) OFFSET $3"
+    duration: 2
+ GET /api/health 503 in 13ms
+[2026-06-24 10:27:32.283 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:27:32.284 +0700] [31mERROR[39m (shopify-autonomous-store): [36mRedis health check failed[39m
+    error: {
+      "type": "Error",
+      "message": "Connection is closed.",
+      "stack":
+          Error: Connection is closed.
+              at EventEmitter.sendCommand (webpack-internal:///(rsc)/./node_modules/ioredis/built/Redis.js:344:28)
+              at EventEmitter.eval [as ping] (webpack-internal:///(rsc)/./node_modules/ioredis/built/utils/Commander.js:90:25)
+              at GET (webpack-internal:///(rsc)/./src/app/api/health/route.ts:41:61)
+              at async C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:57228
+              at async eT.execute (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:46851)
+              at async eT.handle (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:58760)
+              at async doRender (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:1366:42)
+              at async cacheEntry.responseCache.get.routeKind (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:1588:28)
+              at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:1496:28)
+              at async DevServer.renderPageComponent (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:1924:24)
+              at async DevServer.renderToResponseImpl (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:1962:32)
+              at async DevServer.pipeImpl (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:922:25)
+              at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\next-server.js:272:17)
+              at async DevServer.handleRequestImpl (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:818:17)
+              at async C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+              at async Span.traceAsyncFn (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\trace\trace.js:154:20)
+              at async DevServer.handleRequest (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+              at async invokeRender (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\lib\router-server.js:179:21)
+              at async handleRequest (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\lib\router-server.js:359:24)
+              at async requestHandlerImpl (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\lib\router-server.js:383:13)
+              at async Server.requestListener (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\lib\start-server.js:141:13)
+    }
+ GET /api/health 503 in 9ms
+[2026-06-24 10:27:43.847 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:27:43.848 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:27:43.848 +0700] [31mERROR[39m (shopify-autonomous-store): [36mRedis health check failed[39m
+    error: {
+      "type": "Error",
+      "message": "Connection is closed.",
+      "stack":
+          Error: Connection is closed.
+              at EventEmitter.sendCommand (webpack-internal:///(rsc)/./node_modules/ioredis/built/Redis.js:344:28)
+              at EventEmitter.eval [as ping] (webpack-internal:///(rsc)/./node_modules/ioredis/built/utils/Commander.js:90:25)
+              at GET (webpack-internal:///(rsc)/./src/app/api/health/route.ts:41:61)
+              at async C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:57228
+              at async eT.execute (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:46851)
+              at async eT.handle (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:58760)
+              at async doRender (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:1366:42)
+              at async cacheEntry.responseCache.get.routeKind (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:1588:28)
+              at async DevServer.renderToResponseWithComponentsImpl (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:1496:28)
+              at async DevServer.renderPageComponent (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:1924:24)
+              at async DevServer.renderToResponseImpl (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:1962:32)
+              at async DevServer.pipeImpl (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:922:25)
+              at async NextNodeServer.handleCatchallRenderRequest (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\next-server.js:272:17)
+              at async DevServer.handleRequestImpl (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\base-server.js:818:17)
+              at async C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+              at async Span.traceAsyncFn (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\trace\trace.js:154:20)
+              at async DevServer.handleRequest (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+              at async invokeRender (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\lib\router-server.js:179:21)
+              at async handleRequest (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\lib\router-server.js:359:24)
+              at async requestHandlerImpl (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\lib\router-server.js:383:13)
+              at async Server.requestListener (C:\Users\Crossian LLC\workspaces\shofpify-workflow\node_modules\next\dist\server\lib\start-server.js:141:13)
+    }
+[?25h

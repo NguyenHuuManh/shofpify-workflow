@@ -41,6 +41,8 @@ export const researchRunConfigSchema = z.object({
   riskTolerance: researchRiskToleranceSchema.default('medium'),
   excludedCategories: z.array(z.string().min(1)).default([]),
   objective: z.string().min(1).max(120).default('find_winning_product'),
+  maxCandidates: z.coerce.number().int().min(1).max(20).default(5),
+  maxDerivedQueries: z.coerce.number().int().min(0).max(10).default(5),
   sourcing: z
     .object({
       targetSource: z.enum(['1688']).default('1688'),
@@ -64,7 +66,6 @@ export const researchRunConfigSchema = z.object({
   supplementalProviders: z
     .array(supplementalProviderSchema)
     .default([
-      'search',
       'marketplace',
       'trend',
       'keyword',
@@ -112,6 +113,33 @@ export const normalizedResearchSourceSchema = z.object({
   capturedAt: z.coerce.date().default(() => new Date()),
 });
 
+export const apifyCandidateSourceTypeSchema = z.enum([
+  'MARKETPLACE',
+  'SEARCH',
+  'TREND',
+  'ADS_SIGNAL',
+]);
+
+export const apifyCandidateProviderTypeSchema = z.enum([
+  'marketplace',
+  'search',
+  'trend',
+  'adsSignal',
+]);
+
+export const apifyCandidateActorConfigSchema = z.object({
+  actorId: z.string().min(1),
+  label: z.string().min(1).max(120).optional(),
+  sourceType: apifyCandidateSourceTypeSchema.default('MARKETPLACE'),
+  providerType: apifyCandidateProviderTypeSchema.optional(),
+  input: z.record(z.unknown()).optional(),
+  maxItems: z.coerce.number().int().min(1).max(25).default(10),
+});
+
+export const apifyCandidateActorConfigsSchema = z
+  .array(apifyCandidateActorConfigSchema)
+  .default([]);
+
 export const providerEvidenceMetricsSchema = z.object({
   demandSignal: z.coerce.number().min(0).max(100).optional(),
   trendSignal: z.coerce.number().min(0).max(100).optional(),
@@ -134,6 +162,44 @@ export const providerEvidenceMetricsSchema = z.object({
   cpc: z.coerce.number().nonnegative().optional(),
 });
 
+export const researchCollectionStageSchema = z.enum([
+  'query_intelligence',
+  'candidate_discovery',
+  'candidate_enrichment',
+  'sourcing',
+]);
+
+export const queryIntelligenceSourceTypeSchema = z.enum(['TREND', 'KEYWORD', 'SEARCH']);
+
+export const queryIntelligenceCandidateSchema = z.object({
+  query: z.string().min(1).max(255),
+  sourceTypes: z.array(queryIntelligenceSourceTypeSchema).min(1),
+  providers: z.array(z.string().min(1)).min(1),
+  searchVolume: z.coerce.number().int().nonnegative().optional(),
+  trendScore: z.coerce.number().min(0).max(100).optional(),
+  cpc: z.coerce.number().nonnegative().optional(),
+  competitionScore: z.coerce.number().min(0).max(100).optional(),
+  buyerIntentScore: z.coerce.number().min(0).max(100),
+  relevanceScore: z.coerce.number().min(0).max(100),
+  riskScore: z.coerce.number().min(0).max(100).optional(),
+  score: z.coerce.number().min(0).max(100),
+  reason: z.string().min(1).max(500),
+});
+
+export const selectedDiscoveryQuerySchema = z.object({
+  query: z.string().min(1).max(255),
+  source: z.enum(['SEED_QUERY', 'QUERY_INTELLIGENCE']),
+  sourceTypes: z.array(queryIntelligenceSourceTypeSchema).default([]),
+  score: z.coerce.number().min(0).max(100),
+  reason: z.string().min(1).max(500),
+});
+
+export const queryIntelligenceResultSchema = z.object({
+  seedQuery: z.string().min(1).max(255),
+  selectedQueries: z.array(selectedDiscoveryQuerySchema).min(1),
+  candidateQueries: z.array(queryIntelligenceCandidateSchema).default([]),
+});
+
 export const researchCandidateDraftSchema = z.object({
   name: z.string().min(1).max(255),
   positioning: z.string().min(1).max(1000),
@@ -150,6 +216,40 @@ export const researchCandidateDraftSchema = z.object({
   confidence: z.enum(['low', 'medium', 'high']).default('low'),
   risks: z.array(z.string().min(1)).default([]),
   metadata: z.record(z.unknown()).optional(),
+});
+
+export const productAggregationSourceSchema = normalizedResearchSourceSchema.extend({
+  sourceKey: z.string().min(1).max(500),
+});
+
+export const productAggregationMergedMetricsSchema = z.object({
+  demandSignal: z.coerce.number().min(0).max(100).optional(),
+  medianPrice: z.coerce.number().positive().optional(),
+  minPrice: z.coerce.number().positive().optional(),
+  maxPrice: z.coerce.number().positive().optional(),
+  ratingAverage: z.coerce.number().min(0).max(5).optional(),
+  reviewCountTotal: z.coerce.number().int().nonnegative().optional(),
+  orderCountTotal: z.coerce.number().int().nonnegative().optional(),
+  sourceCount: z.coerce.number().int().positive(),
+});
+
+export const productAggregationGroupSchema = z.object({
+  groupId: z.string().min(1).max(255),
+  name: z.string().min(1).max(255),
+  sourceKeys: z.array(z.string().min(1)).min(1),
+  method: z.enum(['ai_grouping', 'deterministic_dedup']),
+  rationale: z.string().max(1000).optional(),
+  mergedMetrics: productAggregationMergedMetricsSchema,
+});
+
+export const productAggregationAiOutputSchema = z.object({
+  groups: z.array(
+    z.object({
+      name: z.string().min(1).max(255),
+      sourceKeys: z.array(z.string().min(1)).min(1),
+      rationale: z.string().max(1000).optional(),
+    }),
+  ),
 });
 
 export const researchGenerationSchema = z.object({
@@ -493,8 +593,19 @@ export type ResearchRunConfig = z.output<typeof researchRunConfigSchema>;
 export type SupplementalProviderName = z.infer<typeof supplementalProviderSchema>;
 export type CandidateScorePayload = z.infer<typeof candidateScorePayloadSchema>;
 export type NormalizedResearchSourceInput = z.infer<typeof normalizedResearchSourceSchema>;
+export type ApifyCandidateSourceType = z.infer<typeof apifyCandidateSourceTypeSchema>;
+export type ApifyCandidateActorConfig = z.infer<typeof apifyCandidateActorConfigSchema>;
 export type ProviderEvidenceMetrics = z.infer<typeof providerEvidenceMetricsSchema>;
+export type ResearchCollectionStage = z.infer<typeof researchCollectionStageSchema>;
+export type QueryIntelligenceSourceType = z.infer<typeof queryIntelligenceSourceTypeSchema>;
+export type QueryIntelligenceCandidate = z.infer<typeof queryIntelligenceCandidateSchema>;
+export type SelectedDiscoveryQuery = z.infer<typeof selectedDiscoveryQuerySchema>;
+export type QueryIntelligenceResult = z.infer<typeof queryIntelligenceResultSchema>;
 export type ResearchCandidateDraft = z.infer<typeof researchCandidateDraftSchema>;
+export type ProductAggregationSource = z.infer<typeof productAggregationSourceSchema>;
+export type ProductAggregationMergedMetrics = z.infer<typeof productAggregationMergedMetricsSchema>;
+export type ProductAggregationGroup = z.infer<typeof productAggregationGroupSchema>;
+export type ProductAggregationAiOutput = z.infer<typeof productAggregationAiOutputSchema>;
 export type ResearchGeneration = z.infer<typeof researchGenerationSchema>;
 export type StartResearchRunInput = z.input<typeof startResearchRunSchema>;
 export type CreateResearchProjectInput = z.input<typeof createResearchProjectSchema>;

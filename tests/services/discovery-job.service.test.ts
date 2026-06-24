@@ -5,11 +5,12 @@
 
 import { describe, expect, it, vi } from 'vitest';
 import { DiscoveryJobService } from '@/services/discovery-job.service';
+import { QueryIntelligenceService } from '@/services/query-intelligence.service';
 import { BaseRepository } from '@/repositories/base.repository';
-import type { AIProvider } from '@/types/ai-provider.interface';
+import type { ResearchProvider } from '@/types/research.types';
 
 describe('DiscoveryJobService', () => {
-  it('should create a discovery job and run provider-backed research for AI-planned queries', async () => {
+  it('should collect provider-backed keywords and run discovery for each', async () => {
     vi.spyOn(BaseRepository, 'transaction').mockImplementation(async (fn) =>
       fn(undefined as never),
     );
@@ -64,32 +65,6 @@ describe('DiscoveryJobService', () => {
       name: 'Pet Travel Water Bottle',
       winningScore: 82,
     };
-    const aiProvider: AIProvider = {
-      providerName: 'test-ai',
-      generateText: vi.fn().mockResolvedValue({
-        text: JSON.stringify({
-          queries: [
-            {
-              query: 'pet travel accessories',
-              angle: 'Travel convenience',
-              rationale: 'Good fit for US buyers',
-              inventedProduct: 'ignored',
-            },
-            {
-              query: 'car interior organizers',
-              angle: 'Everyday utility',
-              rationale: 'Useful recurring buyer problem',
-            },
-          ],
-        }),
-        model: 'test-model',
-        usage: {
-          promptTokens: 10,
-          completionTokens: 10,
-          totalTokens: 20,
-        },
-      }),
-    };
     const jobRepo = {
       create: vi.fn().mockResolvedValue(job),
       findByIdOrThrow: vi.fn().mockResolvedValue(job),
@@ -110,9 +85,22 @@ describe('DiscoveryJobService', () => {
       create: vi.fn().mockResolvedValue({ id: 'audit_001' }),
     };
     const researchSvc = {
-      run: vi.fn().mockResolvedValue({
-        sources: [{ id: 'source_001' }],
-      }),
+      run: vi.fn().mockResolvedValue({ sources: [{ id: 'source_001' }] }),
+    };
+    // Provider-backed keyword source
+    const keywordProvider: ResearchProvider = {
+      name: 'KeywordTestProvider',
+      providerType: 'keyword',
+      collect: vi.fn().mockResolvedValue([{
+        type: 'KEYWORD',
+        provider: 'TestKeyword',
+        externalId: 'cordless portable blender',
+        title: 'cordless portable blender keyword',
+        extractedSignal: 'cordless portable blender, volume 12000, CPC 1.8',
+        rawData: { metrics: { searchVolume: 12000, cpc: 1.8 } },
+        confidence: 0.74,
+        capturedAt: new Date(),
+      }]),
     };
 
     const service = new DiscoveryJobService(
@@ -121,29 +109,19 @@ describe('DiscoveryJobService', () => {
       candidateRepo as never,
       auditRepo as never,
       researchSvc as never,
-      aiProvider,
+      new QueryIntelligenceService(),
+      [keywordProvider],
     );
 
     const started = await service.start(input);
     const result = await service.runJob(started.discoveryJob.id);
 
     expect(started.discoveryJob.id).toBe('job_001');
-    expect(aiProvider.generateText).toHaveBeenCalledOnce();
+    // No seed query → queries Google Trends categories + keyword providers
+    // Mock keyword provider returns "cordless portable blender"
     expect(researchSvc.run).toHaveBeenCalledTimes(2);
-    expect(researchSvc.run).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        researchProjectId: 'project_001',
-        productIdea: 'pet travel accessories',
-      }),
-    );
-    expect(jobRepo.markRunning).toHaveBeenCalledWith(
-      'job_001',
-      expect.objectContaining({
-        queries: expect.arrayContaining([
-          expect.objectContaining({ query: 'pet travel accessories' }),
-        ]),
-      }),
+    expect(researchSvc.run).toHaveBeenCalledWith(
+      expect.objectContaining({ productIdea: 'cordless portable blender' }),
     );
     expect(jobRepo.markCompleted).toHaveBeenCalledWith(
       'job_001',
@@ -157,7 +135,7 @@ describe('DiscoveryJobService', () => {
     expect(result.result.topCandidates.at(0)?.id).toBe('candidate_001');
   });
 
-  it('should use deterministic query planning when no AI provider is available', async () => {
+  it('should use seed query only when providers return no keyword evidence', async () => {
     vi.spyOn(BaseRepository, 'transaction').mockImplementation(async (fn) =>
       fn(undefined as never),
     );
@@ -215,34 +193,34 @@ describe('DiscoveryJobService', () => {
     const researchSvc = {
       run: vi.fn().mockResolvedValue({ sources: [] }),
     };
+    // Empty provider returns no evidence
+    const emptyProvider: ResearchProvider = {
+      name: 'EmptyProvider',
+      providerType: 'keyword',
+      collect: vi.fn().mockResolvedValue([]),
+    };
 
     const service = new DiscoveryJobService(
       jobRepo as never,
       projectRepo as never,
-      {
-        findByResearchProjectId: vi.fn().mockResolvedValue([]),
-      } as never,
-      {
-        create: vi.fn().mockResolvedValue({ id: 'audit_002' }),
-      } as never,
+      { findByResearchProjectId: vi.fn().mockResolvedValue([]) } as never,
+      { create: vi.fn().mockResolvedValue({ id: 'audit_002' }) } as never,
       researchSvc as never,
+      new QueryIntelligenceService(),
+      [emptyProvider],
     );
 
     await service.start(input);
     await service.runJob('job_002');
 
-    expect(researchSvc.run).toHaveBeenCalledTimes(2);
-    expect(researchSvc.run).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        productIdea: 'home organization accessories',
-      }),
+    // Should run only 1 query (seed query only, no derived keywords)
+    expect(researchSvc.run).toHaveBeenCalledTimes(1);
+    expect(researchSvc.run).toHaveBeenCalledWith(
+      expect.objectContaining({ productIdea: 'home organization' }),
     );
     expect(jobRepo.markCompleted).toHaveBeenCalledWith(
       'job_002',
-      expect.objectContaining({
-        candidateCount: 0,
-      }),
+      expect.objectContaining({ candidateCount: 0 }),
     );
   });
 });

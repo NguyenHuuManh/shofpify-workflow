@@ -63,6 +63,8 @@ Agent → Service Layer → Provider Layer → External API
 - Agent → Redis (direct cache/queue access)
 - Controller → Prisma (bypass services)
 - UI → External API (bypass backend)
+- AI Aggregation → Fabricate product names, prices, URLs, suppliers, or costs
+- Discovery Scoring → Include sourcing factors (supplier, sourcing, factoryCost, logistics) before 1688 enrichment
 
 ### Required Patterns (Always)
 
@@ -70,6 +72,8 @@ Agent → Service Layer → Provider Layer → External API
 - Service → Provider Layer
 - Provider → External API
 - Service → Repository → Prisma
+- ProductAggregationService → AIProvider (for grouping only, no fabrication)
+- CandidateScoringService → Phase 1 (Discovery, 6 factors) → Phase 2 (Full, 10 factors after sourcing)
 
 ### Shopify Integration
 
@@ -82,6 +86,117 @@ Repositories handle ONLY database reads and writes. They must NEVER contain busi
 ### Service Layer
 
 Services handle business logic, workflow execution, validation coordination, and external integrations. Services must be reusable.
+
+---
+
+## Product Research Rules
+
+### Query Intelligence (Phase -1 — before marketplace discovery)
+
+Before marketplace and Apify candidate discovery, Product Research may collect
+provider-backed query intelligence from `TREND`, `KEYWORD`, and approved
+lightweight `SEARCH` evidence.
+
+```
+TREND / KEYWORD / SEARCH evidence
+    ↓
+QueryIntelligenceService.selectQueries()
+    ↓
+seed query + capped derived queries
+    ↓
+MARKETPLACE / Apify candidate discovery
+```
+
+Query intelligence rules:
+- Derived queries must come from provider responses or normalized
+  ResearchSource evidence
+- The original seed query must always remain the first discovery query
+- AI may rank, filter, deduplicate, or explain provider-backed query evidence
+  only; it must not invent keywords
+- Marketplace and Apify evidence created from query intelligence must preserve
+  query provenance in `rawData`, including `queryUsed`, `querySource`,
+  `queryScore`, and `collectionStage`
+- Query intelligence must not create ProductCandidate records directly
+- When no usable query intelligence exists, use the seed query only
+
+### Product Aggregation (Phase 0 — before candidate creation)
+
+Before individual candidates are created, marketplace listings from multiple
+providers must be aggregated into unified product groups.
+
+```
+Raw provider listings / normalized ResearchSource evidence
+    ↓
+ProductAggregationService.aggregate() for MARKETPLACE evidence
+    ↓
+AIProvider.generateText() — group only, never fabricate
+    ↓  (fallback: deterministic name dedup if AI unavailable)
+ProductGroup[] (merged demand, price, rating, reviews, orders)
+    ↓
+buildCandidatesFromAggregatedGroups()
+    ↓
+Candidate Drafts
+```
+
+AI aggregation rules:
+- Group items describing the same real-world product by: product name tokens,
+  price cluster, review/order scale, provider context
+- Never fabricate: product names, prices, URLs, suppliers, costs, evidence
+- Assign every input listing to exactly one group
+- Place uncertain matches in separate groups
+- Fall back to deterministic name-based dedup when AI is unavailable
+- Use SEARCH, TREND, KEYWORD, ADS_SIGNAL, and SOCIAL evidence only for scoring,
+  risk, confidence, and source panels unless a later approved phase expands
+  candidate seeding
+- Exclude SOURCING evidence from initial discovery; it enriches an existing
+  ProductCandidate through CandidateSourcingService
+
+Merge rules per product group:
+- demandSignal: maximum across all sources
+- price: median (preserve min/max range)
+- rating: arithmetic mean
+- reviewCount, orderCount: sum across all sources
+- sourceCount: used for confidence scoring
+
+Persistence rules:
+- Do not create a ProductGroup database model in this phase
+- Store aggregation audit details in ProductCandidate.metadata and linked
+  ResearchSource records
+- Respect the configured candidate output limit
+- Apify candidate discovery actors are configured in
+  `config/apify-candidate-discovery.json`
+
+### Two-Phase Candidate Scoring
+
+Scoring must run in two distinct phases, never combining market signals with
+unavailable sourcing data into a single score.
+
+**Phase 1 — Discovery Scoring (during ResearchService.run()):**
+
+Active factors (6):
+
+| Factor | Weight (re-normalized) |
+|---|---|
+| demandScore | ~33% |
+| trendScore | ~20% |
+| marginScore | ~17% (only if landedCost/COGS available) |
+| competitionScore | ~16% |
+| creativePotentialScore | ~8% |
+| riskScore | ~6% |
+
+Excluded: supplierScore, sourcingScore, factoryCostScore, logisticsScore.
+
+**Phase 2 — Full Scoring (after CandidateSourcingService.enrichCandidate()):**
+
+All ten factors active with original weights. Runs after 1688 sourcing
+enrichment completes. Replaces the candidate's winningScore and all factor
+scores with sourcing-backed data.
+
+**Margin constraint:**
+- When price exists but COGS and landedCost are both unavailable, marginScore
+  must fallback to 50 (not computed from price alone)
+- Flag marginEstimated: true in candidate metadata
+- Only use actual landedCost from 1688 for margin calculation in Phase 2
 
 ---
 
@@ -249,3 +364,11 @@ Before submitting any code change, verify:
 - [ ] TypeScript only (no JS)
 - [ ] Code generation order was followed
 - [ ] Workflow states are not skipped
+- [ ] Query Intelligence runs before marketplace discovery when enabled
+- [ ] Derived queries are provider-backed and capped by validated config
+- [ ] Query provenance is persisted in downstream ResearchSource rawData
+- [ ] Product Aggregation runs before candidate creation (no per-listing candidates)
+- [ ] AI aggregation never fabricates product data (names, prices, URLs, suppliers)
+- [ ] Discovery scoring excludes sourcing factors (supplier, sourcing, factoryCost, logistics)
+- [ ] Full scoring runs after CandidateSourcingService.enrichCandidate()
+- [ ] marginScore never computed from price alone without COGS/landedCost

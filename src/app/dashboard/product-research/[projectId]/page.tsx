@@ -311,6 +311,7 @@ function CandidateCard({
   const productImage = extractProductImage(sources);
   const marketplaceSource = findSourceByType(sources, 'MARKETPLACE');
   const sourcingSource = findSourceByType(sources, 'SOURCING');
+  const storeSourceUrl = getCandidateSourceUrl(candidate.metadata) ?? marketplaceSource?.url;
   const storePrice = extractStorePrice(sources) ?? candidate.recommendedPrice;
 
   return (
@@ -405,10 +406,10 @@ function CandidateCard({
 
         <EvidenceSummary sources={sources} />
 
-        {(marketplaceSource?.url || sourcingSource?.url) && (
+        {(storeSourceUrl || sourcingSource?.url) && (
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {marketplaceSource?.url && (
-              <ExternalSourceLink href={marketplaceSource.url} label="View on Store" />
+            {storeSourceUrl && (
+              <ExternalSourceLink href={storeSourceUrl} label="Open on Store" />
             )}
             {sourcingSource?.url && (
               <ExternalSourceLink href={sourcingSource.url} label="View on 1688" accent />
@@ -464,6 +465,7 @@ function CandidateDetailPanel({
 }): React.ReactElement {
   const marketplaceSource = findSourceByType(sources, 'MARKETPLACE');
   const sourcingSource = findSourceByType(sources, 'SOURCING');
+  const storeSourceUrl = getCandidateSourceUrl(candidate.metadata) ?? marketplaceSource?.url;
 
   return (
     <div id="candidate-detail">
@@ -488,10 +490,10 @@ function CandidateDetailPanel({
               {candidate.sellingAngle}
             </p>
           )}
-          {(marketplaceSource?.url || sourcingSource?.url) && (
+          {(storeSourceUrl || sourcingSource?.url) && (
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
-              {marketplaceSource?.url && (
-                <ExternalSourceLink href={marketplaceSource.url} label="View on Store" />
+              {storeSourceUrl && (
+                <ExternalSourceLink href={storeSourceUrl} label="Open on Store" />
               )}
               {sourcingSource?.url && (
                 <ExternalSourceLink href={sourcingSource.url} label="View on 1688" accent />
@@ -1148,6 +1150,20 @@ function findSourceByType(
   return sources.find((source) => source.type === type && Boolean(source.url)) ??
     sources.find((source) => source.type === type) ??
     null;
+}
+
+function getCandidateSourceUrl(metadata: ProductCandidate['metadata']): string | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null;
+  }
+
+  const sourceUrl = (metadata as Record<string, unknown>).sourceUrl;
+  if (typeof sourceUrl !== 'string') {
+    return null;
+  }
+
+  const trimmed = sourceUrl.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 function extractStorePrice(sources: ResearchSource[]): number | null {

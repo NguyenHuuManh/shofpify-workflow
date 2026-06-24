@@ -153,8 +153,18 @@ Creates a product research project and runs the Research Product Intelligence Mo
 The same configuration is used by the dashboard Product Research form. Brief
 constraints are applied to provider-backed candidates after evidence collection;
 they do not enable AI-generated fallback candidates. The initial run discovers
-product candidates from demand/store evidence only; 1688 supplier lookup and
-factory-cost enrichment are run later per candidate.
+product candidates through the two-phase discovery pipeline:
+
+```text
+raw provider listings -> aggregated product groups -> ProductCandidate drafts
+```
+
+The initial run seeds candidates from marketplace evidence only. Search, trend,
+keyword, ads, and social evidence may enrich scores or confidence; 1688 supplier
+lookup and factory-cost enrichment are run later per candidate.
+Before marketplace discovery, the service may run provider-backed query
+intelligence to select derived queries. These derived queries come only from
+provider evidence and are used to improve marketplace/Apify search relevance.
 
 Request:
 
@@ -170,6 +180,7 @@ Request:
   "riskTolerance": "medium",
   "excludedCategories": ["regulated", "fragile"],
   "objective": "find_winning_product",
+  "maxDerivedQueries": 5,
   "sourcing": {
     "targetSource": "1688",
     "targetCurrency": "USD",
@@ -181,7 +192,8 @@ Request:
       "packagingPerUnit": 1.5,
       "qcPerUnit": 0.75
     }
-  }
+  },
+  "maxCandidates": 5
 }
 ```
 
@@ -286,6 +298,8 @@ Returns ranked product candidates for the latest research run.
 Dashboard clients may use this response together with
 `GET /product-research/:projectId/sources` to render candidate comparison
 snapshots, evidence counts, and evidence-type mixes.
+Candidate count is capped by the validated run configuration rather than a
+hardcoded API limit.
 
 Response:
 
@@ -505,6 +519,28 @@ Response:
 ```json
 {
   "sources": [
+    {
+      "id": "marketplace-source-id",
+      "type": "MARKETPLACE",
+      "provider": "Apify Google Shopping",
+      "url": "https://example.com/product.html",
+      "externalId": "marketplace-listing-id",
+      "title": "Cordless Portable Blender",
+      "extractedSignal": "Cordless Portable Blender marketplace listing, price 49, 1200 reviews",
+      "rawData": {
+        "queryUsed": "cordless portable blender",
+        "querySource": "QUERY_INTELLIGENCE",
+        "queryScore": 86,
+        "collectionStage": "candidate_discovery",
+        "metrics": {
+          "price": 49,
+          "rating": 4.6,
+          "reviewCount": 1200
+        }
+      },
+      "confidence": 0.74,
+      "capturedAt": "2026-06-16T00:00:00.000Z"
+    },
     {
       "id": "source-id",
       "type": "SOURCING",

@@ -16,10 +16,16 @@ import type {
   DiscoveryQueryPlan,
   CandidateScorePayload,
   NormalizedResearchSourceInput,
+  ProductAggregationGroup,
+  ProductAggregationSource,
   ProviderEvidenceMetrics,
+  QueryIntelligenceCandidate,
+  QueryIntelligenceResult,
   ResearchCandidateDraft,
+  ResearchCollectionStage,
   ResearchRunConfig,
   ResearchRunConfigInput,
+  SelectedDiscoveryQuery,
   SupplementalProviderName,
 } from '@/schemas/research.schema';
 
@@ -58,6 +64,15 @@ export interface ResearchProviderCollectInput {
   productIdea: string;
   config: ResearchRunConfig;
   candidates?: ResearchCandidateDraft[];
+  collectionContext?: ResearchCollectionContext;
+}
+
+export interface ResearchCollectionContext {
+  stage: ResearchCollectionStage;
+  queries: string[];
+  selectedQueries?: SelectedDiscoveryQuery[];
+  queryMetadata?: Record<string, SelectedDiscoveryQuery>;
+  priorSources?: NormalizedResearchSourceInput[];
 }
 
 export interface ResearchProvider {
@@ -78,6 +93,30 @@ export interface NormalizedProviderEvidence {
   source: NormalizedResearchSourceInput;
   metrics?: ProviderEvidenceMetrics;
 }
+
+export interface ProductAggregationInput {
+  productIdea: string;
+  sources: NormalizedResearchSourceInput[];
+  maxGroups: number;
+}
+
+export interface ProductAggregationResult {
+  groups: ProductAggregationGroup[];
+  sources: ProductAggregationSource[];
+  method: 'ai_grouping' | 'deterministic_dedup';
+}
+
+export interface QueryIntelligenceInput {
+  productIdea: string;
+  config: ResearchRunConfig;
+  sources: NormalizedResearchSourceInput[];
+}
+
+export type {
+  QueryIntelligenceCandidate,
+  QueryIntelligenceResult,
+  SelectedDiscoveryQuery,
+};
 
 export interface RunResearchInput {
   workflowId?: string;

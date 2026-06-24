@@ -1,0 +1,977 @@
+
+> shopify-autonomous-store@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1553ms
+ ✓ Compiled /src/middleware in 224ms (126 modules)
+ ✓ Compiled /api/health in 308ms (144 modules)
+ GET /api/health 200 in 1968ms
+[2026-06-24 10:28:33.714 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:28:33.721 +0700] [32mINFO[39m (shopify-autonomous-store): [36mRedis connected[39m
+ ○ Compiling /dashboard/product-research ...
+ ✓ Compiled /dashboard/product-research in 1384ms (991 modules)
+[2026-06-24 10:29:03.066 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:29:03.067 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 4
+[2026-06-24 10:29:03.067 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:29:03.137 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE \"public\".\"ResearchProject\".\"id\" IN ($1,$2) OFFSET $3"
+    duration: 1
+[2026-06-24 10:29:03.138 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 3
+[2026-06-24 10:29:03.138 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 3
+[2026-06-24 10:29:03.155 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 5
+[2026-06-24 10:29:03.155 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 5
+ GET /dashboard/product-research 200 in 3639ms
+ ✓ Compiled /api/auth/me in 412ms (830 modules)
+ GET /api/auth/me 200 in 676ms
+ GET /api/auth/me 200 in 15ms
+[2026-06-24 10:29:04.238 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 1
+[2026-06-24 10:29:04.267 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ ✓ Compiled /api/product-research/[projectId] in 183ms (832 modules)
+ DELETE /api/product-research/cmqri6tdq00015bmwo07rbdmj 200 in 696ms
+[2026-06-24 10:29:07.774 +0700] [32mINFO[39m (shopify-autonomous-store): [36mResearch project deleted[39m
+    researchProjectId: "cmqri6tdq00015bmwo07rbdmj"
+    deletedRuns: 0
+    deletedCandidates: 0
+    deletedSources: 0
+    deletedDiscoveryJobs: 1
+    deletedVerifications: 0
+[2026-06-24 10:29:07.751 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 2
+[2026-06-24 10:29:07.752 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "BEGIN"
+    duration: 0
+[2026-06-24 10:29:07.756 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchDiscoveryJob\" WHERE \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\" = $1"
+    duration: 0
+[2026-06-24 10:29:07.760 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"SourcingVerification\" WHERE (\"public\".\"SourcingVerification\".\"candidateId\") IN (SELECT \"t1\".\"id\" FROM \"public\".\"ProductCandidate\" AS \"t1\" WHERE (\"t1\".\"researchProjectId\" = $1 AND \"t1\".\"id\" IS NOT NULL))"
+    duration: 2
+[2026-06-24 10:29:07.763 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchSource\" WHERE (\"public\".\"ResearchSource\".\"researchRunId\") IN (SELECT \"t1\".\"id\" FROM \"public\".\"ResearchRun\" AS \"t1\" WHERE (\"t1\".\"researchProjectId\" = $1 AND \"t1\".\"id\" IS NOT NULL))"
+    duration: 2
+[2026-06-24 10:29:07.766 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1"
+    duration: 0
+[2026-06-24 10:29:07.767 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1"
+    duration: 0
+[2026-06-24 10:29:07.768 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:29:07.770 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) RETURNING \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\""
+    duration: 0
+[2026-06-24 10:29:07.771 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "COMMIT"
+    duration: 1
+[2026-06-24 10:29:07.774 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"AuditLog\" (\"id\",\"entityType\",\"entityId\",\"action\",\"actorId\",\"metadata\",\"createdAt\") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING \"public\".\"AuditLog\".\"id\", \"public\".\"AuditLog\".\"entityType\", \"public\".\"AuditLog\".\"entityId\", \"public\".\"AuditLog\".\"action\", \"public\".\"AuditLog\".\"actorId\", \"public\".\"AuditLog\".\"metadata\", \"public\".\"AuditLog\".\"createdAt\""
+    duration: 1
+[2026-06-24 10:29:07.906 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:29:07.906 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:29:07.907 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:29:07.907 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:29:07.910 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+ DELETE /api/product-research/cmqriahqq0001h28lxafqlniw 200 in 35ms
+[2026-06-24 10:29:10.184 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:29:10.185 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "BEGIN"
+    duration: 0
+[2026-06-24 10:29:10.186 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchDiscoveryJob\" WHERE \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\" = $1"
+    duration: 0
+[2026-06-24 10:29:10.187 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"SourcingVerification\" WHERE (\"public\".\"SourcingVerification\".\"candidateId\") IN (SELECT \"t1\".\"id\" FROM \"public\".\"ProductCandidate\" AS \"t1\" WHERE (\"t1\".\"researchProjectId\" = $1 AND \"t1\".\"id\" IS NOT NULL))"
+    duration: 0
+[2026-06-24 10:29:10.188 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchSource\" WHERE (\"public\".\"ResearchSource\".\"researchRunId\") IN (SELECT \"t1\".\"id\" FROM \"public\".\"ResearchRun\" AS \"t1\" WHERE (\"t1\".\"researchProjectId\" = $1 AND \"t1\".\"id\" IS NOT NULL))"
+    duration: 0
+[2026-06-24 10:29:10.190 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1"
+    duration: 0
+[2026-06-24 10:29:10.191 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1"
+    duration: 0
+[2026-06-24 10:29:10.192 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:29:10.193 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) RETURNING \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\""
+    duration: 0
+[2026-06-24 10:29:10.196 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "COMMIT"
+    duration: 2
+[2026-06-24 10:29:10.197 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"AuditLog\" (\"id\",\"entityType\",\"entityId\",\"action\",\"actorId\",\"metadata\",\"createdAt\") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING \"public\".\"AuditLog\".\"id\", \"public\".\"AuditLog\".\"entityType\", \"public\".\"AuditLog\".\"entityId\", \"public\".\"AuditLog\".\"action\", \"public\".\"AuditLog\".\"actorId\", \"public\".\"AuditLog\".\"metadata\", \"public\".\"AuditLog\".\"createdAt\""
+    duration: 0
+[2026-06-24 10:29:10.225 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:29:10.227 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:29:10.197 +0700] [32mINFO[39m (shopify-autonomous-store): [36mResearch project deleted[39m
+    researchProjectId: "cmqriahqq0001h28lxafqlniw"
+    deletedRuns: 6
+    deletedCandidates: 7
+    deletedSources: 116
+    deletedDiscoveryJobs: 1
+    deletedVerifications: 0
+ GET /api/health 200 in 27ms
+[2026-06-24 10:29:15.891 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+ POST /dashboard/product-research 303 in 127ms
+[2026-06-24 10:29:22.376 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:29:22.376 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "BEGIN"
+    duration: 0
+[2026-06-24 10:29:22.378 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"ResearchProject\" (\"id\",\"query\",\"status\",\"createdAt\",\"updatedAt\") VALUES ($1,$2,CAST($3::text AS \"public\".\"ResearchProjectStatus\"),$4,$5) RETURNING \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\""
+    duration: 0
+[2026-06-24 10:29:22.380 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"ResearchDiscoveryJob\" (\"id\",\"researchProjectId\",\"status\",\"input\",\"createdAt\",\"updatedAt\") VALUES ($1,$2,CAST($3::text AS \"public\".\"ResearchDiscoveryJobStatus\"),$4,$5,$6) RETURNING \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\""
+    duration: 0
+[2026-06-24 10:29:22.382 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "COMMIT"
+    duration: 1
+[2026-06-24 10:29:22.384 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"AuditLog\" (\"id\",\"entityType\",\"entityId\",\"action\",\"actorId\",\"metadata\",\"createdAt\") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING \"public\".\"AuditLog\".\"id\", \"public\".\"AuditLog\".\"entityType\", \"public\".\"AuditLog\".\"entityId\", \"public\".\"AuditLog\".\"action\", \"public\".\"AuditLog\".\"actorId\", \"public\".\"AuditLog\".\"metadata\", \"public\".\"AuditLog\".\"createdAt\""
+    duration: 1
+[2026-06-24 10:29:22.464 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:29:22.464 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:29:22.464 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:29:22.466 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:29:22.466 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:29:22.468 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+[2026-06-24 10:29:22.384 +0700] [32mINFO[39m (shopify-autonomous-store): [36mAutonomous product discovery job created[39m
+    discoveryJobId: "cmqril970000713qstev9oeax"
+    researchProjectId: "cmqril96z000513qswuoarwm3"
+[2026-06-24 10:29:22.385 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "research-queue"
+[2026-06-24 10:29:22.389 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "content-queue"
+[2026-06-24 10:29:22.390 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "seo-queue"
+[2026-06-24 10:29:22.390 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "landing-queue"
+[2026-06-24 10:29:22.390 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "publish-queue"
+[2026-06-24 10:29:22.413 +0700] [32mINFO[39m (shopify-autonomous-store): [36mAutonomous product discovery job enqueued[39m
+    discoveryJobId: "cmqril970000713qstev9oeax"
+    jobId: "2"
+    queue: "research-queue"
+ ○ Compiling /dashboard/product-research/[projectId] ...
+ ✓ Compiled /dashboard/product-research/[projectId] in 609ms (1107 modules)
+ GET /dashboard/product-research/cmqril96z000513qswuoarwm3 200 in 4015ms
+[2026-06-24 10:29:57.285 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:29:57.314 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:29:57.316 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:29:57.318 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 1
+[2026-06-24 10:29:57.320 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 1
+ GET /api/auth/me 200 in 54ms
+ GET /api/auth/me 200 in 12ms
+[2026-06-24 10:29:57.698 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:29:57.719 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ GET /dashboard/product-research 200 in 89ms
+[2026-06-24 10:30:07.780 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:30:07.780 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:30:07.780 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:30:07.783 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:30:07.783 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:30:07.785 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+ GET /api/auth/me 200 in 11ms
+[2026-06-24 10:30:08.093 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ GET /api/auth/me 200 in 12ms
+[2026-06-24 10:30:08.112 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ GET /api/health 200 in 41ms
+[2026-06-24 10:30:43.416 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:30:43.416 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+ GET /dashboard/product-research/cmqril96z000513qswuoarwm3 200 in 240ms
+ GET /api/auth/me 200 in 13ms
+ GET /api/auth/me 200 in 10ms
+[2026-06-24 10:32:30.985 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:32:30.989 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:32:30.991 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:32:30.994 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 1
+[2026-06-24 10:32:30.999 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 2
+[2026-06-24 10:32:31.445 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:32:31.463 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ GET /dashboard/product-research/cmqril96z000513qswuoarwm3?candidateId=cmqrimrmw00b85e63u8e5yuik 200 in 193ms
+[2026-06-24 10:33:11.177 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:33:11.177 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:33:11.178 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:33:11.180 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+[2026-06-24 10:33:11.184 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+ GET /api/auth/me 200 in 14ms
+ GET /api/auth/me 200 in 15ms
+[2026-06-24 10:33:11.594 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:33:11.619 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ ✓ Compiled in 309ms (717 modules)
+[2026-06-24 10:36:17.271 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 2
+[2026-06-24 10:36:17.274 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 2
+[2026-06-24 10:36:17.279 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 4
+[2026-06-24 10:36:17.283 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 2
+[2026-06-24 10:39:25.906 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:39:25.947 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:39:25.949 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:39:25.951 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+[2026-06-24 10:39:25.955 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+ GET /dashboard/product-research/cmqril96z000513qswuoarwm3?candidateId=cmqrimrmw00b85e63u8e5yuik 200 in 288ms
+ ✓ Compiled /api/auth/me in 234ms (814 modules)
+ GET /api/auth/me 200 in 3402ms
+ GET /api/auth/me 200 in 13ms
+[2026-06-24 10:39:29.829 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 1
+[2026-06-24 10:39:29.853 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ ✓ Compiled in 340ms (717 modules)
+[2026-06-24 10:43:18.683 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 2
+[2026-06-24 10:43:18.688 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 3
+[2026-06-24 10:43:18.693 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 3
+[2026-06-24 10:43:18.698 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 2
+ GET /dashboard/product-research 200 in 132ms
+[2026-06-24 10:44:59.500 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:44:59.500 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:44:59.553 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:44:59.553 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:44:59.556 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:44:59.558 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 3
+ ✓ Compiled /api/auth/me in 232ms (814 modules)
+ GET /api/auth/me 200 in 3405ms
+ GET /api/auth/me 200 in 126ms
+[2026-06-24 10:45:03.283 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 1
+[2026-06-24 10:45:03.418 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:45:03.418 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:45:03.420 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:45:03.421 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:45:03.422 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+[2026-06-24 10:45:03.431 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ ✓ Compiled /api/product-research/[projectId] in 225ms (816 modules)
+ DELETE /api/product-research/cmqril96z000513qswuoarwm3 200 in 497ms
+[2026-06-24 10:45:06.673 +0700] [32mINFO[39m (shopify-autonomous-store): [36mResearch project deleted[39m
+    researchProjectId: "cmqril96z000513qswuoarwm3"
+    deletedRuns: 6
+    deletedCandidates: 30
+    deletedSources: 69
+    deletedDiscoveryJobs: 1
+    deletedVerifications: 0
+[2026-06-24 10:45:06.574 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:45:06.576 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "BEGIN"
+    duration: 0
+[2026-06-24 10:45:06.578 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchDiscoveryJob\" WHERE \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\" = $1"
+    duration: 0
+[2026-06-24 10:45:06.582 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"SourcingVerification\" WHERE (\"public\".\"SourcingVerification\".\"candidateId\") IN (SELECT \"t1\".\"id\" FROM \"public\".\"ProductCandidate\" AS \"t1\" WHERE (\"t1\".\"researchProjectId\" = $1 AND \"t1\".\"id\" IS NOT NULL))"
+    duration: 3
+[2026-06-24 10:45:06.643 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchSource\" WHERE (\"public\".\"ResearchSource\".\"researchRunId\") IN (SELECT \"t1\".\"id\" FROM \"public\".\"ResearchRun\" AS \"t1\" WHERE (\"t1\".\"researchProjectId\" = $1 AND \"t1\".\"id\" IS NOT NULL))"
+    duration: 16
+[2026-06-24 10:45:06.644 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:45:06.646 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:45:06.653 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1"
+    duration: 8
+[2026-06-24 10:45:06.655 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1"
+    duration: 1
+[2026-06-24 10:45:06.657 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:45:06.659 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) RETURNING \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\""
+    duration: 0
+[2026-06-24 10:45:06.663 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "COMMIT"
+    duration: 3
+[2026-06-24 10:45:06.669 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:45:06.670 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"AuditLog\" (\"id\",\"entityType\",\"entityId\",\"action\",\"actorId\",\"metadata\",\"createdAt\") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING \"public\".\"AuditLog\".\"id\", \"public\".\"AuditLog\".\"entityType\", \"public\".\"AuditLog\".\"entityId\", \"public\".\"AuditLog\".\"action\", \"public\".\"AuditLog\".\"actorId\", \"public\".\"AuditLog\".\"metadata\", \"public\".\"AuditLog\".\"createdAt\""
+    duration: 6
+[2026-06-24 10:45:06.721 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:45:06.723 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+ POST /dashboard/product-research 303 in 134ms
+[2026-06-24 10:45:47.882 +0700] [32mINFO[39m (shopify-autonomous-store): [36mAutonomous product discovery job created[39m
+    discoveryJobId: "cmqrj6dlu000e13qsdonwdw00"
+    researchProjectId: "cmqrj6dls000c13qsj5zq4mww"
+[2026-06-24 10:45:47.882 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "research-queue"
+[2026-06-24 10:45:47.887 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "content-queue"
+[2026-06-24 10:45:47.887 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "seo-queue"
+[2026-06-24 10:45:47.887 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "landing-queue"
+[2026-06-24 10:45:47.888 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "publish-queue"
+[2026-06-24 10:45:47.916 +0700] [32mINFO[39m (shopify-autonomous-store): [36mAutonomous product discovery job enqueued[39m
+    discoveryJobId: "cmqrj6dlu000e13qsdonwdw00"
+    jobId: "3"
+    queue: "research-queue"
+[2026-06-24 10:45:47.868 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:45:47.868 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "BEGIN"
+    duration: 0
+[2026-06-24 10:45:47.870 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"ResearchProject\" (\"id\",\"query\",\"status\",\"createdAt\",\"updatedAt\") VALUES ($1,$2,CAST($3::text AS \"public\".\"ResearchProjectStatus\"),$4,$5) RETURNING \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\""
+    duration: 0
+[2026-06-24 10:45:47.878 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"ResearchDiscoveryJob\" (\"id\",\"researchProjectId\",\"status\",\"input\",\"createdAt\",\"updatedAt\") VALUES ($1,$2,CAST($3::text AS \"public\".\"ResearchDiscoveryJobStatus\"),$4,$5,$6) RETURNING \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\""
+    duration: 6
+[2026-06-24 10:45:47.880 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "COMMIT"
+    duration: 1
+[2026-06-24 10:45:47.882 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"AuditLog\" (\"id\",\"entityType\",\"entityId\",\"action\",\"actorId\",\"metadata\",\"createdAt\") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING \"public\".\"AuditLog\".\"id\", \"public\".\"AuditLog\".\"entityType\", \"public\".\"AuditLog\".\"entityId\", \"public\".\"AuditLog\".\"action\", \"public\".\"AuditLog\".\"actorId\", \"public\".\"AuditLog\".\"metadata\", \"public\".\"AuditLog\".\"createdAt\""
+    duration: 1
+[2026-06-24 10:45:47.963 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:45:47.963 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:45:47.963 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:45:47.965 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:45:47.965 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:45:47.969 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 2
+ GET /dashboard/product-research/cmqrj6dls000c13qsj5zq4mww 200 in 186ms
+[2026-06-24 10:45:55.677 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:45:55.679 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:45:55.680 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+[2026-06-24 10:45:55.683 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 1
+ GET /api/auth/me 200 in 33ms
+ GET /api/auth/me 200 in 18ms
+[2026-06-24 10:45:56.065 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:45:56.095 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ ✓ Compiled in 517ms (963 modules)
+ ✓ Compiled in 259ms (963 modules)
+ ✓ Compiled in 182ms (963 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 510ms (1007 modules)
+ GET / 200 in 2846ms
+ ✓ Compiled /dashboard in 252ms (1009 modules)
+ ✓ Compiled /dashboard/workflows in 443ms (840 modules)
+ ✓ Compiled in 190ms (268 modules)
+ GET /api/auth/me 200 in 3309ms
+[2026-06-24 10:52:18.231 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 2
+[2026-06-24 10:52:18.360 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:52:18.402 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 3
+[2026-06-24 10:52:18.402 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:52:18.404 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ GET /api/auth/me 200 in 160ms
+[2026-06-24 10:52:18.410 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 2
+[2026-06-24 10:52:18.415 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 1
+[2026-06-24 10:52:18.421 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"Workflow\".\"id\", \"public\".\"Workflow\".\"productId\", \"public\".\"Workflow\".\"userId\", \"public\".\"Workflow\".\"currentStep\"::text, \"public\".\"Workflow\".\"status\"::text, \"public\".\"Workflow\".\"startedAt\", \"public\".\"Workflow\".\"completedAt\", \"public\".\"Workflow\".\"createdAt\", \"public\".\"Workflow\".\"updatedAt\" FROM \"public\".\"Workflow\" WHERE 1=1 ORDER BY \"public\".\"Workflow\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 1
+[2026-06-24 10:52:18.421 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT COUNT(*) FROM (SELECT \"public\".\"Workflow\".\"id\" FROM \"public\".\"Workflow\" WHERE 1=1 OFFSET $1) AS \"sub\""
+    duration: 2
+ GET /dashboard/product-research 200 in 201ms
+ GET /api/auth/me 200 in 13ms
+ GET /api/auth/me 200 in 16ms
+[2026-06-24 10:52:18.696 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:52:18.722 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ POST /dashboard/product-research 303 in 168ms
+[2026-06-24 10:52:58.389 +0700] [32mINFO[39m (shopify-autonomous-store): [36mAutonomous product discovery job created[39m
+    discoveryJobId: "cmqrjflsk000j13qs1f4li25c"
+    researchProjectId: "cmqrjflsh000h13qs2d9fh1aq"
+[2026-06-24 10:52:58.390 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "research-queue"
+[2026-06-24 10:52:58.392 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "content-queue"
+[2026-06-24 10:52:58.393 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "seo-queue"
+[2026-06-24 10:52:58.393 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "landing-queue"
+[2026-06-24 10:52:58.393 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "publish-queue"
+[2026-06-24 10:52:58.414 +0700] [32mINFO[39m (shopify-autonomous-store): [36mAutonomous product discovery job enqueued[39m
+    discoveryJobId: "cmqrjflsk000j13qs1f4li25c"
+    jobId: "4"
+    queue: "research-queue"
+[2026-06-24 10:52:58.381 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:52:58.381 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "BEGIN"
+    duration: 0
+[2026-06-24 10:52:58.384 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"ResearchProject\" (\"id\",\"query\",\"status\",\"createdAt\",\"updatedAt\") VALUES ($1,$2,CAST($3::text AS \"public\".\"ResearchProjectStatus\"),$4,$5) RETURNING \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\""
+    duration: 1
+[2026-06-24 10:52:58.386 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"ResearchDiscoveryJob\" (\"id\",\"researchProjectId\",\"status\",\"input\",\"createdAt\",\"updatedAt\") VALUES ($1,$2,CAST($3::text AS \"public\".\"ResearchDiscoveryJobStatus\"),$4,$5,$6) RETURNING \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\""
+    duration: 1
+[2026-06-24 10:52:58.387 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "COMMIT"
+    duration: 0
+[2026-06-24 10:52:58.389 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"AuditLog\" (\"id\",\"entityType\",\"entityId\",\"action\",\"actorId\",\"metadata\",\"createdAt\") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING \"public\".\"AuditLog\".\"id\", \"public\".\"AuditLog\".\"entityType\", \"public\".\"AuditLog\".\"entityId\", \"public\".\"AuditLog\".\"action\", \"public\".\"AuditLog\".\"actorId\", \"public\".\"AuditLog\".\"metadata\", \"public\".\"AuditLog\".\"createdAt\""
+    duration: 0
+[2026-06-24 10:52:58.474 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:52:58.474 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:52:58.474 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:52:58.475 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:52:58.478 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 2
+[2026-06-24 10:52:58.480 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 3
+[2026-06-24 10:52:58.481 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+[2026-06-24 10:52:58.500 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE \"public\".\"ResearchProject\".\"id\" IN ($1,$2) OFFSET $3"
+    duration: 2
+ GET /dashboard/product-research/cmqrjflsh000h13qs2d9fh1aq 200 in 98ms
+[2026-06-24 10:53:13.467 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:53:13.470 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 2
+[2026-06-24 10:53:13.474 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 2
+[2026-06-24 10:53:13.477 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 1
+ GET /api/auth/me 200 in 20ms
+ GET /api/auth/me 200 in 19ms
+[2026-06-24 10:53:13.784 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:53:13.786 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 1
+[2026-06-24 10:53:13.817 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ GET /dashboard/product-research/cmqrjflsh000h13qs2d9fh1aq 200 in 114ms
+ GET /api/auth/me 200 in 13ms
+ GET /api/auth/me 200 in 16ms
+[2026-06-24 10:53:18.601 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:53:18.602 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:53:18.603 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+[2026-06-24 10:53:18.605 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+[2026-06-24 10:53:18.925 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:53:18.951 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:53:54.541 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:53:54.541 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:53:54.543 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:53:54.545 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+[2026-06-24 10:53:54.546 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+ GET /dashboard/product-research/cmqrjflsh000h13qs2d9fh1aq 200 in 175ms
+ GET /api/auth/me 200 in 17ms
+ GET /api/auth/me 200 in 18ms
+[2026-06-24 10:53:54.946 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:53:54.977 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ GET /dashboard/product-research 200 in 145ms
+[2026-06-24 10:57:59.771 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 1
+[2026-06-24 10:57:59.773 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 10:57:59.777 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 3
+[2026-06-24 10:57:59.777 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 3
+[2026-06-24 10:57:59.782 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 3
+[2026-06-24 10:57:59.783 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 4
+[2026-06-24 10:57:59.802 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE \"public\".\"ResearchProject\".\"id\" IN ($1,$2) OFFSET $3"
+    duration: 2
+ GET /api/auth/me 200 in 20ms
+ GET /api/auth/me 200 in 13ms
+[2026-06-24 10:58:00.120 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 1
+[2026-06-24 10:58:00.145 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ ✓ Compiled /api/product-research/[projectId] in 318ms (818 modules)
+[2026-06-24 10:58:24.556 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:58:24.556 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:58:24.557 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "BEGIN"
+    duration: 0
+[2026-06-24 10:58:24.562 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchDiscoveryJob\" WHERE \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\" = $1"
+    duration: 3
+[2026-06-24 10:58:24.568 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"SourcingVerification\" WHERE (\"public\".\"SourcingVerification\".\"candidateId\") IN (SELECT \"t1\".\"id\" FROM \"public\".\"ProductCandidate\" AS \"t1\" WHERE (\"t1\".\"researchProjectId\" = $1 AND \"t1\".\"id\" IS NOT NULL))"
+    duration: 4
+[2026-06-24 10:58:24.573 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchSource\" WHERE (\"public\".\"ResearchSource\".\"researchRunId\") IN (SELECT \"t1\".\"id\" FROM \"public\".\"ResearchRun\" AS \"t1\" WHERE (\"t1\".\"researchProjectId\" = $1 AND \"t1\".\"id\" IS NOT NULL))"
+    duration: 3
+[2026-06-24 10:58:24.575 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1"
+    duration: 1
+[2026-06-24 10:58:24.577 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1"
+    duration: 0
+[2026-06-24 10:58:24.579 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ DELETE /api/product-research/cmqrjflsh000h13qs2d9fh1aq 200 in 3465ms
+[2026-06-24 10:58:24.580 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) RETURNING \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\""
+    duration: 0
+[2026-06-24 10:58:24.581 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "COMMIT"
+    duration: 0
+[2026-06-24 10:58:24.583 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"AuditLog\" (\"id\",\"entityType\",\"entityId\",\"action\",\"actorId\",\"metadata\",\"createdAt\") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING \"public\".\"AuditLog\".\"id\", \"public\".\"AuditLog\".\"entityType\", \"public\".\"AuditLog\".\"entityId\", \"public\".\"AuditLog\".\"action\", \"public\".\"AuditLog\".\"actorId\", \"public\".\"AuditLog\".\"metadata\", \"public\".\"AuditLog\".\"createdAt\""
+    duration: 1
+[2026-06-24 10:58:24.584 +0700] [32mINFO[39m (shopify-autonomous-store): [36mResearch project deleted[39m
+    researchProjectId: "cmqrjflsh000h13qs2d9fh1aq"
+    deletedRuns: 6
+    deletedCandidates: 29
+    deletedSources: 66
+    deletedDiscoveryJobs: 1
+    deletedVerifications: 0
+[2026-06-24 10:58:24.708 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 10:58:24.708 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:58:24.708 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:58:24.710 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:58:24.710 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:58:24.713 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 1
+[2026-06-24 10:58:31.904 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:58:31.904 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:58:31.934 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:58:31.934 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:58:31.936 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 1
+ GET /dashboard/product-research 200 in 125ms
+ GET /api/auth/me 200 in 42ms
+[2026-06-24 10:58:32.269 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 1
+ GET /api/auth/me 200 in 12ms
+[2026-06-24 10:58:32.292 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ DELETE /api/product-research/cmqrj6dls000c13qsj5zq4mww 200 in 49ms
+[2026-06-24 10:58:34.424 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 2
+[2026-06-24 10:58:34.425 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "BEGIN"
+    duration: 0
+[2026-06-24 10:58:34.427 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchDiscoveryJob\" WHERE \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\" = $1"
+    duration: 0
+[2026-06-24 10:58:34.430 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"SourcingVerification\" WHERE (\"public\".\"SourcingVerification\".\"candidateId\") IN (SELECT \"t1\".\"id\" FROM \"public\".\"ProductCandidate\" AS \"t1\" WHERE (\"t1\".\"researchProjectId\" = $1 AND \"t1\".\"id\" IS NOT NULL))"
+    duration: 2
+[2026-06-24 10:58:34.434 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchSource\" WHERE (\"public\".\"ResearchSource\".\"researchRunId\") IN (SELECT \"t1\".\"id\" FROM \"public\".\"ResearchRun\" AS \"t1\" WHERE (\"t1\".\"researchProjectId\" = $1 AND \"t1\".\"id\" IS NOT NULL))"
+    duration: 2
+[2026-06-24 10:58:34.436 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1"
+    duration: 0
+[2026-06-24 10:58:34.437 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1"
+    duration: 0
+[2026-06-24 10:58:34.438 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 10:58:34.440 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "DELETE FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) RETURNING \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\""
+    duration: 1
+[2026-06-24 10:58:34.443 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "COMMIT"
+    duration: 2
+[2026-06-24 10:58:34.445 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"AuditLog\" (\"id\",\"entityType\",\"entityId\",\"action\",\"actorId\",\"metadata\",\"createdAt\") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING \"public\".\"AuditLog\".\"id\", \"public\".\"AuditLog\".\"entityType\", \"public\".\"AuditLog\".\"entityId\", \"public\".\"AuditLog\".\"action\", \"public\".\"AuditLog\".\"actorId\", \"public\".\"AuditLog\".\"metadata\", \"public\".\"AuditLog\".\"createdAt\""
+    duration: 0
+[2026-06-24 10:58:34.480 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:58:34.480 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 10:58:34.445 +0700] [32mINFO[39m (shopify-autonomous-store): [36mResearch project deleted[39m
+    researchProjectId: "cmqrj6dls000c13qsj5zq4mww"
+    deletedRuns: 6
+    deletedCandidates: 30
+    deletedSources: 76
+    deletedDiscoveryJobs: 1
+    deletedVerifications: 0
+ POST /dashboard/product-research 303 in 241ms
+[2026-06-24 11:08:26.197 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "BEGIN"
+    duration: 0
+[2026-06-24 11:08:26.201 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"ResearchProject\" (\"id\",\"query\",\"status\",\"createdAt\",\"updatedAt\") VALUES ($1,$2,CAST($3::text AS \"public\".\"ResearchProjectStatus\"),$4,$5) RETURNING \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\""
+    duration: 1
+[2026-06-24 11:08:26.212 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"ResearchDiscoveryJob\" (\"id\",\"researchProjectId\",\"status\",\"input\",\"createdAt\",\"updatedAt\") VALUES ($1,$2,CAST($3::text AS \"public\".\"ResearchDiscoveryJobStatus\"),$4,$5,$6) RETURNING \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\""
+    duration: 9
+[2026-06-24 11:08:26.214 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "COMMIT"
+    duration: 1
+[2026-06-24 11:08:26.217 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "INSERT INTO \"public\".\"AuditLog\" (\"id\",\"entityType\",\"entityId\",\"action\",\"actorId\",\"metadata\",\"createdAt\") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING \"public\".\"AuditLog\".\"id\", \"public\".\"AuditLog\".\"entityType\", \"public\".\"AuditLog\".\"entityId\", \"public\".\"AuditLog\".\"action\", \"public\".\"AuditLog\".\"actorId\", \"public\".\"AuditLog\".\"metadata\", \"public\".\"AuditLog\".\"createdAt\""
+    duration: 1
+[2026-06-24 11:08:26.329 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE 1=1 ORDER BY \"public\".\"ResearchProject\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 0
+[2026-06-24 11:08:26.334 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 3
+[2026-06-24 11:08:26.339 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 3
+[2026-06-24 11:08:26.350 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchDiscoveryJob\".\"id\", \"public\".\"ResearchDiscoveryJob\".\"researchProjectId\", \"public\".\"ResearchDiscoveryJob\".\"status\"::text, \"public\".\"ResearchDiscoveryJob\".\"input\", \"public\".\"ResearchDiscoveryJob\".\"queryPlan\", \"public\".\"ResearchDiscoveryJob\".\"result\", \"public\".\"ResearchDiscoveryJob\".\"errorMessage\", \"public\".\"ResearchDiscoveryJob\".\"startedAt\", \"public\".\"ResearchDiscoveryJob\".\"completedAt\", \"public\".\"ResearchDiscoveryJob\".\"createdAt\", \"public\".\"ResearchDiscoveryJob\".\"updatedAt\" FROM \"public\".\"ResearchDiscoveryJob\" WHERE 1=1 ORDER BY \"public\".\"ResearchDiscoveryJob\".\"createdAt\" DESC LIMIT $1 OFFSET $2"
+    duration: 2
+[2026-06-24 11:08:26.354 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 2
+[2026-06-24 11:08:26.217 +0700] [32mINFO[39m (shopify-autonomous-store): [36mAutonomous product discovery job created[39m
+    discoveryJobId: "cmqrjzhp6000s13qsoypm31cq"
+    researchProjectId: "cmqrjzhp3000q13qsc8scgdmn"
+[2026-06-24 11:08:26.217 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "research-queue"
+[2026-06-24 11:08:26.222 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "content-queue"
+[2026-06-24 11:08:26.222 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "seo-queue"
+[2026-06-24 11:08:26.223 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "landing-queue"
+[2026-06-24 11:08:26.224 +0700] [32mINFO[39m (shopify-autonomous-store): [36mCreating BullMQ queue[39m
+    queue: "publish-queue"
+[2026-06-24 11:08:26.265 +0700] [32mINFO[39m (shopify-autonomous-store): [36mAutonomous product discovery job enqueued[39m
+    discoveryJobId: "cmqrjzhp6000s13qsoypm31cq"
+    jobId: "5"
+    queue: "research-queue"
+ GET /dashboard/product-research/cmqrjzhp3000q13qsc8scgdmn 200 in 228ms
+[2026-06-24 11:08:57.017 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 11:08:57.017 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 11:08:57.023 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 4
+[2026-06-24 11:08:57.029 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 4
+[2026-06-24 11:08:57.036 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 4
+ GET /api/auth/me 200 in 28ms
+ GET /api/auth/me 200 in 29ms
+[2026-06-24 11:08:57.586 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 3
+[2026-06-24 11:08:57.630 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"User\".\"id\", \"public\".\"User\".\"email\", \"public\".\"User\".\"name\", \"public\".\"User\".\"role\"::text, \"public\".\"User\".\"passwordHash\", \"public\".\"User\".\"createdAt\", \"public\".\"User\".\"updatedAt\" FROM \"public\".\"User\" WHERE (\"public\".\"User\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+ ✓ Compiled in 260ms (719 modules)
+[2026-06-24 11:10:54.888 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 0
+[2026-06-24 11:10:54.888 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchProject\".\"id\", \"public\".\"ResearchProject\".\"query\", \"public\".\"ResearchProject\".\"status\"::text, \"public\".\"ResearchProject\".\"selectedCandidateId\", \"public\".\"ResearchProject\".\"promotedProductId\", \"public\".\"ResearchProject\".\"summary\", \"public\".\"ResearchProject\".\"createdAt\", \"public\".\"ResearchProject\".\"updatedAt\" FROM \"public\".\"ResearchProject\" WHERE (\"public\".\"ResearchProject\".\"id\" = $1 AND 1=1) LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 11:10:54.890 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchRun\".\"id\", \"public\".\"ResearchRun\".\"researchProjectId\", \"public\".\"ResearchRun\".\"productId\", \"public\".\"ResearchRun\".\"workflowId\", \"public\".\"ResearchRun\".\"input\", \"public\".\"ResearchRun\".\"summary\", \"public\".\"ResearchRun\".\"recommendation\", \"public\".\"ResearchRun\".\"providerCosts\", \"public\".\"ResearchRun\".\"startedAt\", \"public\".\"ResearchRun\".\"completedAt\", \"public\".\"ResearchRun\".\"createdAt\" FROM \"public\".\"ResearchRun\" WHERE \"public\".\"ResearchRun\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ResearchRun\".\"createdAt\" DESC LIMIT $2 OFFSET $3"
+    duration: 0
+[2026-06-24 11:10:54.893 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ProductCandidate\".\"id\", \"public\".\"ProductCandidate\".\"researchRunId\", \"public\".\"ProductCandidate\".\"researchProjectId\", \"public\".\"ProductCandidate\".\"productId\", \"public\".\"ProductCandidate\".\"name\", \"public\".\"ProductCandidate\".\"positioning\", \"public\".\"ProductCandidate\".\"targetMarket\", \"public\".\"ProductCandidate\".\"sellingAngle\", \"public\".\"ProductCandidate\".\"recommendedPrice\", \"public\".\"ProductCandidate\".\"estimatedCOGS\", \"public\".\"ProductCandidate\".\"estimatedShipping\", \"public\".\"ProductCandidate\".\"factoryUnitCost\", \"public\".\"ProductCandidate\".\"moq\", \"public\".\"ProductCandidate\".\"landedCost\", \"public\".\"ProductCandidate\".\"landedCostBreakdown\", \"public\".\"ProductCandidate\".\"estimatedGrossProfit\", \"public\".\"ProductCandidate\".\"grossMarginPercent\", \"public\".\"ProductCandidate\".\"breakEvenRoas\", \"public\".\"ProductCandidate\".\"demandScore\", \"public\".\"ProductCandidate\".\"trendScore\", \"public\".\"ProductCandidate\".\"competitionScore\", \"public\".\"ProductCandidate\".\"marginScore\", \"public\".\"ProductCandidate\".\"supplierScore\", \"public\".\"ProductCandidate\".\"sourcingScore\", \"public\".\"ProductCandidate\".\"factoryCostScore\", \"public\".\"ProductCandidate\".\"logisticsScore\", \"public\".\"ProductCandidate\".\"creativePotentialScore\", \"public\".\"ProductCandidate\".\"riskScore\", \"public\".\"ProductCandidate\".\"winningScore\", \"public\".\"ProductCandidate\".\"confidence\", \"public\".\"ProductCandidate\".\"status\"::text, \"public\".\"ProductCandidate\".\"risks\", \"public\".\"ProductCandidate\".\"metadata\", \"public\".\"ProductCandidate\".\"createdAt\" FROM \"public\".\"ProductCandidate\" WHERE \"public\".\"ProductCandidate\".\"researchProjectId\" = $1 ORDER BY \"public\".\"ProductCandidate\".\"winningScore\" DESC, \"public\".\"ProductCandidate\".\"createdAt\" ASC OFFSET $2"
+    duration: 0
+[2026-06-24 11:10:54.899 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT \"public\".\"ResearchSource\".\"id\", \"public\".\"ResearchSource\".\"researchRunId\", \"public\".\"ResearchSource\".\"candidateId\", \"public\".\"ResearchSource\".\"type\"::text, \"public\".\"ResearchSource\".\"provider\", \"public\".\"ResearchSource\".\"url\", \"public\".\"ResearchSource\".\"externalId\", \"public\".\"ResearchSource\".\"title\", \"public\".\"ResearchSource\".\"extractedSignal\", \"public\".\"ResearchSource\".\"rawData\", \"public\".\"ResearchSource\".\"confidence\", \"public\".\"ResearchSource\".\"capturedAt\", \"public\".\"ResearchSource\".\"createdAt\" FROM \"public\".\"ResearchSource\" WHERE \"public\".\"ResearchSource\".\"researchRunId\" = $1 ORDER BY \"public\".\"ResearchSource\".\"createdAt\" ASC OFFSET $2"
+    duration: 3

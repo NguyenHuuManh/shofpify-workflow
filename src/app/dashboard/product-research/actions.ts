@@ -44,10 +44,11 @@ export async function createResearchProject(formData: FormData): Promise<void> {
         : undefined,
     targetMarginPercent,
     riskTolerance: parseRiskTolerance(formData.get('riskTolerance')),
-    excludedCategories: formData
-      .getAll('excludedCategories')
-      .map((value) => String(value).trim())
-      .filter(Boolean),
+    excludedCategories: parseExcludedCategories(
+      formData,
+      'excludedCategories',
+      'excludedCategoriesCustom',
+    ),
     sourcing: {
       targetSource: '1688',
       targetCurrency: 'USD',
@@ -90,10 +91,11 @@ export async function startDiscoveryJob(formData: FormData): Promise<void> {
         : undefined,
     targetMarginPercent,
     riskTolerance: parseRiskTolerance(formData.get('discoveryRiskTolerance')),
-    excludedCategories: formData
-      .getAll('discoveryExcludedCategories')
-      .map((value) => String(value).trim())
-      .filter(Boolean),
+    excludedCategories: parseExcludedCategories(
+      formData,
+      'discoveryExcludedCategories',
+      'discoveryExcludedCategoriesCustom',
+    ),
     maxQueries,
     sourcing: {
       targetSource: '1688',
@@ -126,6 +128,32 @@ function optionalNumber(value: FormDataEntryValue | null): number | undefined {
 
   const parsed = Number(text);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function parseExcludedCategories(
+  formData: FormData,
+  checkboxName: string,
+  customName: string,
+): string[] {
+  const values = [
+    ...formData.getAll(checkboxName).map((value) => String(value)),
+    ...String(formData.get(customName) ?? '').split(/[,;\n]+/u),
+  ];
+  const seen = new Set<string>();
+  const categories: string[] = [];
+
+  for (const value of values) {
+    const category = value.trim();
+    const dedupeKey = category.toLowerCase();
+    if (!category || seen.has(dedupeKey)) {
+      continue;
+    }
+
+    seen.add(dedupeKey);
+    categories.push(category);
+  }
+
+  return categories;
 }
 
 function parseRiskTolerance(

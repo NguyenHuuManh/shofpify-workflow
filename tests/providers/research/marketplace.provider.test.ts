@@ -23,6 +23,8 @@ const input: ResearchProviderCollectInput = {
     riskTolerance: 'medium',
     excludedCategories: [],
     objective: 'find_winning_product',
+    maxCandidates: 5,
+    maxDerivedQueries: 5,
     sourcing: {
       targetSource: '1688',
       targetCurrency: 'USD',

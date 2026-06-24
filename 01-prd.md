@@ -140,8 +140,22 @@ The system must:
 * Generate USPs
 * Discover and rank product candidates from a product idea or niche
 * Collect evidence from external research sources through provider integrations
+* Extract provider-backed trending, related, and buyer-intent keywords before
+  marketplace discovery so downstream providers search on higher-quality query
+  terms instead of only the original product idea
+* Discover candidates through two phases: collect raw provider listings, then
+  aggregate those listings into candidate drafts before any ProductCandidate is
+  created
+* Aggregate marketplace listings from multiple Apify/DataForSEO/marketplace
+  sources into unified candidate drafts using AI-powered product grouping,
+  merging demand signals, pricing, reviews, and order volumes across providers
 * Estimate factory cost, sourcing cost, landed cost, gross margin, break-even ROAS, and pricing feasibility
-* Score each product candidate by demand, trend, competition, margin, sourcing and factory fit, creative potential, and risk
+* Score each product candidate through two phases:
+  - **Phase 1 (Discovery):** market-signal scoring (demand, trend, competition,
+    creative potential, risk) with margin estimated only when landed cost data
+    is available
+  - **Phase 2 (Full):** complete scoring including supplier, sourcing, factory
+    cost, and logistics factors after candidate-level 1688 sourcing enrichment
 * Produce a recommendation for the best product candidate to continue into content generation
 
 ---
@@ -158,8 +172,15 @@ The module must:
   categories
 * Generate multiple product candidates instead of a single research summary
 * Gather supporting data through approved provider interfaces
+* Aggregate multi-source marketplace listings into unified candidate drafts
+  using AI-powered product grouping before individual ProductCandidate creation
+* Use query intelligence from approved trend, keyword, and search providers to
+  build a capped set of derived marketplace discovery queries, while preserving
+  the original seed query and source provenance for auditability
 * Persist raw source evidence used for scoring and recommendations
-* Rank candidates by commercial viability
+* Rank candidates by commercial viability through two-phase scoring:
+  discovery-phase market signals first, full sourcing-adjusted scoring after
+  1688 enrichment
 * Highlight factory cost, sourcing, fulfillment, competition, legal, seasonality, and saturation risks
 * Allow a human reviewer to select one candidate and promote it into the product creation workflow
 
@@ -338,7 +359,31 @@ generating fallback candidates with AI.
 
 ## FR-003b
 
-The system shall rank product candidates using demand, trend, competition, margin, sourcing and factory fit, creative potential, logistics feasibility, and risk scores.
+The system shall rank product candidates using a two-phase scoring model.
+
+**Phase 1 — Discovery Scoring (market signals only):**
+
+The system shall score candidates using only market-level factors available
+before sourcing enrichment:
+
+- demandScore (from aggregated order count, review count across providers)
+- trendScore (from trend/interest signals)
+- competitionScore (from competitor and saturation indicators)
+- marginScore (only when landed cost or COGS data is available; must not
+  estimate margin from price alone without cost data)
+- creativePotentialScore (from ads signal and creative angle evidence)
+- riskScore (from combined risk indicators)
+
+Sourcing-dependent factors (supplierScore, sourcingScore, factoryCostScore,
+logisticsScore) shall be excluded from Phase 1 scoring and their weights
+redistributed across the active market factors.
+
+**Phase 2 — Full Scoring (after sourcing enrichment):**
+
+After candidate-level 1688 sourcing enrichment through
+CandidateSourcingService, the system shall re-score the candidate with all
+ten factors including supplier, sourcing, factory cost, and logistics scores
+backed by real sourcing evidence.
 
 The system shall use reviewer-supplied research constraints, including price
 band, target margin, maximum MOQ, risk tolerance, and excluded categories, to
@@ -400,6 +445,82 @@ broad discovery brief instead of a required keyword.
 The job shall use AI to create a query plan only. Product candidates, suppliers,
 costs, MOQ, landed cost, source URLs, and source evidence shall come from
 approved provider integrations and persisted ResearchSource records.
+
+---
+
+## FR-003i
+
+The system shall aggregate marketplace listings from multiple external providers
+into unified product candidates before individual candidate creation.
+
+This is the Product Research two-phase candidate discovery contract:
+
+```text
+Phase 1: raw provider listings -> normalized ResearchSource evidence
+Phase 2: aggregated product groups -> ProductCandidate drafts
+```
+
+The Product Aggregation step must:
+
+* Accept `MARKETPLACE` source evidence as the candidate-seeding input
+* Use `SEARCH`, `TREND`, `KEYWORD`, `ADS_SIGNAL`, and `SOCIAL` as supporting
+  evidence for enrichment, scoring, and confidence, not as standalone candidate
+  seeds
+* Exclude `SOURCING` evidence from initial candidate discovery; 1688 sourcing
+  enriches an existing candidate later
+* Use AI exclusively to analyze and group provider-backed listings that
+  describe the same real-world product, based on product name, price cluster,
+  review/order scale, and provider context
+* Never fabricate product names, prices, URLs, suppliers, or source evidence
+* Fall back to deterministic name-based deduplication when the AI provider is
+  unavailable, misconfigured, or returns invalid output
+* Merge aggregated metrics per product group: demand signals (max),
+  pricing (median and range), rating (average), review and order counts (sum),
+  and source count (for confidence scoring)
+* Preserve all original source records and source URLs in the merged candidate
+  metadata for full auditability
+* Return an empty candidate list when no provider evidence is available, with
+  no AI-generated fallback candidates
+* Avoid creating a dedicated ProductGroup database model for the initial
+  implementation; aggregation results are transient service-layer outputs and
+  must be persisted through ProductCandidate metadata and linked ResearchSource
+  records
+* Respect the configured candidate output limit instead of hardcoding the
+  shortlist size
+
+Apify-backed candidate discovery shall use the actor definitions in
+`config/apify-candidate-discovery.json`. The Research Provider layer may run
+the configured actors whose `providerType` is enabled by the research
+configuration, normalize their dataset items into `ResearchSource` evidence,
+and pass the resulting marketplace evidence into ProductAggregationService.
+
+---
+
+## FR-003j
+
+The system shall support provider-backed query intelligence before marketplace
+candidate discovery.
+
+Query intelligence must:
+
+* Run approved `TREND`, `KEYWORD`, and lightweight `SEARCH` providers before
+  marketplace and Apify candidate discovery
+* Extract trending, rising, related, and buyer-intent keyword candidates only
+  from provider responses and normalized source evidence
+* Rank and filter keyword candidates by relevance to the seed query, trend
+  strength, search volume, buyer intent, competition, CPC, risk, and duplicate
+  similarity
+* Produce a capped set of derived queries, preserving the original seed query
+  as the first candidate-discovery query
+* Allow AI only to rank, filter, or explain provider-backed keyword evidence;
+  AI must not invent keywords that are absent from provider responses
+* Pass the seed query plus selected derived queries into marketplace and Apify
+  candidate-discovery providers
+* Persist or embed query provenance on every downstream `ResearchSource`, such
+  as `queryUsed`, `querySource`, `queryScore`, and `collectionStage`
+* Return the original seed-query-only discovery path when providers return no
+  usable query intelligence; it must not fall back to AI-generated keywords,
+  products, URLs, prices, or evidence
 
 ---
 

@@ -29,6 +29,8 @@ import { BaseRepository } from '@/repositories/base.repository';
 import { productService, type ProductService } from './product.service';
 import { workflowService, type WorkflowService } from './workflow.service';
 import { CandidateScoringService, candidateScoringService } from './candidate-scoring.service';
+import { ProductAggregationService, productAggregationService } from './product-aggregation.service';
+import { QueryIntelligenceService, queryIntelligenceService } from './query-intelligence.service';
 import { createDefaultResearchProviders } from '@/providers/research';
 import { AppError, ErrorCodes } from '@/lib/errors';
 import { logger } from '@/lib/logger';
@@ -42,16 +44,19 @@ import type { AIProvider } from '@/types/ai-provider.interface';
 import type {
   NormalizedResearchSourceInput,
   ProviderEvidenceMetrics,
+  ProductAggregationGroup,
   ResearchCandidateDraft,
   ResearchRunConfig,
   CreateResearchProjectInput,
   ResearchRunConfigInput,
+  SupplementalProviderName,
 } from '@/schemas/research.schema';
 import type {
   ResearchProvider,
   RunResearchInput,
   RunResearchResult,
   ResearchProjectSummary,
+  ResearchCollectionContext,
 } from '@/types/research.types';
 import type { Prisma, ProductCandidate, ResearchProject, ResearchSource } from '@prisma/client';
 import type { ProductResearchRepository } from '@/repositories/product-research.repository';
@@ -75,11 +80,13 @@ export class ResearchService {
     private readonly auditRepo: AuditLogRepository = auditLogRepository,
     private readonly scoring: CandidateScoringService = candidateScoringService,
     private readonly providers: ResearchProvider[] = createDefaultResearchProviders(),
-    _aiProvider?: AIProvider,
+    private readonly defaultAiProvider?: AIProvider,
     private readonly productSvc: ProductService = productService,
     private readonly workflowSvc: WorkflowService = workflowService,
     private readonly discoveryJobRepo: ResearchDiscoveryJobRepository = researchDiscoveryJobRepository,
     private readonly verificationRepo: SourcingVerificationRepository = sourcingVerificationRepository,
+    private readonly aggregation: ProductAggregationService = productAggregationService,
+    private readonly queryIntelligence: QueryIntelligenceService = queryIntelligenceService,
   ) {}
 
   async createProjectAndRun(
@@ -111,9 +118,47 @@ export class ResearchService {
 
   async run(
     input: RunResearchInput,
-    _aiProvider?: AIProvider,
+    aiProvider?: AIProvider,
   ): Promise<RunResearchResult> {
     const config = validate(researchRunConfigSchema, input.config ?? {});
+    const querySources = await this.collectProviderSources(
+      input.productIdea,
+      config,
+      [],
+      {
+        providerTypes: ['trend', 'keyword', 'search'],
+        collectionContext: {
+          stage: 'query_intelligence',
+          queries: [input.productIdea],
+        },
+      },
+    );
+    const queryIntelligenceResult = this.queryIntelligence.selectQueries({
+      productIdea: input.productIdea,
+      config,
+      sources: querySources,
+    });
+    const selectedDiscoveryQueries = queryIntelligenceResult.selectedQueries;
+    const queryMetadata = Object.fromEntries(
+      selectedDiscoveryQueries.map((query) => [query.query, query]),
+    );
+    const candidateDiscoverySources = await this.collectProviderSources(
+      input.productIdea,
+      config,
+      [],
+      {
+        providerTypes: ['marketplace'],
+        collectionContext: {
+          stage: 'candidate_discovery',
+          queries: selectedDiscoveryQueries.map((query) => query.query),
+          selectedQueries: selectedDiscoveryQueries,
+          queryMetadata,
+          priorSources: querySources,
+        },
+      },
+    );
+    const providerSources = [...querySources, ...candidateDiscoverySources];
+
     const researchRun = await this.runRepo.create({
       researchProjectId: input.researchProjectId,
       productId: input.productId,
@@ -121,6 +166,7 @@ export class ResearchService {
       input: {
         productIdea: input.productIdea,
         config,
+        queryIntelligence: queryIntelligenceResult,
       },
     });
 
@@ -129,15 +175,19 @@ export class ResearchService {
       'Research intelligence run started',
     );
 
-    const providerSources = await this.collectProviderSources(
-      input.productIdea,
-      config,
-      [],
+    const aggregationResult = await this.aggregation.aggregate(
+      {
+        productIdea: input.productIdea,
+        sources: candidateDiscoverySources,
+        maxGroups: config.maxCandidates,
+      },
+      aiProvider ?? this.defaultAiProvider,
     );
-    const candidateDrafts = this.buildCandidatesFromExternalSources(
+    const candidateDrafts = this.buildCandidatesFromAggregatedGroups(
       input.productIdea,
       config,
-      providerSources,
+      aggregationResult.groups,
+      aggregationResult.sources,
     ).filter((candidate) => this.candidateMatchesResearchBrief(candidate, config));
 
     const candidates: ProductCandidate[] = [];
@@ -158,7 +208,7 @@ export class ResearchService {
         },
         evidenceSources,
       );
-      const score = this.scoring.score({
+      const score = this.scoring.scoreDiscovery({
         ...evidenceAdjustedScoreInput,
       });
 
@@ -201,6 +251,7 @@ export class ResearchService {
             sourceTypes: Array.from(new Set(evidenceSources.map((source) => source.type))),
             backedByExternalEvidence: evidenceSources.length > 0,
           },
+          scoringPhase: 'DISCOVERY',
         } as Prisma.InputJsonValue,
       });
 
@@ -277,6 +328,11 @@ export class ResearchService {
         researchProjectId: input.researchProjectId,
         workflowId: input.workflowId,
         candidateCount: candidates.length,
+        aggregationMethod: aggregationResult.method,
+        queryIntelligence: {
+          selectedQueries: selectedDiscoveryQueries.map((query) => query.query),
+          candidateQueryCount: queryIntelligenceResult.candidateQueries.length,
+        },
       },
     });
 
@@ -678,64 +734,41 @@ export class ResearchService {
     return research.selectedCandidateId;
   }
 
-  private buildCandidatesFromExternalSources(
+  private buildCandidatesFromAggregatedGroups(
     productIdea: string,
     config: ResearchRunConfigInput,
-    sources: NormalizedResearchSourceInput[],
+    groups: ProductAggregationGroup[],
+    aggregationSources: Array<NormalizedResearchSourceInput & { sourceKey: string }>,
   ): ResearchCandidateDraft[] {
     const parsedConfig = validate(researchRunConfigSchema, config);
-    const priority = (source: NormalizedResearchSourceInput): number => {
-      if (source.type === 'MARKETPLACE') {
-        return 0;
-      }
-      if (source.type === 'SEARCH') {
-        return 1;
-      }
-      return 2;
-    };
-    const candidateSources = sources
-      .filter((source) => source.type !== 'AI_ESTIMATE')
-      .filter((source) => ['MARKETPLACE', 'SEARCH'].includes(source.type))
-      .filter((source) => source.title || source.externalId)
-      .sort((a, b) => {
-        const priorityDelta = priority(a) - priority(b);
-        if (priorityDelta !== 0) {
-          return priorityDelta;
-        }
-        return (b.confidence ?? 0) - (a.confidence ?? 0);
-      });
-
-    const seen = new Set<string>();
+    const sourcesByKey = new Map(aggregationSources.map((source) => [source.sourceKey, source]));
     const candidates: ResearchCandidateDraft[] = [];
 
-    for (const source of candidateSources) {
-      const name = this.normalizeCandidateName(source.title ?? source.externalId ?? productIdea);
-      const dedupeKey = name.toLowerCase();
-      if (!name || seen.has(dedupeKey)) {
+    for (const group of groups) {
+      const groupSources = group.sourceKeys
+        .map((sourceKey) => sourcesByKey.get(sourceKey))
+        .filter((source): source is NormalizedResearchSourceInput & { sourceKey: string } => Boolean(source));
+      if (groupSources.length === 0) {
         continue;
       }
 
-      const metrics = this.extractEvidenceMetrics(source);
-      const landedCost = this.calculateLandedCost(metrics, parsedConfig);
-      seen.add(dedupeKey);
+      const name = this.normalizeCandidateName(group.name || groupSources[0]?.title || productIdea);
+      const metrics = this.metricsFromAggregationGroup(group);
       candidates.push({
         name,
         positioning: this.truncate(
-          source.extractedSignal || `${name} appeared in external research results for ${productIdea}.`,
+          group.rationale ||
+            `${name} appeared in ${group.mergedMetrics.sourceCount} marketplace listings for ${productIdea}.`,
           1000,
         ),
         targetMarket: parsedConfig.targetMarket,
         sellingAngle: this.truncate(
-          `${name} showed external ${source.type.toLowerCase()} evidence from ${source.provider}.`,
+          `${name} showed aggregated marketplace evidence from ${Array.from(
+            new Set(groupSources.map((source) => source.provider)),
+          ).join(', ')}.`,
           1000,
         ),
         recommendedPrice: metrics.price,
-        estimatedCOGS: landedCost.landedCost ?? metrics.productCost,
-        estimatedShipping: metrics.shippingCost,
-        factoryUnitCost: metrics.factoryUnitCost ?? metrics.productCost,
-        moq: metrics.moq,
-        landedCost: landedCost.landedCost,
-        landedCostBreakdown: landedCost.breakdown,
         scores: {
           demandScore:
             metrics.demandSignal ??
@@ -753,21 +786,43 @@ export class ResearchService {
         confidence: 'low',
         risks: [],
         metadata: {
-          generatedFrom: 'external_provider_source',
-          sourceType: source.type,
-          sourceProvider: source.provider,
-          sourceUrl: source.url,
-          sourceExternalId: source.externalId,
-          sourcing: source.type === 'SOURCING' ? landedCost.breakdown : undefined,
+          generatedFrom: 'product_aggregation',
+          sourceType: 'MARKETPLACE',
+          sourceProvider:
+            groupSources.length === 1 ? groupSources[0]?.provider : 'aggregated_marketplace',
+          sourceUrl: groupSources[0]?.url,
+          sourceExternalId: groupSources[0]?.externalId,
+          aggregation: {
+            groupId: group.groupId,
+            method: group.method,
+            sourceKeys: group.sourceKeys,
+            sourceUrls: groupSources.map((source) => source.url).filter(Boolean),
+            sourceExternalIds: groupSources.map((source) => source.externalId).filter(Boolean),
+            sourceTitles: groupSources.map((source) => source.title).filter(Boolean),
+            providers: Array.from(new Set(groupSources.map((source) => source.provider))),
+            actorIds: Array.from(
+              new Set(
+                groupSources
+                  .map((source) => this.rawDataString(source, 'apifyActorId'))
+                  .filter((value): value is string => Boolean(value)),
+              ),
+            ),
+            mergedMetrics: group.mergedMetrics,
+          },
         },
       });
-
-      if (candidates.length >= 5) {
-        break;
-      }
     }
 
     return candidates;
+  }
+
+  private metricsFromAggregationGroup(group: ProductAggregationGroup): ProviderEvidenceMetrics {
+    return {
+      demandSignal: group.mergedMetrics.demandSignal,
+      price: group.mergedMetrics.medianPrice,
+      reviewCount: group.mergedMetrics.reviewCountTotal,
+      rating: group.mergedMetrics.ratingAverage,
+    };
   }
 
   private normalizeCandidateName(value: string): string {
@@ -857,14 +912,40 @@ export class ResearchService {
     productIdea: string,
     config: ResearchRunConfigInput,
     candidates: ResearchCandidateDraft[],
+    options?: {
+      providerTypes?: SupplementalProviderName[];
+      collectionContext?: ResearchCollectionContext;
+    },
   ): Promise<NormalizedResearchSourceInput[]> {
     const parsedConfig = validate(researchRunConfigSchema, config);
     const enabledProviders = new Set(parsedConfig.supplementalProviders);
+    const allowedProviderTypes = options?.providerTypes
+      ? new Set(options.providerTypes)
+      : undefined;
     const results = await Promise.all(
       this.providers
-        .filter((provider) => !provider.providerType || enabledProviders.has(provider.providerType))
+        .filter((provider) => {
+          if (provider.providerType) {
+            return enabledProviders.has(provider.providerType) &&
+              (!allowedProviderTypes || allowedProviderTypes.has(provider.providerType));
+          }
+
+          if (options?.collectionContext?.stage === 'query_intelligence') {
+            return false;
+          }
+
+          return !allowedProviderTypes ||
+            Array.from(allowedProviderTypes).some((providerType) =>
+              enabledProviders.has(providerType),
+            );
+        })
         .map((provider) =>
-          provider.collect({ productIdea, config: parsedConfig, candidates }),
+          provider.collect({
+            productIdea,
+            config: parsedConfig,
+            candidates,
+            collectionContext: options?.collectionContext,
+          }),
         ),
     );
 
@@ -880,12 +961,18 @@ export class ResearchService {
     const exactSources = sources.filter((source) =>
       this.sourceMatchesCandidatePrimaryEvidence(source, candidate.metadata),
     );
+    const supportingSources = sources.filter(
+      (source) =>
+        source.type !== 'SOURCING' &&
+        !exactSources.includes(source) &&
+        this.sourceMatchesCandidate(source, candidate.name),
+    );
 
     if (exactSources.length > 0) {
-      return exactSources;
+      return [...exactSources, ...supportingSources];
     }
 
-    return sources.filter((source) => this.sourceMatchesCandidate(source, candidate.name));
+    return supportingSources;
   }
 
   private sourceMatchesCandidatePrimaryEvidence(
@@ -896,12 +983,17 @@ export class ResearchService {
     const candidateSourceProvider = this.metadataString(metadata, 'sourceProvider');
     const candidateSourceUrl = this.metadataString(metadata, 'sourceUrl');
     const candidateSourceExternalId = this.metadataString(metadata, 'sourceExternalId');
+    const aggregation = this.metadataRecord(metadata, 'aggregation');
 
     if (!candidateSourceType || source.type !== candidateSourceType) {
       return false;
     }
 
-    if (candidateSourceProvider && source.provider !== candidateSourceProvider) {
+    if (
+      candidateSourceProvider &&
+      candidateSourceProvider !== 'aggregated_marketplace' &&
+      source.provider !== candidateSourceProvider
+    ) {
       return false;
     }
 
@@ -911,6 +1003,26 @@ export class ResearchService {
 
     if (candidateSourceUrl && source.url === candidateSourceUrl) {
       return true;
+    }
+
+    if (aggregation) {
+      const sourceUrls = this.recordStringArray(aggregation, 'sourceUrls');
+      const sourceExternalIds = this.recordStringArray(aggregation, 'sourceExternalIds');
+      const sourceTitles = this.recordStringArray(aggregation, 'sourceTitles');
+
+      if (source.url && sourceUrls.includes(source.url)) {
+        return true;
+      }
+
+      if (source.externalId && sourceExternalIds.includes(source.externalId)) {
+        return true;
+      }
+
+      if (source.title && sourceTitles.includes(source.title)) {
+        return true;
+      }
+
+      return false;
     }
 
     return !candidateSourceExternalId && !candidateSourceUrl;
@@ -945,7 +1057,23 @@ export class ResearchService {
   ): ProductCandidate | undefined {
     return candidates.find((candidate) =>
       this.sourceMatchesCandidatePrimaryEvidence(source, candidate.metadata),
-    );
+    ) ?? (source.type === 'SOURCING'
+      ? undefined
+      : candidates.find((candidate) => this.sourceMatchesCandidate(source, candidate.name)));
+  }
+
+  private metadataRecord(
+    metadata: ResearchCandidateDraft['metadata'] | ProductCandidate['metadata'],
+    key: string,
+  ): Record<string, unknown> | undefined {
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+      return undefined;
+    }
+
+    const value = (metadata as Record<string, unknown>)[key];
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : undefined;
   }
 
   private metadataString(
@@ -957,6 +1085,19 @@ export class ResearchService {
     }
 
     const value = (metadata as Record<string, unknown>)[key];
+    return typeof value === 'string' && value.length > 0 ? value : undefined;
+  }
+
+  private recordStringArray(record: Record<string, unknown>, key: string): string[] {
+    const value = record[key];
+    return Array.isArray(value)
+      ? value.filter((item): item is string => typeof item === 'string' && item.length > 0)
+      : [];
+  }
+
+  private rawDataString(source: NormalizedResearchSourceInput, key: string): string | undefined {
+    const rawData = source.rawData ?? {};
+    const value = rawData[key];
     return typeof value === 'string' && value.length > 0 ? value : undefined;
   }
 
@@ -1039,67 +1180,6 @@ export class ResearchService {
       moq: base.moq ?? first(metrics.map((metric) => metric.moq)),
       landedCost: base.landedCost ?? first(metrics.map((metric) => metric.landedCost)),
       landedCostBreakdown: base.landedCostBreakdown,
-    };
-  }
-
-  private calculateLandedCost(
-    metrics: ProviderEvidenceMetrics,
-    config: ResearchRunConfig,
-  ): { landedCost?: number; breakdown?: Record<string, unknown> } {
-    const factoryUnitCost = metrics.factoryUnitCost ?? metrics.productCost;
-    if (factoryUnitCost === undefined) {
-      return {};
-    }
-
-    const assumptions = config.sourcing.landedCostAssumptions;
-    const domesticChinaShipping = metrics.shippingCost ?? 0;
-    const internationalFreightEstimate = assumptions.internationalFreightPerUnit ?? 0;
-    const agentFeeEstimate = assumptions.agentFeePercent
-      ? Math.round(factoryUnitCost * (assumptions.agentFeePercent / 100) * 100) / 100
-      : 0;
-    const customsDutyEstimate = assumptions.customsDutyPercent
-      ? Math.round(factoryUnitCost * (assumptions.customsDutyPercent / 100) * 100) / 100
-      : 0;
-    const packagingEstimate = assumptions.packagingPerUnit ?? 0;
-    const qcEstimate = assumptions.qcPerUnit ?? 0;
-    const landedCost =
-      Math.round(
-        (
-          factoryUnitCost +
-          domesticChinaShipping +
-          internationalFreightEstimate +
-          agentFeeEstimate +
-          customsDutyEstimate +
-          packagingEstimate +
-          qcEstimate
-        ) *
-          100,
-      ) / 100;
-
-    const missingAssumptions = [
-      assumptions.internationalFreightPerUnit === undefined
-        ? 'internationalFreightPerUnit'
-        : undefined,
-      assumptions.agentFeePercent === undefined ? 'agentFeePercent' : undefined,
-      assumptions.customsDutyPercent === undefined ? 'customsDutyPercent' : undefined,
-      assumptions.packagingPerUnit === undefined ? 'packagingPerUnit' : undefined,
-      assumptions.qcPerUnit === undefined ? 'qcPerUnit' : undefined,
-    ].filter(Boolean);
-
-    return {
-      landedCost,
-      breakdown: {
-        factoryUnitCost,
-        moq: metrics.moq,
-        domesticChinaShipping,
-        internationalFreightEstimate,
-        agentFeeEstimate,
-        customsDutyEstimate,
-        packagingEstimate,
-        qcEstimate,
-        landedCost,
-        missingAssumptions,
-      },
     };
   }
 

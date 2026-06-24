@@ -97,12 +97,73 @@ export class CandidateScoringService {
     };
   }
 
+  scoreDiscovery(input: ScoreCandidateInput): CandidateScoreResult {
+    const parsed = validate(candidateScorePayloadSchema, input);
+    const marginMetrics = this.calculateMargin(parsed);
+    const demandScore = this.scoreOrDefault(parsed.demandScore, 50);
+    const trendScore = this.scoreOrDefault(parsed.trendScore, 50);
+    const competitionScore = this.scoreOrDefault(parsed.competitionScore, 50);
+    const creativePotentialScore = this.scoreOrDefault(parsed.creativePotentialScore, 50);
+    const riskScore = this.scoreOrDefault(parsed.riskScore, 50);
+    const marginScore = this.scoreOrDefault(
+      parsed.marginScore,
+      marginMetrics.grossMarginPercent === undefined
+        ? 50
+        : Math.round(marginMetrics.grossMarginPercent * 1.4),
+    );
+
+    const activeWeights = {
+      demand: this.weights.demand,
+      trend: this.weights.trend,
+      competition: this.weights.competition,
+      margin:
+        parsed.marginScore !== undefined || marginMetrics.grossMarginPercent !== undefined
+          ? this.weights.margin
+          : 0,
+      creativePotential: this.weights.creativePotential,
+      risk: this.weights.risk,
+    };
+    const total = Object.values(activeWeights).reduce((sum, value) => sum + value, 0);
+    const winningScore = Math.round(
+      (demandScore * activeWeights.demand +
+        trendScore * activeWeights.trend +
+        competitionScore * activeWeights.competition +
+        marginScore * activeWeights.margin +
+        creativePotentialScore * activeWeights.creativePotential +
+        (100 - riskScore) * activeWeights.risk) /
+        total,
+    );
+
+    return {
+      demandScore,
+      trendScore,
+      competitionScore,
+      marginScore,
+      supplierScore: 50,
+      sourcingScore: 50,
+      factoryCostScore: 50,
+      logisticsScore: 50,
+      creativePotentialScore,
+      riskScore,
+      winningScore: this.clampScore(winningScore),
+      ...marginMetrics,
+    };
+  }
+
   private calculateMargin(input: ScoreCandidateInput): Pick<
     CandidateScoreResult,
     'landedCost' | 'estimatedGrossProfit' | 'grossMarginPercent' | 'breakEvenRoas'
   > {
     const price = input.recommendedPrice;
     if (!price || price <= 0) {
+      return {};
+    }
+
+    const hasCost =
+      input.landedCost !== undefined ||
+      input.estimatedCOGS !== undefined ||
+      input.estimatedShipping !== undefined;
+    if (!hasCost) {
       return {};
     }
 

@@ -20,6 +20,14 @@ Workflow Manager
 
 Research Product Intelligence Module
 
+Query Intelligence Service
+
+Product Aggregation Service
+
+Candidate Scoring Service (Two-Phase)
+
+Candidate Sourcing Service (1688 Enrichment)
+
 ---
 
 ## Backend
@@ -60,19 +68,51 @@ Research Service
 
 ↓
 
-Research Agent
+Query Intelligence Providers (Trend, Keyword, lightweight Search)
 
 ↓
 
-Research Product Intelligence Module
+Query Intelligence Service (provider-backed derived queries)
 
 ↓
 
-Product Candidate Ranking
+Candidate Discovery Providers (Marketplace, Apify marketplace actors)
+
+↓
+
+Normalize Raw Listings into ResearchSource Evidence
+
+↓
+
+Product Aggregation Service (AI-powered grouping of MARKETPLACE evidence)
+
+↓
+
+Build ProductCandidate Drafts
+
+↓
+
+Candidate Enrichment Providers (Search, Trend, Keyword, Ads, Social)
+
+↓
+
+Phase 1: Discovery Scoring (market signals only)
+
+↓
+
+Product Candidate Ranking (discovery)
 
 ↓
 
 Select Candidate
+
+↓
+
+Candidate Sourcing Service (1688 enrichment)
+
+↓
+
+Phase 2: Full Scoring (all 10 factors)
 
 ↓
 
@@ -316,13 +356,31 @@ Initial provider categories:
 
 - Search Provider: web results, competitor pages, review articles, discussion pages
 - Marketplace Provider: listing price, reviews, ratings, sellers, common complaints, product variants
-- Trend Provider: demand trend, seasonality, regional interest
-- Keyword Provider: search volume, keyword difficulty, CPC estimates
+- Trend Provider: demand trend, seasonality, regional interest, related/rising queries when available
+- Keyword Provider: search volume, keyword difficulty, CPC estimates, buyer-intent keyword candidates
 - Ads Signal Provider: active ad examples, creative angles, saturation signals
 - Sourcing Provider: factory unit cost, MOQ, tiered prices, domestic supplier shipping, lead time, supplier reliability, and factory/trader signals
 - Social Listening Provider: customer pain points, objections, emotional language
 
 Provider output must be normalized before persistence.
+
+Query intelligence runs before marketplace candidate discovery. It uses
+provider-backed `TREND`, `KEYWORD`, and lightweight `SEARCH` evidence to extract
+candidate search terms such as rising queries, related queries, high-volume
+buyer-intent keywords, and useful problem/alternative terms from search result
+titles or snippets. These terms are ranked and capped by QueryIntelligenceService
+before they are passed into marketplace and Apify discovery providers.
+
+Query intelligence must remain evidence-backed:
+
+- Derived queries must come from provider responses or normalized source
+  evidence.
+- AI may rank, filter, deduplicate, or explain derived queries only when the
+  query text is present in provider-backed evidence.
+- The seed query remains included even when query intelligence is empty.
+- Marketplace and Apify providers must record `queryUsed`, `querySource`,
+  `queryScore`, and `collectionStage` in `rawData` for downstream auditability.
+- Query intelligence must not create ProductCandidate records directly.
 
 Supplemental provider implementations must use approved API integrations only. If
 credentials are missing, providers must return no evidence and log a structured
@@ -382,6 +440,28 @@ source evidence when providers return no usable data.
 
 ---
 
+## Apify Candidate Discovery
+
+Apify-backed candidate discovery is part of the general marketplace evidence
+pipeline, not the 1688 sourcing failover path.
+
+Actor definitions live in:
+
+```text
+config/apify-candidate-discovery.json
+```
+
+Each actor definition declares its Apify actor ID, source type, provider type,
+maximum items, and templated actor input. The Apify candidate discovery provider
+may run configured actors whose `providerType` is enabled by the validated
+research configuration. Dataset items are normalized into ResearchSource
+records, primarily `MARKETPLACE` evidence.
+
+The provider must not create ProductCandidate records directly. Its output feeds
+ProductAggregationService along with other marketplace provider evidence.
+
+---
+
 ## AI-Assisted Source Match Review
 
 Product Research may use AI to review whether two persisted source records
@@ -434,11 +514,19 @@ Input Product Idea / Niche
     ↓
 Apply Research Brief Constraints
     ↓
-Collect External Evidence
+Collect Query Intelligence Evidence (TREND, KEYWORD, lightweight SEARCH)
     ↓
-Derive Product Candidates From External Evidence
+QueryIntelligenceService ranks provider-backed derived queries
+    ↓
+Collect Candidate Discovery Evidence using seed query + derived queries
     ↓
 Normalize Evidence
+    ↓
+Persist/Prepare Normalized ResearchSource Evidence
+    ↓
+ProductAggregationService groups MARKETPLACE evidence
+    ↓
+Build ProductCandidate Drafts From Aggregated Groups
     ↓
 Estimate Sourcing Cost, Landed Cost, and Profit
     ↓
@@ -453,9 +541,12 @@ Candidate Selection
 Promote Candidate to Product Workflow
 ```
 
-Product candidates must be derived from external provider evidence such as
-search, marketplace, sourcing, trend, keyword, social, or ads signals. If
-providers are unavailable or return no usable evidence, Product Research must
+Product candidates must be seeded from `MARKETPLACE` provider evidence after
+ProductAggregationService groups raw listings into unified product groups.
+`SEARCH`, `TREND`, `KEYWORD`, `ADS_SIGNAL`, and `SOCIAL` evidence can enrich
+score inputs, risk flags, confidence, and source panels, but they must not
+create candidates by themselves in the initial discovery phase. If providers are
+unavailable or return no usable marketplace evidence, Product Research must
 return an empty shortlist or fail visibly; it must not fall back to
 AI-generated product candidates.
 
@@ -464,10 +555,19 @@ candidate drafts are derived. Constraints such as excluded categories, maximum
 MOQ, and price band may remove candidates from the shortlist, but they must not
 trigger AI-generated replacements.
 
-Sourcing evidence can create product candidates directly when it represents a
-specific product opportunity, such as a 1688 offer or factory listing. The
-Research Service must not limit candidate creation to marketplace or search
-evidence only.
+Sourcing evidence must not create initial ProductCandidate records. It enriches
+an existing candidate through CandidateSourcingService after discovery and
+selection/review actions expose a candidate-level 1688 sourcing workflow.
+
+ProductAggregationService stores no ProductGroup table in the initial
+implementation. Product groups are transient service-layer outputs. The final
+candidate metadata must preserve aggregation details, source IDs or URLs, actor
+provenance, and merged metrics so the recommendation remains auditable.
+
+Derived query outputs are transient service-layer results. The initial
+implementation should avoid a dedicated query-intelligence database table and
+persist auditability through `ResearchRun.input`, `ResearchSource.rawData`, and
+candidate aggregation metadata.
 
 ---
 

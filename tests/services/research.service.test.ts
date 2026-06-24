@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ResearchService } from '@/services/research.service';
 import { CandidateScoringService } from '@/services/candidate-scoring.service';
 import type { AIProvider } from '@/types/ai-provider.interface';
+import type { ResearchProviderCollectInput } from '@/types/research.types';
 
 describe('ResearchService', () => {
   it('should create, score, persist, and recommend provider-backed candidates', async () => {
@@ -232,6 +233,401 @@ describe('ResearchService', () => {
     expect(aiProvider.generateText).not.toHaveBeenCalled();
   });
 
+  it('should aggregate multiple marketplace listings before creating candidates', async () => {
+    const run = {
+      id: 'run_aggregate',
+      researchProjectId: null,
+      productId: null,
+      workflowId: null,
+      input: {},
+      summary: null,
+      recommendation: null,
+      providerCosts: null,
+      startedAt: new Date('2026-01-01'),
+      completedAt: null,
+      createdAt: new Date('2026-01-01'),
+    };
+    const candidateRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: 'cand_aggregate',
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const sourceRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: `src_${sourceRepo.create.mock.calls.length}`,
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const marketplaceSources = [
+      {
+        type: 'MARKETPLACE',
+        provider: 'Apify Google Shopping',
+        url: 'https://example.com/blender-a',
+        externalId: 'listing_a',
+        title: 'USB Portable Blender',
+        extractedSignal: 'USB Portable Blender listing, 1200 reviews',
+        rawData: {
+          metrics: {
+            price: 39.99,
+            reviewCount: 1200,
+            demandSignal: 82,
+          },
+        },
+        confidence: 0.74,
+        capturedAt: new Date('2026-01-01'),
+      },
+      {
+        type: 'MARKETPLACE',
+        provider: 'Apify Amazon Product Scraper',
+        url: 'https://example.com/blender-b',
+        externalId: 'listing_b',
+        title: 'USB Portable Blender',
+        extractedSignal: 'USB Portable Blender listing, 800 reviews',
+        rawData: {
+          metrics: {
+            price: 42.99,
+            reviewCount: 800,
+            demandSignal: 78,
+          },
+        },
+        confidence: 0.71,
+        capturedAt: new Date('2026-01-01'),
+      },
+    ];
+    const service = new ResearchService(
+      {
+        create: vi.fn().mockResolvedValue(run),
+        updateCompleted: vi.fn().mockImplementation((_id, input) =>
+          Promise.resolve({
+            ...run,
+            ...input,
+            completedAt: new Date('2026-01-01'),
+          }),
+        ),
+      } as never,
+      {} as never,
+      candidateRepo as never,
+      sourceRepo as never,
+      {} as never,
+      {} as never,
+      {
+        create: vi.fn().mockResolvedValue({ id: 'audit_001' }),
+      } as never,
+      new CandidateScoringService(),
+      [
+        {
+          name: 'MarketplaceResearchProvider',
+          providerType: 'marketplace',
+          collect: vi.fn().mockResolvedValue(marketplaceSources),
+        },
+      ],
+    );
+
+    const result = await service.run({ productIdea: 'Portable Blender' });
+
+    expect(result.candidates).toHaveLength(1);
+    expect(candidateRepo.create).toHaveBeenCalledTimes(1);
+    expect(candidateRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'USB Portable Blender',
+        recommendedPrice: 41.49,
+        metadata: expect.objectContaining({
+          generatedFrom: 'product_aggregation',
+          aggregation: expect.objectContaining({
+            method: 'deterministic_dedup',
+            sourceUrls: ['https://example.com/blender-a', 'https://example.com/blender-b'],
+            mergedMetrics: expect.objectContaining({
+              sourceCount: 2,
+              medianPrice: 41.49,
+              reviewCountTotal: 2000,
+            }),
+          }),
+        }),
+      }),
+    );
+    expect(sourceRepo.create).toHaveBeenCalledTimes(2);
+    expect(sourceRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ candidateId: 'cand_aggregate', url: 'https://example.com/blender-a' }),
+    );
+    expect(sourceRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ candidateId: 'cand_aggregate', url: 'https://example.com/blender-b' }),
+    );
+  });
+
+  it('should use provider-backed query intelligence before marketplace discovery', async () => {
+    const run = {
+      id: 'run_query_intelligence',
+      researchProjectId: null,
+      productId: null,
+      workflowId: null,
+      input: {},
+      summary: null,
+      recommendation: null,
+      providerCosts: null,
+      startedAt: new Date('2026-01-01'),
+      completedAt: null,
+      createdAt: new Date('2026-01-01'),
+    };
+    const keywordProvider = {
+      name: 'KeywordResearchProvider',
+      providerType: 'keyword' as const,
+      collect: vi.fn().mockResolvedValue([
+        {
+          type: 'KEYWORD',
+          provider: 'DataForSEO Google Ads Search Volume',
+          externalId: 'cordless portable blender',
+          title: 'cordless portable blender keyword signal',
+          extractedSignal: 'cordless portable blender keyword evidence, search volume 12000',
+          rawData: {
+            keyword: 'cordless portable blender',
+            metrics: {
+              searchVolume: 12000,
+              cpc: 1.8,
+              competitionSignal: 42,
+            },
+          },
+          confidence: 0.74,
+          capturedAt: new Date('2026-01-01'),
+        },
+      ]),
+    };
+    const marketplaceProvider = {
+      name: 'MarketplaceResearchProvider',
+      providerType: 'marketplace' as const,
+      collect: vi.fn().mockImplementation(async (input: ResearchProviderCollectInput) => {
+        const derivedQuery = input.collectionContext?.selectedQueries?.at(1)?.query;
+        return [
+          {
+            type: 'MARKETPLACE',
+            provider: 'SerpAPI Google Shopping',
+            url: 'https://store.example.com/cordless-portable-blender',
+            externalId: 'shopping_query_001',
+            title: 'Cordless Portable Blender',
+            extractedSignal: `Marketplace listing collected for ${derivedQuery}`,
+            rawData: {
+              queryUsed: derivedQuery,
+              querySource: input.collectionContext?.selectedQueries?.at(1)?.source,
+              queryScore: input.collectionContext?.selectedQueries?.at(1)?.score,
+              collectionStage: input.collectionContext?.stage,
+              metrics: {
+                price: 49,
+                reviewCount: 900,
+              },
+            },
+            confidence: 0.72,
+            capturedAt: new Date('2026-01-01'),
+          },
+        ];
+      }),
+    };
+    const candidateRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: 'cand_query_intelligence',
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const sourceRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: `src_${sourceRepo.create.mock.calls.length}`,
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const runRepo = {
+      create: vi.fn().mockResolvedValue(run),
+      updateCompleted: vi.fn().mockImplementation((_id, input) =>
+        Promise.resolve({
+          ...run,
+          ...input,
+          completedAt: new Date('2026-01-01'),
+        }),
+      ),
+    };
+
+    const service = new ResearchService(
+      runRepo as never,
+      {} as never,
+      candidateRepo as never,
+      sourceRepo as never,
+      {} as never,
+      {} as never,
+      {
+        create: vi.fn().mockResolvedValue({ id: 'audit_001' }),
+      } as never,
+      new CandidateScoringService(),
+      [keywordProvider, marketplaceProvider],
+    );
+
+    const result = await service.run({
+      productIdea: 'portable blender',
+      config: {
+        supplementalProviders: ['keyword', 'marketplace'],
+        maxDerivedQueries: 1,
+      },
+    });
+
+    expect(keywordProvider.collect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionContext: expect.objectContaining({ stage: 'query_intelligence' }),
+      }),
+    );
+    expect(marketplaceProvider.collect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collectionContext: expect.objectContaining({
+          stage: 'candidate_discovery',
+          queries: ['portable blender', 'cordless portable blender'],
+        }),
+      }),
+    );
+    expect(runRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          queryIntelligence: expect.objectContaining({
+            selectedQueries: expect.arrayContaining([
+              expect.objectContaining({ query: 'cordless portable blender' }),
+            ]),
+          }),
+        }),
+      }),
+    );
+    expect(result.candidates).toHaveLength(1);
+    expect(sourceRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'MARKETPLACE',
+        candidateId: 'cand_query_intelligence',
+        rawData: expect.objectContaining({
+          queryUsed: 'cordless portable blender',
+          querySource: 'QUERY_INTELLIGENCE',
+          collectionStage: 'candidate_discovery',
+        }),
+      }),
+    );
+  });
+
+  it('should not collect web search articles by default', async () => {
+    const run = {
+      id: 'run_default_providers',
+      researchProjectId: null,
+      productId: null,
+      workflowId: null,
+      input: {},
+      summary: null,
+      recommendation: null,
+      providerCosts: null,
+      startedAt: new Date('2026-01-01'),
+      completedAt: null,
+      createdAt: new Date('2026-01-01'),
+    };
+    const searchProvider = {
+      name: 'SearchResearchProvider',
+      providerType: 'search' as const,
+      collect: vi.fn().mockResolvedValue([
+        {
+          type: 'SEARCH',
+          provider: 'SerpAPI Google Search',
+          url: 'https://example.com/blog/trending-products',
+          title: 'Top products to sell this year',
+          extractedSignal: 'Article result',
+          confidence: 0.7,
+          capturedAt: new Date('2026-01-01'),
+        },
+      ]),
+    };
+    const marketplaceProvider = {
+      name: 'MarketplaceResearchProvider',
+      providerType: 'marketplace' as const,
+      collect: vi.fn().mockResolvedValue([
+        {
+          type: 'MARKETPLACE',
+          provider: 'SerpAPI Google Shopping',
+          url: 'https://store.example.com/self-cleaning-blender',
+          externalId: 'shopping_001',
+          title: 'Self-cleaning Portable Blender',
+          extractedSignal: 'Marketplace product listing with price and reviews',
+          rawData: {
+            metrics: {
+              price: 79,
+              reviewCount: 450,
+            },
+          },
+          confidence: 0.72,
+          capturedAt: new Date('2026-01-01'),
+        },
+      ]),
+    };
+    const candidateRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: 'cand_default_marketplace',
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const sourceRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: `src_${sourceRepo.create.mock.calls.length}`,
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const service = new ResearchService(
+      {
+        create: vi.fn().mockResolvedValue(run),
+        updateCompleted: vi.fn().mockImplementation((_id, input) =>
+          Promise.resolve({
+            ...run,
+            ...input,
+            completedAt: new Date('2026-01-01'),
+          }),
+        ),
+      } as never,
+      {} as never,
+      candidateRepo as never,
+      sourceRepo as never,
+      {} as never,
+      {} as never,
+      {
+        create: vi.fn().mockResolvedValue({ id: 'audit_001' }),
+      } as never,
+      new CandidateScoringService(),
+      [searchProvider, marketplaceProvider],
+    );
+
+    const result = await service.run({
+      productIdea: 'Portable Blender',
+    });
+
+    expect(searchProvider.collect).not.toHaveBeenCalled();
+    expect(marketplaceProvider.collect).toHaveBeenCalledOnce();
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates.at(0)?.metadata).toEqual(
+      expect.objectContaining({
+        sourceType: 'MARKETPLACE',
+      }),
+    );
+    expect(sourceRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'MARKETPLACE',
+        candidateId: 'cand_default_marketplace',
+      }),
+    );
+  });
+
   it('should not create candidates directly from 1688 sourcing evidence during discovery', async () => {
     const run = {
       id: 'run_sourcing',
@@ -333,6 +729,122 @@ describe('ResearchService', () => {
     expect(result.candidates).toEqual([]);
     expect(candidateRepo.create).not.toHaveBeenCalled();
     expect(sourceRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('should not create product candidates from search articles or videos', async () => {
+    const run = {
+      id: 'run_search_content',
+      researchProjectId: null,
+      productId: null,
+      workflowId: null,
+      input: {},
+      summary: null,
+      recommendation: null,
+      providerCosts: null,
+      startedAt: new Date('2026-01-01'),
+      completedAt: null,
+      createdAt: new Date('2026-01-01'),
+    };
+    const candidateRepo = {
+      create: vi.fn(),
+    };
+    const sourceRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: `src_${sourceRepo.create.mock.calls.length}`,
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const searchSources = [
+      {
+        type: 'SEARCH',
+        provider: 'SerpAPI Google Search',
+        url: 'https://www.youtube.com/watch?v=abc123',
+        externalId: 'yt_001',
+        title: 'New Amazon FBA Product Research Techniques for 2024',
+        extractedSignal: 'Video result about research techniques, not a product listing',
+        rawData: {
+          source: 'YouTube',
+          duration: '12:48',
+        },
+        confidence: 0.82,
+        capturedAt: new Date('2026-01-01'),
+      },
+      {
+        type: 'SEARCH',
+        provider: 'SerpAPI Google Search',
+        url: 'https://example.com/blog/how-to-find-products-to-sell',
+        externalId: 'blog_001',
+        title: 'How to Find Products to Sell on Amazon: 7 Proven Methods',
+        extractedSignal: 'Guide article about product research, not a product listing',
+        rawData: {
+          source: 'Example Blog',
+        },
+        confidence: 0.76,
+        capturedAt: new Date('2026-01-01'),
+      },
+    ];
+    const aiProvider: AIProvider = {
+      providerName: 'test-ai',
+      generateText: vi.fn(),
+    };
+    const service = new ResearchService(
+      {
+        create: vi.fn().mockResolvedValue(run),
+        updateCompleted: vi.fn().mockImplementation((_id, input) =>
+          Promise.resolve({
+            ...run,
+            ...input,
+            completedAt: new Date('2026-01-01'),
+          }),
+        ),
+      } as never,
+      {} as never,
+      candidateRepo as never,
+      sourceRepo as never,
+      {} as never,
+      {} as never,
+      {
+        create: vi.fn().mockResolvedValue({ id: 'audit_001' }),
+      } as never,
+      new CandidateScoringService(),
+      [
+        {
+          name: 'SearchResearchProvider',
+          providerType: 'search',
+          collect: vi.fn().mockResolvedValue(searchSources),
+        },
+      ],
+      aiProvider,
+    );
+
+    const result = await service.run({
+      productIdea: 'Amazon product research',
+      config: {
+        supplementalProviders: ['search'],
+      },
+    });
+
+    expect(result.candidates).toEqual([]);
+    expect(candidateRepo.create).not.toHaveBeenCalled();
+    expect(aiProvider.generateText).not.toHaveBeenCalled();
+    expect(sourceRepo.create).toHaveBeenCalledTimes(2);
+    expect(sourceRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        candidateId: undefined,
+        type: 'SEARCH',
+        url: 'https://www.youtube.com/watch?v=abc123',
+      }),
+    );
+    expect(sourceRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        candidateId: undefined,
+        type: 'SEARCH',
+        url: 'https://example.com/blog/how-to-find-products-to-sell',
+      }),
+    );
   });
 
   it('should filter provider-backed candidates by research brief constraints', async () => {

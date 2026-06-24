@@ -1,0 +1,36 @@
+
+> shopify-autonomous-store@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1951ms
+ ✓ Compiled /src/middleware in 192ms (126 modules)
+ ✓ Compiled /api/health in 351ms (144 modules)
+[2026-06-24 11:12:22.852 +0700] [34mDEBUG[39m (shopify-autonomous-store): [36mPrisma query[39m
+    query: "SELECT 1"
+    duration: 1
+[2026-06-24 11:12:22.856 +0700] [32mINFO[39m (shopify-autonomous-store): [36mRedis connected[39m
+ GET /api/health 200 in 1882ms
+ ✓ Compiled in 66ms
+   Reload env: .env
+ ✓ Compiled in 463ms (329 modules)
+   Reload env: .env
+ ✓ Compiled in 133ms (329 modules)
+   Reload env: .env
+ ✓ Compiled in 73ms (329 modules)
+   Reload env: .env
+ ✓ Compiled in 82ms (329 modules)
+   Reload env: .env
+ ✓ Compiled in 97ms (329 modules)
+   Reload env: .env
+ ✓ Compiled in 79ms (329 modules)
+   Reload env: .env
+ ✓ Compiled in 142ms (329 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 591ms (480 modules)
+ GET / 200 in 754ms
+[?25h

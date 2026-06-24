@@ -29,32 +29,35 @@ import {
   ResearchProjectRepository,
 } from '@/repositories/research-project.repository';
 import { BaseRepository } from '@/repositories/base.repository';
+import { createDefaultResearchProviders } from '@/providers/research';
 import { createDefaultProvider } from '@/providers/provider.factory';
 import { getOptionalEnvValue } from '@/lib/env';
 import { AppError, ErrorCodes } from '@/lib/errors';
 import { logger } from '@/lib/logger';
 import { validate } from '@/lib/validate';
+import { normalizedResearchSourceSchema } from '@/schemas/research.schema';
 import {
   autonomousDiscoveryJobSchema,
   discoveryJobResultSchema,
-  discoveryQueryPlanSchema,
   researchRunConfigSchema,
   type AutonomousDiscoveryJobConfig,
   type AutonomousDiscoveryJobInput,
   type DiscoveryJobResult,
-  type DiscoveryQueryPlan,
-  type DiscoveryQueryPlanItem,
+  type ResearchRunConfig,
   type ResearchRunConfigInput,
 } from '@/schemas/research.schema';
 import { researchService, ResearchService } from './research.service';
+import { QueryIntelligenceService, queryIntelligenceService } from './query-intelligence.service';
 import type { AIProvider } from '@/types/ai-provider.interface';
 import type { AuditLogRepository } from '@/repositories/audit-log.repository';
 import type { ProductCandidateRepository } from '@/repositories/product-candidate.repository';
+import type { ResearchProvider } from '@/types/research.types';
 import type {
   DiscoveryJobRunResult,
   DiscoveryJobSummary,
   StartDiscoveryJobResult,
 } from '@/types/research.types';
+import type { NormalizedResearchSourceInput } from '@/schemas/research.schema';
 
 export class DiscoveryJobService {
   constructor(
@@ -63,6 +66,8 @@ export class DiscoveryJobService {
     private readonly candidateRepo: ProductCandidateRepository = productCandidateRepository,
     private readonly auditRepo: AuditLogRepository = auditLogRepository,
     private readonly researchSvc: ResearchService = researchService,
+    private readonly queryIntel: QueryIntelligenceService = queryIntelligenceService,
+    private readonly providers: ResearchProvider[] = createDefaultResearchProviders(),
     private readonly aiProvider?: AIProvider,
   ) {}
 
@@ -150,14 +155,15 @@ export class DiscoveryJobService {
 
     const project = await this.projectRepo.findByIdOrThrow(job.researchProjectId);
     const config = validate(autonomousDiscoveryJobSchema, job.input);
-    const queryPlan = await this.buildQueryPlan(config);
+    const discoveryQueries = await this.collectDiscoveryQueries(config);
+    const queryPlan = { queries: discoveryQueries.map((q) => ({ query: q, angle: 'Provider-backed keyword', rationale: '' })) };
     await this.jobRepo.markRunning(job.id, this.toJson(queryPlan));
 
     logger.info(
       {
         discoveryJobId: job.id,
         researchProjectId: project.id,
-        queryCount: queryPlan.queries.length,
+        queryCount: discoveryQueries.length,
       },
       'Autonomous product discovery job started',
     );
@@ -167,10 +173,10 @@ export class DiscoveryJobService {
       let sourceCount = 0;
       const researchConfig = this.toResearchRunConfig(config);
 
-      for (const planItem of queryPlan.queries) {
+      for (const query of discoveryQueries) {
         const result = await this.researchSvc.run({
           researchProjectId: project.id,
-          productIdea: planItem.query,
+          productIdea: query,
           config: researchConfig,
         });
         runCount += 1;
@@ -182,7 +188,7 @@ export class DiscoveryJobService {
         (a, b) => (b.winningScore ?? 0) - (a.winningScore ?? 0),
       );
       const result = validate(discoveryJobResultSchema, {
-        queryCount: queryPlan.queries.length,
+        queryCount: discoveryQueries.length,
         runCount,
         candidateCount: candidates.length,
         sourceCount,
@@ -243,35 +249,276 @@ export class DiscoveryJobService {
     }
   }
 
-  private async buildQueryPlan(
+  /**
+   * Collect discovery queries from provider-backed keyword intelligence.
+   *
+   * Two paths:
+   * - With seed query: QueryIntelligenceService filters keywords by relevance to seed
+   * - Without seed query: query Google Trends with broad e-commerce category seeds,
+   *   extract related/rising queries (real trending keywords from Google), merge & cap
+   */
+  private async collectDiscoveryQueries(
     config: AutonomousDiscoveryJobConfig,
-  ): Promise<DiscoveryQueryPlan> {
-    const aiProvider = this.resolveAiProvider();
+  ): Promise<string[]> {
+    const hasSeedQuery = Boolean(config.seedQuery?.trim());
+    const seedQuery = (config.seedQuery ?? '').trim().replace(/\s+/g, ' ');
+    const queryIntelConfig = validate(researchRunConfigSchema, config);
 
-    if (aiProvider) {
-      try {
-        const output = await aiProvider.generateText({
-          systemPrompt: [
-            'You plan product research queries for a Shopify Product Research system.',
-            'Return JSON only. Do not include products, suppliers, URLs, prices, MOQ, or cost claims.',
-            'Output shape: {"queries":[{"query":"...","angle":"...","rationale":"..."}]}',
-          ].join(' '),
-          prompt: this.buildPlannerPrompt(config),
-          maxTokens: 1400,
-          temperature: 0.4,
-        });
+    if (!hasSeedQuery) {
+      return this.collectTrendBasedDiscoveryQueries(queryIntelConfig, config);
+    }
 
-        const parsed = discoveryQueryPlanSchema.parse(this.parseJsonObject(output.text));
-        return this.limitQueryPlan(parsed, config);
-      } catch (error) {
-        logger.warn(
-          { error: error instanceof Error ? error.message : 'Unknown' },
-          'AI discovery query planning failed; using deterministic fallback plan',
-        );
+    // With seed query — collect keyword evidence and filter by relevance
+    const keywordSources = await this.collectKeywordEvidence(seedQuery, queryIntelConfig);
+    return this.selectDiscoveryQueriesWithSeed(seedQuery, keywordSources, config, queryIntelConfig);
+  }
+
+  /**
+   * Without seed query: query Google Trends with broad e-commerce category seeds,
+   * extract related/rising queries (real trending keywords), and use them.
+   */
+  private async collectTrendBasedDiscoveryQueries(
+    config: ResearchRunConfig,
+    discoveryConfig: AutonomousDiscoveryJobConfig,
+  ): Promise<string[]> {
+    const categorySeeds = [
+      'home gadgets',
+      'kitchen tools',
+      'car accessories',
+      'pet supplies',
+      'fitness gear',
+      'baby products',
+      'phone accessories',
+      'outdoor gear',
+    ];
+
+    const seen = new Set<string>();
+    const allKeywords: string[] = [];
+    const addKeyword = (kw: string | undefined | null) => {
+      if (!kw || typeof kw !== 'string') return;
+      const clean = kw.trim().replace(/\s+/g, ' ').toLowerCase();
+      if (clean.length > 3 && clean.split(/\s+/).length >= 2 && !seen.has(clean)) {
+        seen.add(clean);
+        allKeywords.push(clean);
+      }
+    };
+
+    // Query Google Trends for each category seed in parallel
+    const trendResults = await Promise.all(
+      categorySeeds.map((seed) =>
+        this.collectKeywordEvidence(seed, config),
+      ),
+    );
+
+    // Extract related/rising queries from Google Trends responses + keyword providers
+    for (const sources of trendResults) {
+      for (const source of sources) {
+        const rawData = source.rawData ?? {};
+
+        // Google Trends related/rising queries
+        if (source.type === 'TREND') {
+          for (const kw of this.extractKeywordsFromTrendResponse(rawData.response)) {
+            addKeyword(kw);
+          }
+        }
+
+        // Keyword provider data (externalId, title, raw keyword)
+        if (source.type === 'KEYWORD') {
+          addKeyword(source.externalId);
+          addKeyword(source.title?.replace(/\s+keyword signal$/iu, ''));
+          addKeyword(typeof rawData.keyword === 'string' ? rawData.keyword : undefined);
+        }
       }
     }
 
-    return this.buildFallbackQueryPlan(config);
+    if (allKeywords.length > 0) {
+      const selected = allKeywords.slice(0, discoveryConfig.maxQueries);
+      logger.info(
+        { categorySeeds: categorySeeds.length, extractedKeywords: allKeywords.length, selected },
+        'Discovery queries from Google Trends related/rising queries across categories',
+      );
+      return selected;
+    }
+
+    // Last resort fallback
+    return this.defaultDiscoveryQueries(discoveryConfig.maxQueries);
+  }
+
+  private defaultDiscoveryQueries(maxQueries: number): string[] {
+    const queries = [
+      'portable blender USB rechargeable',
+      'car phone mount magnetic',
+      'pet hair remover reusable lint roller',
+      'LED strip lights room decor',
+      'posture corrector back support',
+      'kitchen gadget organizer drawer',
+      'wireless earbuds Bluetooth 5.0',
+      'baby car mirror rear facing',
+      'resistance bands set workout',
+      'phone case wallet card holder',
+      'essential oil diffuser ultrasonic',
+      'yoga mat non slip exercise',
+    ];
+    return queries.slice(0, maxQueries);
+  }
+
+  /**
+   * Extract keywords from nested Google Trends response data.
+   * Handles related_queries, rising_queries, top_queries at any depth.
+   */
+  private extractKeywordsFromTrendResponse(value: unknown, depth = 0): string[] {
+    if (depth > 4) return [];
+    if (typeof value === 'string' && value.length > 3 && value.split(/\s+/).length >= 2) {
+      return [value];
+    }
+    if (Array.isArray(value)) {
+      return value.flatMap((item) => this.extractKeywordsFromTrendResponse(item, depth + 1));
+    }
+    if (!value || typeof value !== 'object') return [];
+
+    const record = value as Record<string, unknown>;
+    const direct = [
+      typeof record.query === 'string' ? record.query : undefined,
+      typeof record.keyword === 'string' ? record.keyword : undefined,
+      typeof record.title === 'string' ? record.title : undefined,
+      typeof record.value === 'string' ? record.value : undefined,
+    ].filter((k): k is string => Boolean(k));
+
+    const nested = [
+      record.related_queries, record.relatedQueries,
+      record.rising_queries, record.risingQueries,
+      record.top_queries, record.topQueries,
+      record.rising, record.top,
+      record.items, record.data, record.results,
+      record.ads_results, record.keyword_ideas,
+    ].flatMap((item) => this.extractKeywordsFromTrendResponse(item, depth + 1));
+
+    return [...direct, ...nested];
+  }
+  private async selectDiscoveryQueriesWithSeed(
+    seedQuery: string,
+    sources: NormalizedResearchSourceInput[],
+    config: AutonomousDiscoveryJobConfig,
+    queryIntelConfig: ResearchRunConfig,
+  ): Promise<string[]> {
+    const queryIntelResult = this.queryIntel.selectQueries({
+      productIdea: seedQuery,
+      config: queryIntelConfig,
+      sources,
+    });
+
+    // If AI available, rank/filter provider-backed keywords (no invention)
+    const aiProvider = this.resolveAiProvider();
+    if (aiProvider && queryIntelResult.candidateQueries.length > 0) {
+      const aiRanked = await this.aiRankKeywords(
+        seedQuery,
+        queryIntelResult.candidateQueries.map((c) => c.query),
+        config,
+        aiProvider,
+      );
+      if (aiRanked.length > 0) {
+        const queries = [seedQuery, ...aiRanked.slice(0, config.maxQueries - 1)];
+        logger.info(
+          { seedQuery, aiRankedCount: aiRanked.length, totalQueries: queries.length },
+          'Discovery queries selected via AI ranking of provider-backed keywords',
+        );
+        return queries;
+      }
+    }
+
+    // Fallback — use QueryIntelligenceService selected queries
+    const fallback = queryIntelResult.selectedQueries
+      .slice(0, config.maxQueries)
+      .map((q) => q.query);
+    logger.info(
+      { seedQuery, queryCount: fallback.length },
+      'Discovery queries selected via QueryIntelligenceService (provider-backed)',
+    );
+    return fallback;
+  }
+
+  /**
+   * Collect TREND, KEYWORD, and SEARCH evidence from configured providers.
+   * Returns empty array when providers are not configured (no AI fallback).
+   */
+  private async collectKeywordEvidence(
+    seedQuery: string,
+    config: ResearchRunConfig,
+  ): Promise<NormalizedResearchSourceInput[]> {
+    const enabledProviders = new Set(config.supplementalProviders);
+    const results = await Promise.all(
+      this.providers
+        .filter((p) => {
+          const pt = p.providerType;
+          return pt === 'trend' || pt === 'keyword' || pt === 'search';
+        })
+        .filter((p) => p.providerType && enabledProviders.has(p.providerType))
+        .map((provider) =>
+          provider.collect({
+            productIdea: seedQuery,
+            config,
+            collectionContext: {
+              stage: 'query_intelligence',
+              queries: [seedQuery],
+            },
+          }),
+        ),
+    );
+
+    return results.flat().map((source) => validate(normalizedResearchSourceSchema, source));
+  }
+
+  /**
+   * Use AI to rank/filter existing provider-backed keywords.
+   * AI MUST NOT invent new keywords — only reorder/select from the provided list.
+   */
+  private async aiRankKeywords(
+    seedQuery: string,
+    keywordCandidates: string[],
+    config: AutonomousDiscoveryJobConfig,
+    aiProvider: AIProvider,
+  ): Promise<string[]> {
+    try {
+      const prompt = JSON.stringify({
+        task: 'Rank these provider-backed keyword candidates by relevance for e-commerce product discovery.',
+        seedQuery,
+        keywordCandidates,
+        constraints: {
+          targetMarket: config.targetMarket,
+          priceBand: config.priceBand,
+          excludedCategories: config.excludedCategories,
+          maxToSelect: config.maxQueries - 1, // seed query is already #1
+        },
+        rules: [
+          'Only select from the provided keywordCandidates list. DO NOT invent new keywords.',
+          'Prioritize specific product-buyer keywords over generic category terms.',
+          'Each selected keyword should target a distinct product category.',
+          'Return JSON: {"selectedKeywords":["keyword1","keyword2",...]}',
+        ],
+      });
+
+      const output = await aiProvider.generateText({
+        systemPrompt: 'You rank e-commerce product discovery keywords. Only select from the provided list — never invent new keywords. Return JSON only.',
+        prompt,
+        maxTokens: 800,
+        temperature: 0.2,
+      });
+
+      const parsed = this.parseJsonObject(output.text) as { selectedKeywords?: string[] };
+      if (!Array.isArray(parsed?.selectedKeywords)) {
+        return [];
+      }
+
+      // Validate all returned keywords exist in the input list
+      const validSet = new Set(keywordCandidates.map((k) => k.toLowerCase()));
+      return parsed.selectedKeywords.filter((k) => validSet.has(k.toLowerCase()));
+    } catch (error) {
+      logger.warn(
+        { error: error instanceof Error ? error.message : 'Unknown' },
+        'AI keyword ranking failed; falling back to QueryIntelligenceService ordering',
+      );
+      return [];
+    }
   }
 
   private resolveAiProvider(): AIProvider | undefined {
@@ -298,67 +545,6 @@ export class DiscoveryJobService {
     }
   }
 
-  private buildFallbackQueryPlan(
-    config: AutonomousDiscoveryJobConfig,
-  ): DiscoveryQueryPlan {
-    const baseQueries = config.seedQuery
-      ? [
-          `${config.seedQuery} accessories`,
-          `${config.seedQuery} problem solving products`,
-          `${config.seedQuery} premium utility products`,
-          `${config.seedQuery} viral product ideas`,
-          `${config.seedQuery} 1688 factory products`,
-          `${config.seedQuery} high margin products`,
-        ]
-      : [
-          'pet travel accessories',
-          'kitchen prep gadgets',
-          'home organization tools',
-          'fitness recovery products',
-          'car interior organizers',
-          'baby safety accessories',
-          'personal comfort gadgets',
-          'small space storage products',
-        ];
-
-    return {
-      queries: baseQueries.slice(0, config.maxQueries).map((query) => ({
-        query,
-        angle: this.inferAngle(query),
-        rationale: `Explore ${query} for ${config.targetMarket} buyers with provider-backed demand and 1688 sourcing evidence.`,
-      })),
-    };
-  }
-
-  private limitQueryPlan(
-    plan: DiscoveryQueryPlan,
-    config: AutonomousDiscoveryJobConfig,
-  ): DiscoveryQueryPlan {
-    const seen = new Set<string>();
-    const queries: DiscoveryQueryPlanItem[] = [];
-
-    for (const item of plan.queries) {
-      const query = item.query.trim().replace(/\s+/g, ' ');
-      const key = query.toLowerCase();
-      if (!query || seen.has(key)) {
-        continue;
-      }
-
-      seen.add(key);
-      queries.push({
-        query,
-        angle: item.angle,
-        rationale: item.rationale,
-      });
-
-      if (queries.length >= config.maxQueries) {
-        break;
-      }
-    }
-
-    return queries.length > 0 ? { queries } : this.buildFallbackQueryPlan(config);
-  }
-
   private toResearchRunConfig(
     config: AutonomousDiscoveryJobConfig,
   ): ResearchRunConfigInput {
@@ -367,36 +553,6 @@ export class DiscoveryJobService {
       ...researchConfig,
       objective: 'autonomous_discovery',
     });
-  }
-
-  private buildPlannerPrompt(config: AutonomousDiscoveryJobConfig): string {
-    return JSON.stringify({
-      task: 'Generate provider research queries for finding winning products.',
-      constraints: {
-        seedQuery: config.seedQuery,
-        targetMarket: config.targetMarket,
-        priceBand: config.priceBand,
-        targetMarginPercent: config.targetMarginPercent,
-        riskTolerance: config.riskTolerance,
-        excludedCategories: config.excludedCategories,
-        maxMoq: config.sourcing.maxMoq,
-        targetSource: config.sourcing.targetSource,
-        maxQueries: config.maxQueries,
-      },
-      rules: [
-        'Return query plan only.',
-        'Do not invent products.',
-        'Do not invent suppliers.',
-        'Do not invent prices, costs, MOQ, URLs, or evidence.',
-      ],
-    });
-  }
-
-  private parseJsonObject(text: string): unknown {
-    const trimmed = text.trim();
-    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    const jsonText = fenced?.[1]?.trim() ?? trimmed;
-    return JSON.parse(jsonText);
   }
 
   private buildProjectSummary(result: DiscoveryJobResult): string {
@@ -411,22 +567,15 @@ export class DiscoveryJobService {
     return `Autonomous discovery for ${config.targetMarket} winning products`;
   }
 
-  private inferAngle(query: string): string {
-    if (query.includes('1688') || query.includes('factory')) {
-      return 'Factory sourcing and landed-cost feasibility';
-    }
-    if (query.includes('viral')) {
-      return 'Creative potential and demand signal discovery';
-    }
-    if (query.includes('high margin')) {
-      return 'Margin-first product opportunity discovery';
-    }
-
-    return 'Demand, sourcing, margin, and risk discovery';
-  }
-
   private toJson(value: unknown): Prisma.InputJsonValue {
     return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+  }
+
+  private parseJsonObject(text: string): unknown {
+    const trimmed = text.trim();
+    const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    const jsonText = fenced?.[1]?.trim() ?? trimmed;
+    return JSON.parse(jsonText);
   }
 }
 

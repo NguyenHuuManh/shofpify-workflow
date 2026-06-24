@@ -636,6 +636,81 @@ If source matching becomes central to reporting, filtering, or audit workflows,
 promote these records into a dedicated model such as `ResearchSourceMatch` with
 foreign keys to both ResearchSource records and the owning ProductCandidate.
 
+Product aggregation does not require a dedicated `ProductGroup` model in the
+initial implementation. Aggregated groups are transient service-layer outputs
+created from normalized `MARKETPLACE` ResearchSource evidence. Persist the
+auditable aggregation result in `ProductCandidate.metadata`, for example:
+
+```json
+{
+  "aggregation": {
+    "groupId": "deterministic-or-ai-group-id",
+    "method": "ai_grouping",
+    "sourceIds": ["source-id-a", "source-id-b"],
+    "sourceUrls": ["https://example.com/product"],
+    "providerActors": ["apify/e-commerce-scraping-tool"],
+    "mergedMetrics": {
+      "medianPrice": 39.99,
+      "minPrice": 29.99,
+      "maxPrice": 49.99,
+      "ratingAverage": 4.5,
+      "reviewCountTotal": 1280,
+      "orderCountTotal": 320,
+      "demandSignal": 82,
+      "sourceCount": 2
+    }
+  }
+}
+```
+
+If aggregation groups later need independent reporting, review queues, or manual
+merge/split workflows, introduce a dedicated model in a separate approved
+migration.
+
+Query intelligence does not require a dedicated database model in the initial
+implementation. Derived queries are transient service-layer outputs generated
+from provider-backed `TREND`, `KEYWORD`, and lightweight `SEARCH` evidence.
+Persist query auditability in `ResearchRun.input`, `ResearchSource.rawData`,
+and candidate metadata rather than adding a first-class table at this stage.
+
+Example `ResearchRun.input` query intelligence metadata:
+
+```json
+{
+  "productIdea": "portable blender",
+  "config": {
+    "maxDerivedQueries": 5
+  },
+  "queryIntelligence": {
+    "seedQuery": "portable blender",
+    "selectedQueries": [
+      {
+        "query": "cordless portable blender",
+        "sourceTypes": ["TREND", "KEYWORD"],
+        "score": 86,
+        "reason": "rising trend and buyer-intent keyword evidence"
+      }
+    ]
+  }
+}
+```
+
+Every downstream marketplace or Apify `ResearchSource.rawData` created from a
+derived query should preserve query provenance:
+
+```json
+{
+  "queryUsed": "cordless portable blender",
+  "querySource": "QUERY_INTELLIGENCE",
+  "queryScore": 86,
+  "collectionStage": "candidate_discovery",
+  "metrics": {
+    "price": 39.99,
+    "reviewCount": 1200
+  }
+}
+```
+
 ---
 
 # 7c. ResearchSource

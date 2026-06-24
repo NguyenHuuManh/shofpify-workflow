@@ -118,9 +118,40 @@ structured warning log with the provider name and missing configuration key.
 Product Research candidate discovery must be provider-first. The service must
 not use AI-generated candidate fallback when external providers are missing,
 failing, or returning no usable evidence. In that case it must return an empty
-shortlist or surface a visible failure state. The initial discovery run must
-not call 1688/sourcing providers by default; 1688 supplier lookup, factory cost,
-MOQ, and landed-cost analysis happen through candidate-level sourcing
+shortlist or surface a visible failure state.
+
+Candidate discovery is a two-phase pipeline:
+
+```text
+raw provider listings -> aggregated product groups -> ProductCandidate drafts
+```
+
+Before marketplace listing collection, Product Research may run a provider-backed
+query intelligence phase:
+
+```text
+TREND / KEYWORD / lightweight SEARCH evidence
+    -> QueryIntelligenceService
+    -> seed query + capped derived queries
+    -> MARKETPLACE / Apify candidate discovery
+```
+
+Query intelligence must not create ProductCandidate records. It only selects
+search terms for downstream provider calls and enrichment. Derived query text
+must come from provider-backed evidence such as related/rising trend queries,
+keyword-volume results, or search result titles/snippets. AI may only rank,
+filter, deduplicate, or explain existing provider-backed query candidates; it
+must not invent keywords, product ideas, URLs, prices, suppliers, or evidence.
+When query intelligence returns no usable derived queries, the system must use
+the original seed query only instead of generating AI fallback keywords.
+
+The initial discovery run must seed candidates from `MARKETPLACE` evidence
+after ProductAggregationService groups listings from multiple providers.
+`SEARCH`, `TREND`, `KEYWORD`, `ADS_SIGNAL`, and `SOCIAL` evidence may enrich
+scores, risk flags, source panels, and confidence. They must not create
+standalone candidates in the initial discovery phase. The initial discovery run
+must not call 1688/sourcing providers by default; 1688 supplier lookup, factory
+cost, MOQ, and landed-cost analysis happen through candidate-level sourcing
 enrichment after a candidate already exists.
 
 The 1688 sourcing provider chain must use DajiSaaS as primary and Apify as the
@@ -158,9 +189,9 @@ sourcing verification workflow confirms supplier quality, MOQ, lead time,
 sample availability, and production suitability.
 
 Candidate creation for the current Product Research flow must come from
-demand/store evidence such as marketplace and search sources. `SOURCING`
-evidence is attached to an existing candidate during enrichment and must not
-create a new ProductCandidate in that step.
+aggregated demand/store marketplace evidence. `SOURCING` evidence is attached
+to an existing candidate during enrichment and must not create a new
+ProductCandidate in initial discovery or in the candidate sourcing action.
 
 AI-assisted source matching is allowed only as an evidence reviewer. It may
 compare persisted ResearchSource records and candidate metadata to estimate
@@ -179,6 +210,88 @@ niche hypotheses, and query batches. The job service must persist the query
 plan and then call ResearchService for each planned query. ProductCandidate,
 ResearchSource, supplier, cost, MOQ, landed-cost, and source URL data must come
 from approved providers and repositories, not from AI planner output.
+
+---
+
+## Product Aggregation Rules
+
+Product candidate discovery must aggregate marketplace listings from multiple
+external providers into unified product candidates before individual candidate
+creation.
+
+The aggregation input for candidate seeding is `MARKETPLACE` source evidence.
+Other non-sourcing source types can support scoring and confidence, but they
+must not seed initial ProductCandidate records by themselves.
+
+Apify-backed candidate discovery must read actor definitions from
+`config/apify-candidate-discovery.json`. The provider may run configured actors
+whose `providerType` is enabled by the research configuration. The actor config
+controls actor selection, actor input, and per-actor `maxItems`; candidate
+shortlist size is controlled by validated run config. When query intelligence
+is available, Apify-backed discovery should run configured actors against the
+seed query plus selected derived queries, while recording query provenance in
+each normalized ResearchSource `rawData`.
+
+The Product Aggregation step must use AI exclusively to analyze and group
+provider-backed listings. AI must:
+
+- Group items that describe the same real-world product based on product name,
+  price cluster, review/order scale, and provider context
+- Never fabricate product names, prices, URLs, suppliers, or source evidence
+- Assign every input listing to exactly one group
+- Place uncertain matches in separate groups
+
+When the AI provider is unavailable, misconfigured, or returns invalid output,
+the aggregation must fall back to deterministic name-based deduplication.
+
+Merged metrics per product group must apply these rules:
+
+- demandScore: maximum across all sources
+- price: median (with min/max range preserved)
+- rating: arithmetic mean
+- reviewCount and orderCount: sum across all sources
+- sourceCount: used for confidence scoring
+
+Product Aggregation must operate entirely within the service layer. AI calls
+for grouping must go through the AI Provider interface. The aggregation service
+must not call external research APIs, provider SDKs, or Prisma directly.
+Do not create a ProductGroup database table in this phase. Product groups are
+transient service-layer outputs; persist auditability through ProductCandidate
+metadata and linked ResearchSource records.
+
+---
+
+## Two-Phase Candidate Scoring Rules
+
+Candidate scoring must be split into two distinct phases:
+
+**Phase 1 — Discovery Scoring:**
+
+- Only market-signal factors are active: demand, trend, competition,
+  creative potential, risk
+- marginScore is included only when landedCost or COGS data is available
+- Sourcing-dependent factors (supplier, sourcing, factoryCost, logistics)
+  must be excluded
+- Weights must be re-normalized across active factors only
+- This phase runs during ResearchService.run() candidate creation
+
+**Phase 2 — Full Scoring:**
+
+- All ten factors are active with full original weights
+- Runs after CandidateSourcingService.enrichCandidate() completes 1688
+  sourcing enrichment
+- Replaces the candidate's winningScore and individual factor scores with
+  sourcing-backed data
+- Must update the ProductCandidate record with the new scores
+
+Margin estimation rules:
+
+- When price is available but COGS/landedCost is missing, marginScore must
+  fall back to 50 and candidate metadata must flag marginEstimated: true
+- Never compute marginScore from price alone (price - 0 = 100% margin is
+  misleading)
+- When landedCost is available from 1688 enrichment, use actual landedCost
+  for margin calculation
 
 ---
 

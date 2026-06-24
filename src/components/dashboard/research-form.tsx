@@ -156,34 +156,11 @@ export function DiscoveryJobForm(): React.ReactElement {
             flexWrap: 'wrap',
           }}
         >
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {[
-              ['fragile', 'Fragile'],
-              ['electronics', 'Electronics'],
-              ['regulated', 'Regulated'],
-              ['oversized', 'Oversized'],
-              ['trademark', 'Trademark risk'],
-            ].map(([value, label]) => (
-              <label
-                key={value}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '7px',
-                  color: '#334155',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                }}
-              >
-                <input
-                  type="checkbox"
-                  name="discoveryExcludedCategories"
-                  value={value}
-                />
-                {label}
-              </label>
-            ))}
-          </div>
+          <ExcludedCategoryFields
+            checkboxName="discoveryExcludedCategories"
+            customId="discoveryExcludedCategoriesCustom"
+            customName="discoveryExcludedCategoriesCustom"
+          />
           <DiscoverySubmitButton />
         </div>
 
@@ -291,30 +268,11 @@ export function ResearchForm(): React.ReactElement {
             flexWrap: 'wrap',
           }}
         >
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {[
-              ['fragile', 'Fragile'],
-              ['electronics', 'Electronics'],
-              ['regulated', 'Regulated'],
-              ['oversized', 'Oversized'],
-              ['trademark', 'Trademark risk'],
-            ].map(([value, label]) => (
-              <label
-                key={value}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '7px',
-                  color: '#334155',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                }}
-              >
-                <input type="checkbox" name="excludedCategories" value={value} />
-                {label}
-              </label>
-            ))}
-          </div>
+          <ExcludedCategoryFields
+            checkboxName="excludedCategories"
+            customId="excludedCategoriesCustom"
+            customName="excludedCategoriesCustom"
+          />
           <SubmitButton />
         </div>
 
@@ -324,6 +282,59 @@ export function ResearchForm(): React.ReactElement {
         <input type="hidden" name="qcPerUnit" value="0.75" />
       </form>
     </Card>
+  );
+}
+
+function ExcludedCategoryFields({
+  checkboxName,
+  customId,
+  customName,
+}: {
+  checkboxName: string;
+  customId: string;
+  customName: string;
+}): React.ReactElement {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: '12px',
+        alignItems: 'end',
+        flex: '1 1 520px',
+      }}
+    >
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        {[
+          ['fragile', 'Fragile'],
+          ['electronics', 'Electronics'],
+          ['regulated', 'Regulated'],
+          ['oversized', 'Oversized'],
+          ['trademark', 'Trademark risk'],
+        ].map(([value, label]) => (
+          <label
+            key={value}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '7px',
+              color: '#334155',
+              fontSize: '13px',
+              fontWeight: 600,
+            }}
+          >
+            <input type="checkbox" name={checkboxName} value={value} />
+            {label}
+          </label>
+        ))}
+      </div>
+      <TextField
+        id={customId}
+        name={customName}
+        label="Custom excludes"
+        placeholder="supplements, adult, weapons"
+      />
+    </div>
   );
 }
 

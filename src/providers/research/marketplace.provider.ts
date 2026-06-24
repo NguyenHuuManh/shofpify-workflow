@@ -37,14 +37,15 @@ export class MarketplaceResearchProvider extends HttpResearchProvider {
   }
 
   protected buildRequests(input: ResearchProviderCollectInput): ResearchHttpRequest[] {
+    const queryContexts = this.discoveryQueryContexts(input);
+
     if (this.hasDataForSeo) {
-      return [
-        {
+      return queryContexts.map((queryContext) => ({
           url: 'https://api.dataforseo.com/v3/serp/google/shopping/live/advanced',
           init: buildDataForSeoRequest(
             [
               {
-                keyword: input.productIdea,
+                keyword: queryContext.query,
                 location_name:
                   input.config.targetMarket === 'US'
                     ? 'United States'
@@ -55,19 +56,25 @@ export class MarketplaceResearchProvider extends HttpResearchProvider {
               },
             ],
           ),
-        },
-      ];
+          metadata: queryContext,
+        }));
     }
 
-    const url = new URL('https://serpapi.com/search.json');
-    url.searchParams.set('engine', 'google_shopping');
-    url.searchParams.set('q', input.productIdea);
-    url.searchParams.set('api_key', this.apiKey ?? '');
-    url.searchParams.set('gl', input.config.targetMarket.toLowerCase());
-    return [{ url: url.toString() }];
+    return queryContexts.map((queryContext) => {
+      const url = new URL('https://serpapi.com/search.json');
+      url.searchParams.set('engine', 'google_shopping');
+      url.searchParams.set('q', queryContext.query);
+      url.searchParams.set('api_key', this.apiKey ?? '');
+      url.searchParams.set('gl', input.config.targetMarket.toLowerCase());
+      return { url: url.toString(), metadata: queryContext };
+    });
   }
 
-  protected normalizeResponse(response: unknown): NormalizedResearchSourceInput[] {
+  protected normalizeResponse(
+    response: unknown,
+    _input: ResearchProviderCollectInput,
+    metadata?: Record<string, unknown>,
+  ): NormalizedResearchSourceInput[] {
     const root = this.asRecord(response);
     const dataForSeoItems = extractDataForSeoItems(response);
     const results = dataForSeoItems.length > 0
@@ -119,11 +126,55 @@ export class MarketplaceResearchProvider extends HttpResearchProvider {
         ),
         rawData: {
           ...record,
+          ...this.queryProvenance(metadata),
           metrics: { price, rating, reviewCount: reviews },
         },
         confidence: 0.72,
         capturedAt: new Date(),
       };
     });
+  }
+
+  private discoveryQueryContexts(input: ResearchProviderCollectInput): Array<Record<string, unknown> & { query: string }> {
+    const selectedQueries = input.collectionContext?.selectedQueries;
+    if (!selectedQueries || selectedQueries.length === 0) {
+      return [
+        {
+          query: input.productIdea,
+          querySource: 'SEED_QUERY',
+          queryScore: 100,
+          collectionStage: input.collectionContext?.stage ?? 'candidate_discovery',
+        },
+      ];
+    }
+
+    return selectedQueries.map((selectedQuery) => ({
+      query: selectedQuery.query,
+      queryUsed: selectedQuery.query,
+      querySource: selectedQuery.source,
+      queryScore: selectedQuery.score,
+      querySourceTypes: selectedQuery.sourceTypes,
+      queryReason: selectedQuery.reason,
+      collectionStage: input.collectionContext?.stage ?? 'candidate_discovery',
+    }));
+  }
+
+  private queryProvenance(metadata: Record<string, unknown> | undefined): Record<string, unknown> {
+    if (!metadata) {
+      return {};
+    }
+
+    return {
+      queryUsed: typeof metadata.queryUsed === 'string'
+        ? metadata.queryUsed
+        : typeof metadata.query === 'string'
+          ? metadata.query
+          : undefined,
+      querySource: metadata.querySource,
+      queryScore: metadata.queryScore,
+      querySourceTypes: metadata.querySourceTypes,
+      queryReason: metadata.queryReason,
+      collectionStage: metadata.collectionStage,
+    };
   }
 }

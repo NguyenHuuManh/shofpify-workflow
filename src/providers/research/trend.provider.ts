@@ -62,7 +62,12 @@ export class TrendResearchProvider extends HttpResearchProvider {
     url.searchParams.set('engine', 'google_trends');
     url.searchParams.set('q', input.productIdea);
     url.searchParams.set('api_key', this.apiKey ?? '');
-    return [{ url: url.toString() }];
+    const relatedUrl = new URL('https://serpapi.com/search.json');
+    relatedUrl.searchParams.set('engine', 'google_trends');
+    relatedUrl.searchParams.set('q', input.productIdea);
+    relatedUrl.searchParams.set('data_type', 'RELATED_QUERIES');
+    relatedUrl.searchParams.set('api_key', this.apiKey ?? '');
+    return [{ url: url.toString() }, { url: relatedUrl.toString() }];
   }
 
   protected normalizeResponse(response: unknown, input: ResearchProviderCollectInput): NormalizedResearchSourceInput[] {
