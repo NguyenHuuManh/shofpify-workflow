@@ -1,22 +1,22 @@
 /**
  * Purpose:
- * Unit tests for supplemental search research provider.
+ * Unit tests for keyword intelligence research provider.
  *
  * Responsibilities:
- * - Verify missing credentials do not fabricate evidence
- * - Verify approved API responses are normalized into ResearchSource payloads
+ * - Verify DataForSEO keyword suggestions are collected without user-entered product keywords
+ * - Preserve normalized keyword metrics for query intelligence
  *
  * Dependencies:
  * - vitest
- * - SearchResearchProvider
+ * - KeywordResearchProvider
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { SearchResearchProvider } from '@/providers/research';
+import { KeywordResearchProvider } from '@/providers/research';
 import type { ResearchProviderCollectInput } from '@/types/research.types';
 
 const input: ResearchProviderCollectInput = {
-  productIdea: 'portable blender',
+  productIdea: 'sample discovery query',
   config: {
     targetMarket: 'US',
     targetMarginPercent: 40,
@@ -30,12 +30,12 @@ const input: ResearchProviderCollectInput = {
       targetCurrency: 'USD',
       landedCostAssumptions: {},
     },
-    supplementalProviders: ['search'],
+    supplementalProviders: ['keyword'],
   },
   candidates: [],
 };
 
-describe('SearchResearchProvider', () => {
+describe('KeywordResearchProvider', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     delete process.env.DATAFORSEO_LOGIN;
@@ -43,18 +43,7 @@ describe('SearchResearchProvider', () => {
     delete process.env.SERPAPI_API_KEY;
   });
 
-  it('returns no evidence when credentials are missing', async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
-
-    const provider = new SearchResearchProvider();
-    const result = await provider.collect(input);
-
-    expect(result).toEqual([]);
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it('normalizes DataForSEO organic SERP results into SEARCH sources', async () => {
+  it('normalizes DataForSEO keyword suggestions into KEYWORD evidence', async () => {
     process.env.DATAFORSEO_LOGIN = 'login';
     process.env.DATAFORSEO_PASSWORD = 'password';
     const fetchMock = vi.fn().mockResolvedValue({
@@ -66,9 +55,10 @@ describe('SearchResearchProvider', () => {
               {
                 items: [
                   {
-                    title: 'Portable blender competitor guide',
-                    url: 'https://example.com/dataforseo-result',
-                    description: 'Competitor page discusses weak motors and leaking lids.',
+                    keyword: 'smart home gadget organizer',
+                    search_volume: 14800,
+                    cpc: 1.75,
+                    competition_index: 44,
                   },
                 ],
               },
@@ -79,18 +69,27 @@ describe('SearchResearchProvider', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const provider = new SearchResearchProvider();
+    const provider = new KeywordResearchProvider();
     const result = await provider.collect(input);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.dataforseo.com/v3/serp/google/organic/live/advanced',
+      'https://api.dataforseo.com/v3/keywords_data/google_ads/keywords_for_keywords/live',
       expect.objectContaining({ method: 'POST' }),
     );
     expect(result[0]).toEqual(
       expect.objectContaining({
-        provider: 'DataForSEO Google Organic SERP',
-        url: 'https://example.com/dataforseo-result',
-        extractedSignal: expect.stringContaining('weak motors'),
+        type: 'KEYWORD',
+        provider: 'DataForSEO Google Ads Keywords For Keywords',
+        externalId: 'smart home gadget organizer',
+        rawData: expect.objectContaining({
+          keyword: 'smart home gadget organizer',
+          dataForSeoEndpoint: 'keywords_for_keywords',
+          metrics: expect.objectContaining({
+            searchVolume: 14800,
+            cpc: 1.75,
+            competitionSignal: 44,
+          }),
+        }),
       }),
     );
   });

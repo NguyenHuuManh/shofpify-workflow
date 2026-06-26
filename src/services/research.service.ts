@@ -922,36 +922,63 @@ export class ResearchService {
     const allowedProviderTypes = options?.providerTypes
       ? new Set(options.providerTypes)
       : undefined;
+    const providers = this.providers.filter((provider) => {
+      if (provider.providerType) {
+        return enabledProviders.has(provider.providerType) &&
+          (!allowedProviderTypes || allowedProviderTypes.has(provider.providerType));
+      }
+
+      if (options?.collectionContext?.stage === 'query_intelligence') {
+        return false;
+      }
+
+      return !allowedProviderTypes ||
+        Array.from(allowedProviderTypes).some((providerType) =>
+          enabledProviders.has(providerType),
+        );
+    });
+
+    if (this.shouldUseSequentialMarketplaceFallback(allowedProviderTypes, options?.collectionContext)) {
+      for (const provider of providers) {
+        const providerSources = await provider.collect({
+          productIdea,
+          config: parsedConfig,
+          candidates,
+          collectionContext: options?.collectionContext,
+        });
+        const validated = providerSources.map((source) => validate(normalizedResearchSourceSchema, source));
+        const usableMarketplaceSources = validated.filter((source) => source.type === 'MARKETPLACE');
+        if (usableMarketplaceSources.length > 0) {
+          return validated;
+        }
+      }
+
+      return [];
+    }
+
     const results = await Promise.all(
-      this.providers
-        .filter((provider) => {
-          if (provider.providerType) {
-            return enabledProviders.has(provider.providerType) &&
-              (!allowedProviderTypes || allowedProviderTypes.has(provider.providerType));
-          }
-
-          if (options?.collectionContext?.stage === 'query_intelligence') {
-            return false;
-          }
-
-          return !allowedProviderTypes ||
-            Array.from(allowedProviderTypes).some((providerType) =>
-              enabledProviders.has(providerType),
-            );
-        })
-        .map((provider) =>
-          provider.collect({
-            productIdea,
-            config: parsedConfig,
-            candidates,
-            collectionContext: options?.collectionContext,
-          }),
-        ),
+      providers.map((provider) =>
+        provider.collect({
+          productIdea,
+          config: parsedConfig,
+          candidates,
+          collectionContext: options?.collectionContext,
+        }),
+      ),
     );
 
     return results
       .flat()
       .map((source) => validate(normalizedResearchSourceSchema, source));
+  }
+
+  private shouldUseSequentialMarketplaceFallback(
+    allowedProviderTypes: Set<SupplementalProviderName> | undefined,
+    collectionContext: ResearchCollectionContext | undefined,
+  ): boolean {
+    return collectionContext?.stage === 'candidate_discovery' &&
+      allowedProviderTypes?.size === 1 &&
+      allowedProviderTypes.has('marketplace');
   }
 
   private sourcesForCandidate(

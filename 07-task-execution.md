@@ -805,6 +805,142 @@ Verification already run after Phase 7i implementation:
 
 ---
 
+### Phase 7j DataForSEO Autonomous Keyword Discovery
+
+Current status:
+- Phase 7j DataForSEO autonomous keyword discovery has been implemented
+  (2026-06-26) and updated so no-seed discovery no longer relies on project
+  hardcoded category seeds.
+- `DataForSeoLabsDiscoveryProvider` calls DataForSEO Labs Google
+  `top_searches/live` to collect broad provider-backed category/keyword roots
+  when the user leaves `seedQuery` blank.
+- `KeywordResearchProvider` now calls DataForSEO Google Ads
+  `keywords_for_keywords/live` for seed-query expansion instead of only
+  search-volume metrics for a user-entered keyword.
+- When an autonomous discovery job has no `seedQuery`, `DiscoveryJobService`
+  queries approved root-discovery providers, extracts category and keyword
+  provenance from normalized DataForSEO evidence, ranks/deduplicates the
+  provider-backed keywords, and runs Product Research only for selected
+  provider-backed keywords.
+- The previous static fallback keyword list was removed. If configured
+  providers return no usable keyword evidence, the discovery job is marked
+  failed with a visible validation error instead of inventing fallback
+  keywords.
+- This change does not call 1688 sourcing and does not require
+  `SOURCING_1688_APIFY_API_TOKEN`; sourcing remains candidate-level enrichment.
+
+Implemented Phase 7j files:
+- `src/providers/research/dataforseo-labs-discovery.provider.ts` —
+  DataForSEO Labs Top Searches autonomous category/keyword root discovery.
+- `src/providers/research/keyword.provider.ts` — DataForSEO keyword suggestion
+  endpoint and flexible nested keyword-record normalization.
+- `src/services/discovery-job.service.ts` — no-seed discovery now uses
+  provider-backed category/keyword candidates only and fails visibly when none
+  exist.
+- `src/components/dashboard/research-form.tsx` — seed input copy clarifies that
+  blank input uses DataForSEO discovery.
+- `tests/providers/research/keyword.provider.test.ts` — DataForSEO keyword
+  suggestion normalization test.
+- `tests/providers/research/dataforseo-labs-discovery.provider.test.ts` —
+  DataForSEO Labs category/keyword evidence normalization test.
+- `tests/services/discovery-job.service.test.ts` — no-seed provider-backed
+  discovery and no-evidence failure tests.
+
+Verification run after Phase 7j implementation:
+- `npm run type-check`
+- `npx prisma validate`
+- `git diff --check`
+- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/discovery-job.service.test.ts` (3 passed)
+- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/query-intelligence.service.test.ts tests/providers/research/keyword.provider.test.ts` (3 passed)
+
+---
+
+### Phase 7k DataForSEO Merchant Market Validation Handoff
+
+Current status:
+- DataForSEO Merchant Google Shopping market validation has been implemented
+  (2026-06-26).
+- No database migration is required for the initial plan because Merchant
+  product listings persist as existing `ResearchSource` records with
+  `type = MARKETPLACE`.
+- Existing candidate creation still depends on ProductAggregationService; this
+  remains required after Merchant validation.
+
+Decision:
+- DataForSEO Labs and keyword providers discover product-like queries.
+- DataForSEO Merchant Google Shopping is the preferred marketplace validation
+  provider for product-like queries.
+- Merchant evidence validates that a query maps to real products being sold,
+  but it must not create ProductCandidate records directly.
+- Merchant `MARKETPLACE` listings must still pass through
+  ProductAggregationService so duplicate or similar listings are grouped into
+  unified ProductCandidate drafts.
+- Apify marketplace actors remain fallback or additional marketplace evidence
+  when DataForSEO Merchant is unavailable, unconfigured, fails, or returns no
+  usable listings.
+
+Implemented Phase 7k files:
+- `src/providers/research/dataforseo-merchant.provider.ts` — DataForSEO
+  Merchant Google Products async task provider (`task_post` and
+  `task_get/advanced`) that normalizes product results into `MARKETPLACE`
+  evidence with query provenance.
+- `src/providers/research/index.ts` — registers DataForSEO Merchant before
+  Apify candidate discovery.
+- `src/services/research.service.ts` — candidate discovery marketplace
+  providers now run sequentially for the `candidate_discovery` stage so
+  Merchant can act as primary and Apify as fallback, while still preserving all
+  evidence returned by the selected provider.
+- `tests/providers/research/dataforseo-merchant.provider.test.ts` — Merchant
+  task flow and normalization test.
+- `tests/services/research.service.test.ts` — asserts Merchant marketplace
+  evidence is preferred before Apify fallback and still feeds aggregation.
+
+Before implementing, the next session must read:
+- `.github/skills/task-execution/SKILL.md` — project startup rules.
+- `01-prd.md` — Product Research requirements and FR-003i/FR-003j decisions.
+- `02-sdd.md` — Research pipeline and marketplace provider policy.
+- `05-engineering-standards.md` — provider, aggregation, and no-fallback rules.
+- `06-deepseek.md` — strict architecture boundaries.
+- `src/providers/research/dataforseo-client.ts` — shared DataForSEO auth and
+  response helpers.
+- `src/services/research.service.ts` — staged query intelligence, marketplace
+  collection, aggregation, and candidate creation.
+- `src/services/product-aggregation.service.ts` — grouping rules for
+  `MARKETPLACE` evidence.
+
+Follow-up implementation order:
+1. Optionally add provider-local Zod schemas if live Merchant payload variance
+   requires stricter validation.
+2. Run one live DataForSEO Merchant smoke test with a low-cost query after
+   confirming API quota.
+3. If live payload shape differs from mocks, adapt
+   `DataForSeoMerchantProvider.normalizeItem()` without changing repository or
+   service boundaries.
+4. Update this section with live smoke-test evidence.
+
+Verification run after Phase 7k implementation:
+- `npm run type-check`
+- `npx prisma validate`
+- `git diff --check`
+- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/providers/research/dataforseo-merchant.provider.test.ts` (1 passed)
+- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/research.service.test.ts` (12 passed)
+- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/providers/research/dataforseo-merchant.provider.test.ts tests/providers/research/keyword.provider.test.ts tests/services/discovery-job.service.test.ts tests/services/query-intelligence.service.test.ts tests/services/research.service.test.ts` (19 passed)
+
+Architecture warnings:
+- Do not call DataForSEO Merchant from agents, API routes, UI, repositories, or
+  workflow nodes; only the provider layer may call the external API.
+- Do not let Merchant, Apify, DataForSEO Labs, or AI create ProductCandidate
+  records directly.
+- Do not skip aggregation after Merchant validation.
+- Do not call 1688 sourcing during initial marketplace validation; 1688 remains
+  candidate-level enrichment after a candidate exists.
+- If Merchant and fallback marketplace providers return no usable
+  `MARKETPLACE` evidence, return an empty shortlist or visible failure. Do not
+  generate AI fallback products, URLs, prices, suppliers, MOQ, or source
+  evidence.
+
+---
+
 ## Phase 8
 
 Production Deployment

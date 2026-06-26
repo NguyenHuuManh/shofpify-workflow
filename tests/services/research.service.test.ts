@@ -516,6 +516,131 @@ describe('ResearchService', () => {
     );
   });
 
+  it('should prefer DataForSEO Merchant marketplace evidence before Apify fallback', async () => {
+    const run = {
+      id: 'run_merchant_primary',
+      researchProjectId: null,
+      productId: null,
+      workflowId: null,
+      input: {},
+      summary: null,
+      recommendation: null,
+      providerCosts: null,
+      startedAt: new Date('2026-01-01'),
+      completedAt: null,
+      createdAt: new Date('2026-01-01'),
+    };
+    const merchantProvider = {
+      name: 'DataForSeoMerchantProvider',
+      providerType: 'marketplace' as const,
+      collect: vi.fn().mockResolvedValue([
+        {
+          type: 'MARKETPLACE',
+          provider: 'DataForSEO Merchant Google Products',
+          url: 'https://merchant.example.com/product',
+          externalId: 'merchant_product_001',
+          title: 'Cordless Portable Blender',
+          extractedSignal: 'Cordless Portable Blender marketplace listing, price 49 USD, 1200 reviews',
+          rawData: {
+            queryUsed: 'portable blender',
+            querySource: 'SEED_QUERY',
+            collectionStage: 'candidate_discovery',
+            metrics: {
+              price: 49,
+              currency: 'USD',
+              rating: 4.6,
+              reviewCount: 1200,
+              demandSignal: 82,
+            },
+          },
+          confidence: 0.78,
+          capturedAt: new Date('2026-01-01'),
+        },
+      ]),
+    };
+    const apifyProvider = {
+      name: 'ApifyCandidateDiscoveryProvider',
+      providerType: 'marketplace' as const,
+      collect: vi.fn().mockResolvedValue([
+        {
+          type: 'MARKETPLACE',
+          provider: 'Apify Google Shopping',
+          url: 'https://apify.example.com/product',
+          title: 'Fallback Blender',
+          extractedSignal: 'Fallback listing',
+          confidence: 0.7,
+          capturedAt: new Date('2026-01-01'),
+        },
+      ]),
+    };
+    const candidateRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: 'cand_merchant_primary',
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const sourceRepo = {
+      create: vi.fn().mockImplementation((input) =>
+        Promise.resolve({
+          id: `src_${sourceRepo.create.mock.calls.length}`,
+          createdAt: new Date('2026-01-01'),
+          ...input,
+        }),
+      ),
+    };
+    const service = new ResearchService(
+      {
+        create: vi.fn().mockResolvedValue(run),
+        updateCompleted: vi.fn().mockImplementation((_id, input) =>
+          Promise.resolve({
+            ...run,
+            ...input,
+            completedAt: new Date('2026-01-01'),
+          }),
+        ),
+      } as never,
+      {} as never,
+      candidateRepo as never,
+      sourceRepo as never,
+      {} as never,
+      {} as never,
+      {
+        create: vi.fn().mockResolvedValue({ id: 'audit_001' }),
+      } as never,
+      new CandidateScoringService(),
+      [merchantProvider, apifyProvider],
+    );
+
+    const result = await service.run({
+      productIdea: 'portable blender',
+      config: {
+        supplementalProviders: ['marketplace'],
+      },
+    });
+
+    expect(merchantProvider.collect).toHaveBeenCalledTimes(1);
+    expect(apifyProvider.collect).not.toHaveBeenCalled();
+    expect(result.candidates).toHaveLength(1);
+    expect(candidateRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Cordless Portable Blender',
+        metadata: expect.objectContaining({
+          generatedFrom: 'product_aggregation',
+        }),
+      }),
+    );
+    expect(sourceRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'MARKETPLACE',
+        provider: 'DataForSEO Merchant Google Products',
+        candidateId: 'cand_merchant_primary',
+      }),
+    );
+  });
+
   it('should not collect web search articles by default', async () => {
     const run = {
       id: 'run_default_providers',

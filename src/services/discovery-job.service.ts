@@ -43,6 +43,7 @@ import {
   type AutonomousDiscoveryJobConfig,
   type AutonomousDiscoveryJobInput,
   type DiscoveryJobResult,
+  type QueryIntelligenceCandidate,
   type ResearchRunConfig,
   type ResearchRunConfigInput,
 } from '@/schemas/research.schema';
@@ -153,22 +154,28 @@ export class DiscoveryJobService {
       });
     }
 
-    const project = await this.projectRepo.findByIdOrThrow(job.researchProjectId);
-    const config = validate(autonomousDiscoveryJobSchema, job.input);
-    const discoveryQueries = await this.collectDiscoveryQueries(config);
-    const queryPlan = { queries: discoveryQueries.map((q) => ({ query: q, angle: 'Provider-backed keyword', rationale: '' })) };
-    await this.jobRepo.markRunning(job.id, this.toJson(queryPlan));
-
-    logger.info(
-      {
-        discoveryJobId: job.id,
-        researchProjectId: project.id,
-        queryCount: discoveryQueries.length,
-      },
-      'Autonomous product discovery job started',
-    );
-
     try {
+      const project = await this.projectRepo.findByIdOrThrow(job.researchProjectId);
+      const config = validate(autonomousDiscoveryJobSchema, job.input);
+      const discoveryQueries = await this.collectDiscoveryQueries(config);
+      const queryPlan = {
+        queries: discoveryQueries.map((q) => ({
+          query: q,
+          angle: 'Provider-backed keyword',
+          rationale: '',
+        })),
+      };
+      await this.jobRepo.markRunning(job.id, this.toJson(queryPlan));
+
+      logger.info(
+        {
+          discoveryJobId: job.id,
+          researchProjectId: project.id,
+          queryCount: discoveryQueries.length,
+        },
+        'Autonomous product discovery job started',
+      );
+
       let runCount = 0;
       let sourceCount = 0;
       const researchConfig = this.toResearchRunConfig(config);
@@ -230,15 +237,24 @@ export class DiscoveryJobService {
         entityId: job.id,
         action: 'RESEARCH_DISCOVERY_JOB_FAILED',
         metadata: {
-          researchProjectId: project.id,
+          researchProjectId: job.researchProjectId,
           errorMessage: message,
         },
       });
 
       logger.error(
-        { discoveryJobId: job.id, researchProjectId: project.id, error: message },
+        { discoveryJobId: job.id, researchProjectId: job.researchProjectId, error: message },
         'Autonomous product discovery job failed',
       );
+
+      if (error instanceof AppError) {
+        throw new AppError({
+          code: error.code,
+          message,
+          statusCode: error.statusCode,
+          details: { ...(error.details ?? {}), discoveryJobId: failedJob.id },
+        });
+      }
 
       throw new AppError({
         code: ErrorCodes.AI_PROVIDER_ERROR,
@@ -254,8 +270,8 @@ export class DiscoveryJobService {
    *
    * Two paths:
    * - With seed query: QueryIntelligenceService filters keywords by relevance to seed
-   * - Without seed query: query Google Trends with broad e-commerce category seeds,
-   *   extract related/rising queries (real trending keywords from Google), merge & cap
+   * - Without seed query: query root-discovery providers that collect broad
+   *   category/keyword evidence directly from DataForSEO, then cap keywords
    */
   private async collectDiscoveryQueries(
     config: AutonomousDiscoveryJobConfig,
@@ -274,127 +290,137 @@ export class DiscoveryJobService {
   }
 
   /**
-   * Without seed query: query Google Trends with broad e-commerce category seeds,
-   * extract related/rising queries (real trending keywords), and use them.
+   * Without seed query: query DataForSEO Labs root-discovery evidence and use
+   * only provider-backed category/keyword candidates.
    */
   private async collectTrendBasedDiscoveryQueries(
     config: ResearchRunConfig,
     discoveryConfig: AutonomousDiscoveryJobConfig,
   ): Promise<string[]> {
-    const categorySeeds = [
-      'home gadgets',
-      'kitchen tools',
-      'car accessories',
-      'pet supplies',
-      'fitness gear',
-      'baby products',
-      'phone accessories',
-      'outdoor gear',
-    ];
+    const sources = await this.collectAutonomousDiscoveryEvidence(config);
+    const candidates = this.keywordCandidatesFromRootSources(sources);
+    const selected = this.selectDistinctKeywordCandidates(candidates, discoveryConfig.maxQueries);
 
-    const seen = new Set<string>();
-    const allKeywords: string[] = [];
-    const addKeyword = (kw: string | undefined | null) => {
-      if (!kw || typeof kw !== 'string') return;
-      const clean = kw.trim().replace(/\s+/g, ' ').toLowerCase();
-      if (clean.length > 3 && clean.split(/\s+/).length >= 2 && !seen.has(clean)) {
-        seen.add(clean);
-        allKeywords.push(clean);
-      }
-    };
-
-    // Query Google Trends for each category seed in parallel
-    const trendResults = await Promise.all(
-      categorySeeds.map((seed) =>
-        this.collectKeywordEvidence(seed, config),
-      ),
-    );
-
-    // Extract related/rising queries from Google Trends responses + keyword providers
-    for (const sources of trendResults) {
-      for (const source of sources) {
-        const rawData = source.rawData ?? {};
-
-        // Google Trends related/rising queries
-        if (source.type === 'TREND') {
-          for (const kw of this.extractKeywordsFromTrendResponse(rawData.response)) {
-            addKeyword(kw);
-          }
-        }
-
-        // Keyword provider data (externalId, title, raw keyword)
-        if (source.type === 'KEYWORD') {
-          addKeyword(source.externalId);
-          addKeyword(source.title?.replace(/\s+keyword signal$/iu, ''));
-          addKeyword(typeof rawData.keyword === 'string' ? rawData.keyword : undefined);
-        }
-      }
-    }
-
-    if (allKeywords.length > 0) {
-      const selected = allKeywords.slice(0, discoveryConfig.maxQueries);
+    if (selected.length > 0) {
+      const categories = this.distinctSourceCategories(sources);
       logger.info(
-        { categorySeeds: categorySeeds.length, extractedKeywords: allKeywords.length, selected },
-        'Discovery queries from Google Trends related/rising queries across categories',
+        {
+          providerCategories: categories,
+          providerKeywordCandidates: candidates.length,
+          selected,
+        },
+        'Discovery queries selected from provider-backed DataForSEO category and keyword intelligence',
       );
       return selected;
     }
 
-    // Last resort fallback
-    return this.defaultDiscoveryQueries(discoveryConfig.maxQueries);
+    logger.warn(
+      { sourceCount: sources.length },
+      'Autonomous discovery stopped because keyword providers returned no usable query evidence',
+    );
+    throw new AppError({
+      code: ErrorCodes.VALIDATION_ERROR,
+      message: 'No provider-backed discovery categories or keywords were found. Configure DataForSEO Labs or adjust discovery constraints.',
+      statusCode: 422,
+    });
   }
 
-  private defaultDiscoveryQueries(maxQueries: number): string[] {
-    const queries = [
-      'portable blender USB rechargeable',
-      'car phone mount magnetic',
-      'pet hair remover reusable lint roller',
-      'LED strip lights room decor',
-      'posture corrector back support',
-      'kitchen gadget organizer drawer',
-      'wireless earbuds Bluetooth 5.0',
-      'baby car mirror rear facing',
-      'resistance bands set workout',
-      'phone case wallet card holder',
-      'essential oil diffuser ultrasonic',
-      'yoga mat non slip exercise',
-    ];
-    return queries.slice(0, maxQueries);
+  private async collectAutonomousDiscoveryEvidence(
+    config: ResearchRunConfig,
+  ): Promise<NormalizedResearchSourceInput[]> {
+    const enabledProviders = new Set(config.supplementalProviders);
+    const results = await Promise.all(
+      this.providers
+        .filter((p) => p.discoveryRootProvider === true)
+        .filter((p) => p.providerType && enabledProviders.has(p.providerType))
+        .map((provider) =>
+          provider.collect({
+            productIdea: 'autonomous product discovery',
+            config,
+            collectionContext: {
+              stage: 'query_intelligence',
+              queries: [],
+            },
+          }),
+        ),
+    );
+
+    return results.flat().map((source) => validate(normalizedResearchSourceSchema, source));
   }
 
-  /**
-   * Extract keywords from nested Google Trends response data.
-   * Handles related_queries, rising_queries, top_queries at any depth.
-   */
-  private extractKeywordsFromTrendResponse(value: unknown, depth = 0): string[] {
-    if (depth > 4) return [];
-    if (typeof value === 'string' && value.length > 3 && value.split(/\s+/).length >= 2) {
-      return [value];
-    }
-    if (Array.isArray(value)) {
-      return value.flatMap((item) => this.extractKeywordsFromTrendResponse(item, depth + 1));
-    }
-    if (!value || typeof value !== 'object') return [];
-
-    const record = value as Record<string, unknown>;
-    const direct = [
-      typeof record.query === 'string' ? record.query : undefined,
-      typeof record.keyword === 'string' ? record.keyword : undefined,
-      typeof record.title === 'string' ? record.title : undefined,
-      typeof record.value === 'string' ? record.value : undefined,
-    ].filter((k): k is string => Boolean(k));
-
-    const nested = [
-      record.related_queries, record.relatedQueries,
-      record.rising_queries, record.risingQueries,
-      record.top_queries, record.topQueries,
-      record.rising, record.top,
-      record.items, record.data, record.results,
-      record.ads_results, record.keyword_ideas,
-    ].flatMap((item) => this.extractKeywordsFromTrendResponse(item, depth + 1));
-
-    return [...direct, ...nested];
+  private distinctSourceCategories(sources: NormalizedResearchSourceInput[]): string[] {
+    const categories = sources.flatMap((source) => {
+      const rawData = source.rawData as Record<string, unknown> | undefined;
+      const value = rawData?.categories;
+      return Array.isArray(value) ? value.map(String) : [];
+    });
+    return [...new Set(categories)].slice(0, 12);
   }
+
+  private keywordCandidatesFromRootSources(
+    sources: NormalizedResearchSourceInput[],
+  ): QueryIntelligenceCandidate[] {
+    return sources
+      .filter((source) => source.type === 'KEYWORD')
+      .map((source) => {
+        const rawData = source.rawData as Record<string, unknown> | undefined;
+        const metrics = rawData?.metrics as Record<string, unknown> | undefined;
+        const query = typeof rawData?.keyword === 'string'
+          ? rawData.keyword
+          : source.externalId ?? source.title?.replace(/\s+keyword signal$/iu, '') ?? '';
+        const searchVolume = this.numberFromUnknown(metrics?.searchVolume);
+        const cpc = this.numberFromUnknown(metrics?.cpc);
+        const competitionScore = this.numberFromUnknown(metrics?.competitionSignal);
+        const volumeScore = searchVolume
+          ? Math.min(35, Math.log10(Math.max(searchVolume, 10)) * 8)
+          : 0;
+        const cpcScore = cpc ? Math.min(20, cpc * 4) : 0;
+        const competitionPenalty = competitionScore !== undefined
+          ? Math.min(25, competitionScore / 4)
+          : 8;
+        const score = Math.round(Math.max(1, volumeScore + cpcScore + 45 - competitionPenalty));
+
+        return {
+          query,
+          score,
+          reason: [
+            `DataForSEO Labs provider-backed score ${score}`,
+            searchVolume !== undefined ? `volume ${searchVolume}` : undefined,
+          ].filter(Boolean).join(', '),
+          sourceTypes: ['KEYWORD'],
+          providers: [source.provider],
+          searchVolume,
+          cpc,
+          competitionScore,
+          buyerIntentScore: cpc ? Math.min(100, 50 + cpc * 8) : 50,
+          relevanceScore: 100,
+          riskScore: 10,
+        };
+      });
+  }
+
+  private numberFromUnknown(value: unknown): number | undefined {
+    return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+  }
+
+  private selectDistinctKeywordCandidates(
+    candidates: QueryIntelligenceCandidate[],
+    maxQueries: number,
+  ): string[] {
+    const seen = new Set<string>();
+    return [...candidates]
+      .sort((a, b) => b.score - a.score)
+      .map((candidate) => candidate.query.trim().replace(/\s+/g, ' ').toLowerCase())
+      .filter((query) => {
+        if (query.length <= 3 || query.split(/\s+/).length < 2 || seen.has(query)) {
+          return false;
+        }
+        seen.add(query);
+        return true;
+      })
+      .slice(0, maxQueries);
+  }
+
   private async selectDiscoveryQueriesWithSeed(
     seedQuery: string,
     sources: NormalizedResearchSourceInput[],

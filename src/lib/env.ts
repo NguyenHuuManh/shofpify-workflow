@@ -65,7 +65,6 @@ const envSchema = z.object({
   ENABLE_IMAGE_GENERATION: z.coerce.boolean().default(false),
 
   // Supplemental Research Providers
-  BRAVE_SEARCH_API_KEY: optionalString,
   SERPAPI_API_KEY: optionalString,
   DATAFORSEO_LOGIN: optionalString,
   DATAFORSEO_PASSWORD: optionalString,

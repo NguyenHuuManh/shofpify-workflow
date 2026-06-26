@@ -159,12 +159,16 @@ product candidates through the two-phase discovery pipeline:
 raw provider listings -> aggregated product groups -> ProductCandidate drafts
 ```
 
-The initial run seeds candidates from marketplace evidence only. Search, trend,
-keyword, ads, and social evidence may enrich scores or confidence; 1688 supplier
-lookup and factory-cost enrichment are run later per candidate.
+The initial run seeds candidates from marketplace evidence only. DataForSEO
+Merchant Google Shopping is the preferred marketplace validation provider for
+product-like queries; Apify marketplace actors may provide fallback or
+additional marketplace evidence. Search, trend, keyword, ads, and social
+evidence may enrich scores or confidence; 1688 supplier lookup and factory-cost
+enrichment are run later per candidate.
 Before marketplace discovery, the service may run provider-backed query
 intelligence to select derived queries. These derived queries come only from
 provider evidence and are used to improve marketplace/Apify search relevance.
+Merchant and Apify marketplace results must still pass through ProductAggregationService before any ProductCandidate is created.
 
 Request:
 
@@ -522,11 +526,11 @@ Response:
     {
       "id": "marketplace-source-id",
       "type": "MARKETPLACE",
-      "provider": "Apify Google Shopping",
+      "provider": "DataForSEO Merchant Google Products",
       "url": "https://example.com/product.html",
       "externalId": "marketplace-listing-id",
       "title": "Cordless Portable Blender",
-      "extractedSignal": "Cordless Portable Blender marketplace listing, price 49, 1200 reviews",
+      "extractedSignal": "Cordless Portable Blender marketplace listing, price 49 USD, 1200 reviews",
       "rawData": {
         "queryUsed": "cordless portable blender",
         "querySource": "QUERY_INTELLIGENCE",
@@ -534,8 +538,10 @@ Response:
         "collectionStage": "candidate_discovery",
         "metrics": {
           "price": 49,
+          "currency": "USD",
           "rating": 4.6,
-          "reviewCount": 1200
+          "reviewCount": 1200,
+          "seller": "Example Shop"
         }
       },
       "confidence": 0.74,

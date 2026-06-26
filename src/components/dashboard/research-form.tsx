@@ -72,8 +72,8 @@ export function DiscoveryJobForm(): React.ReactElement {
           <TextField
             id="seedQuery"
             name="seedQuery"
-            label="Optional seed"
-            placeholder="home organization, pet travel..."
+            label="Seed override"
+            placeholder="Leave blank for DataForSEO discovery"
           />
           <TextField
             id="discoveryTargetMarket"

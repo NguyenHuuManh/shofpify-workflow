@@ -261,7 +261,7 @@ Query Intelligence Providers
     ↓
 QueryIntelligenceService
     ↓
-Marketplace / Apify candidate discovery using seed query + derived queries
+DataForSEO Merchant / Marketplace / Apify candidate discovery using seed query + derived queries
     ↓
 ProductAggregationService
     ↓
@@ -308,6 +308,22 @@ buildCandidatesFromAggregatedGroups()
     ↓
 Candidate Drafts
 ```
+
+DataForSEO Merchant Google Shopping is the preferred marketplace validation
+provider for product-like discovery queries. It must run only inside the
+Research Provider layer and normalize Google Shopping product results into
+`MARKETPLACE` ResearchSource evidence. Required normalized evidence includes
+product title, product URL or product ID, price, currency, seller/shop signal,
+rating, review or vote count when available, and query provenance. Merchant
+validation does not replace ProductAggregationService; multiple Merchant
+listings can describe the same product opportunity and must be grouped before
+candidate creation.
+
+Apify marketplace actors remain available as fallback or additional
+marketplace evidence when DataForSEO Merchant is unavailable, unconfigured,
+fails, or returns no usable listings. Provider orchestration must avoid
+fabricating product candidates when both Merchant and fallback marketplace
+providers return no usable evidence.
 
 AI aggregation must only group provider-backed evidence. It must not generate
 product names, prices, URLs, suppliers, costs, or source evidence. Every input

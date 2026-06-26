@@ -76,7 +76,8 @@ Query Intelligence Service (provider-backed derived queries)
 
 ↓
 
-Candidate Discovery Providers (Marketplace, Apify marketplace actors)
+Candidate Discovery Providers (DataForSEO Merchant Google Shopping primary,
+Apify marketplace actors fallback/additional)
 
 ↓
 
@@ -364,12 +365,15 @@ Initial provider categories:
 
 Provider output must be normalized before persistence.
 
-Query intelligence runs before marketplace candidate discovery. It uses
-provider-backed `TREND`, `KEYWORD`, and lightweight `SEARCH` evidence to extract
-candidate search terms such as rising queries, related queries, high-volume
-buyer-intent keywords, and useful problem/alternative terms from search result
-titles or snippets. These terms are ranked and capped by QueryIntelligenceService
-before they are passed into marketplace and Apify discovery providers.
+Query intelligence runs before marketplace candidate discovery. With a user
+seed query, it uses provider-backed `TREND`, `KEYWORD`, and lightweight
+`SEARCH` evidence to extract candidate search terms such as rising queries,
+related queries, high-volume buyer-intent keywords, and useful
+problem/alternative terms from search result titles or snippets. Without a user
+seed query, autonomous discovery uses DataForSEO Labs root-discovery evidence to
+collect broad provider-backed category/keyword opportunities instead of
+project hardcoded category seeds. These terms are ranked and capped before they
+are passed into marketplace and Apify discovery providers.
 
 Query intelligence must remain evidence-backed:
 
@@ -389,8 +393,9 @@ families include:
 
 - Search and competitor discovery via search APIs such as DataForSEO SERP,
   Brave Search, or SerpAPI
-- Marketplace intelligence via DataForSEO Merchant/Shopping, shopping, Amazon,
-  or marketplace data providers
+- Marketplace intelligence via DataForSEO Merchant Google Shopping as the
+  primary product-query validation source, with Apify marketplace actors or
+  other approved marketplace providers as fallback/additional evidence
 - Trend and keyword intelligence via DataForSEO trend/keyword APIs or SerpAPI
 - Ads signal intelligence via approved ads libraries or ads intelligence providers
 - Factory sourcing intelligence via 1688, Alibaba-family sourcing APIs, or
@@ -444,6 +449,31 @@ source evidence when providers return no usable data.
 
 Apify-backed candidate discovery is part of the general marketplace evidence
 pipeline, not the 1688 sourcing failover path.
+
+DataForSEO Merchant Google Shopping is the preferred marketplace validation
+provider for product-like keyword queries. The Merchant provider must live in
+the Research Provider layer, call only DataForSEO Merchant APIs, and normalize
+Google Shopping product results into `MARKETPLACE` ResearchSource records.
+Normalized Merchant evidence should preserve product title, URL or product ID,
+price, currency, seller/shop signal, rating, review or vote count when
+available, image/product metadata when available, and query provenance
+(`queryUsed`, `querySource`, `queryScore`, `collectionStage`).
+
+Merchant validation answers whether a keyword maps to real products being sold.
+It does not replace ProductAggregationService. DataForSEO Merchant can return
+multiple listings for the same underlying product across shops or offer pages,
+so its output must still feed ProductAggregationService before any
+ProductCandidate is created.
+
+The marketplace provider policy is:
+
+- Use DataForSEO Merchant Google Shopping first when configured.
+- If Merchant is unavailable, unconfigured, fails, or returns no usable
+  `MARKETPLACE` evidence, use Apify marketplace actors as fallback/additional
+  evidence.
+- Do not let any marketplace provider create ProductCandidate records directly.
+- Do not use Google Shopping keyword or SERP evidence alone as a product
+  candidate; only normalized `MARKETPLACE` listings can seed aggregation.
 
 Actor definitions live in:
 
@@ -519,6 +549,8 @@ Collect Query Intelligence Evidence (TREND, KEYWORD, lightweight SEARCH)
 QueryIntelligenceService ranks provider-backed derived queries
     ↓
 Collect Candidate Discovery Evidence using seed query + derived queries
+    ↓
+DataForSEO Merchant validates product-like queries with MARKETPLACE listings
     ↓
 Normalize Evidence
     ↓

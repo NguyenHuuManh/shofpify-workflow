@@ -78,6 +78,7 @@ export interface ResearchCollectionContext {
 export interface ResearchProvider {
   readonly name: string;
   readonly providerType?: SupplementalProviderName;
+  readonly discoveryRootProvider?: boolean;
   collect(input: ResearchProviderCollectInput): Promise<NormalizedResearchSourceInput[]>;
 }
 

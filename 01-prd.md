@@ -143,12 +143,15 @@ The system must:
 * Extract provider-backed trending, related, and buyer-intent keywords before
   marketplace discovery so downstream providers search on higher-quality query
   terms instead of only the original product idea
+* Validate product-like discovery queries through DataForSEO Merchant Google
+  Shopping marketplace evidence before creating product candidates
 * Discover candidates through two phases: collect raw provider listings, then
   aggregate those listings into candidate drafts before any ProductCandidate is
   created
-* Aggregate marketplace listings from multiple Apify/DataForSEO/marketplace
-  sources into unified candidate drafts using AI-powered product grouping,
-  merging demand signals, pricing, reviews, and order volumes across providers
+* Aggregate marketplace listings from DataForSEO Merchant, Apify, and other
+  approved marketplace sources into unified candidate drafts using AI-powered
+  product grouping, merging demand signals, pricing, reviews, and order
+  volumes across providers
 * Estimate factory cost, sourcing cost, landed cost, gross margin, break-even ROAS, and pricing feasibility
 * Score each product candidate through two phases:
   - **Phase 1 (Discovery):** market-signal scoring (demand, trend, competition,
@@ -172,6 +175,9 @@ The module must:
   categories
 * Generate multiple product candidates instead of a single research summary
 * Gather supporting data through approved provider interfaces
+* Use DataForSEO Labs and keyword providers for provider-backed product-query
+  discovery, then use DataForSEO Merchant Google Shopping as the primary
+  marketplace validation source for product-like queries
 * Aggregate multi-source marketplace listings into unified candidate drafts
   using AI-powered product grouping before individual ProductCandidate creation
 * Use query intelligence from approved trend, keyword, and search providers to
@@ -488,11 +494,26 @@ The Product Aggregation step must:
 * Respect the configured candidate output limit instead of hardcoding the
   shortlist size
 
+DataForSEO Merchant Google Shopping shall be the primary marketplace validation
+provider for product-like discovery queries. The Research Provider layer shall
+normalize Merchant product results into `MARKETPLACE` `ResearchSource`
+evidence with product title, product URL or product ID, price, currency,
+seller/shop signal, rating, review/vote count when available, and query
+provenance.
+
+DataForSEO Merchant evidence validates that a keyword maps to real products
+being sold; it must not create ProductCandidate records directly. Merchant
+listings must still flow into ProductAggregationService so duplicate or similar
+listings can be grouped into unified product opportunities.
+
 Apify-backed candidate discovery shall use the actor definitions in
 `config/apify-candidate-discovery.json`. The Research Provider layer may run
 the configured actors whose `providerType` is enabled by the research
 configuration, normalize their dataset items into `ResearchSource` evidence,
 and pass the resulting marketplace evidence into ProductAggregationService.
+Apify acts as an additional or fallback marketplace evidence provider when
+DataForSEO Merchant is unavailable, unconfigured, or returns no usable
+marketplace evidence.
 
 ---
 
@@ -507,6 +528,9 @@ Query intelligence must:
   marketplace and Apify candidate discovery
 * Extract trending, rising, related, and buyer-intent keyword candidates only
   from provider responses and normalized source evidence
+* For autonomous discovery without a user seed query, collect broad category
+  and keyword opportunities from DataForSEO Labs provider evidence instead of
+  using project hardcoded category seeds
 * Rank and filter keyword candidates by relevance to the seed query, trend
   strength, search volume, buyer intent, competition, CPC, risk, and duplicate
   similarity

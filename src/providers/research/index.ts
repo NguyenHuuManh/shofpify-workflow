@@ -14,6 +14,8 @@
 import type { ResearchProvider, ResearchProviderCollectInput } from '@/types/research.types';
 import { AdsSignalResearchProvider } from './ads-signal.provider';
 import { ApifyCandidateDiscoveryProvider } from './apify-candidate-discovery.provider';
+import { DataForSeoLabsDiscoveryProvider } from './dataforseo-labs-discovery.provider';
+import { DataForSeoMerchantProvider } from './dataforseo-merchant.provider';
 import { KeywordResearchProvider } from './keyword.provider';
 import { SearchResearchProvider } from './search.provider';
 import { Sourcing1688ResearchProvider } from './sourcing-1688.provider';
@@ -23,6 +25,8 @@ import { TrendResearchProvider } from './trend.provider';
 export { AdsSignalResearchProvider } from './ads-signal.provider';
 export { Apify1688Provider } from './apify-1688.provider';
 export { ApifyCandidateDiscoveryProvider } from './apify-candidate-discovery.provider';
+export { DataForSeoLabsDiscoveryProvider } from './dataforseo-labs-discovery.provider';
+export { DataForSeoMerchantProvider } from './dataforseo-merchant.provider';
 export { DajiSaasProvider } from './dajisaas.provider';
 export { KeywordResearchProvider } from './keyword.provider';
 export { MarketplaceResearchProvider } from './marketplace.provider';
@@ -34,12 +38,13 @@ export { TrendResearchProvider } from './trend.provider';
 export function createDefaultResearchProviders(): ResearchProvider[] {
   return [
     new SearchResearchProvider(),
-    // MarketplaceResearchProvider removed — ApifyCandidateDiscoveryProvider
-    // is the sole marketplace source for candidate discovery.
-    // SerpAPI/DataForSEO Google Shopping is not a product data source.
+    new DataForSeoMerchantProvider(),
+    // ApifyCandidateDiscoveryProvider is the fallback/additional marketplace
+    // source when DataForSEO Merchant returns no usable marketplace evidence.
     new ApifyCandidateDiscoveryProvider(),
     new Sourcing1688ResearchProvider(),
     new TrendResearchProvider(),
+    new DataForSeoLabsDiscoveryProvider(),
     new KeywordResearchProvider(),
     new AdsSignalResearchProvider(),
     new SupplierResearchProvider(),

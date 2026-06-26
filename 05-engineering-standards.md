@@ -144,9 +144,19 @@ filter, deduplicate, or explain existing provider-backed query candidates; it
 must not invent keywords, product ideas, URLs, prices, suppliers, or evidence.
 When query intelligence returns no usable derived queries, the system must use
 the original seed query only instead of generating AI fallback keywords.
+For autonomous discovery jobs without an original seed query, the system must
+collect broad category/keyword roots from approved providers such as DataForSEO
+Labs. It must not rely on project hardcoded category seed lists as the source
+of discovery categories.
 
 The initial discovery run must seed candidates from `MARKETPLACE` evidence
 after ProductAggregationService groups listings from multiple providers.
+DataForSEO Merchant Google Shopping is the preferred market-validation source
+for product-like discovery queries. Merchant results must be normalized into
+`MARKETPLACE` ResearchSource evidence and must not create ProductCandidate
+records directly. Apify marketplace actors may be used as fallback or
+additional marketplace evidence when Merchant is unavailable, unconfigured, or
+returns no usable listings.
 `SEARCH`, `TREND`, `KEYWORD`, `ADS_SIGNAL`, and `SOCIAL` evidence may enrich
 scores, risk flags, source panels, and confidence. They must not create
 standalone candidates in the initial discovery phase. The initial discovery run
@@ -231,6 +241,13 @@ shortlist size is controlled by validated run config. When query intelligence
 is available, Apify-backed discovery should run configured actors against the
 seed query plus selected derived queries, while recording query provenance in
 each normalized ResearchSource `rawData`.
+
+DataForSEO Merchant Google Shopping validation must run in the provider layer.
+The provider must normalize product title, URL or product ID, price, currency,
+seller/shop signal, rating, review or vote count when available, and query
+provenance into `MARKETPLACE` evidence. Merchant validation establishes that a
+query maps to real marketplace products; aggregation is still required to merge
+duplicate or similar listings into ProductCandidate drafts.
 
 The Product Aggregation step must use AI exclusively to analyze and group
 provider-backed listings. AI must:

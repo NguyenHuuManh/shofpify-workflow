@@ -34,18 +34,19 @@ export class KeywordResearchProvider extends HttpResearchProvider {
   }
 
   protected buildRequests(input: ResearchProviderCollectInput): ResearchHttpRequest[] {
-    // Primary: DataForSEO
     if (this.login && this.password) {
       return [
         {
-          url: 'https://api.dataforseo.com/v3/keywords_data/google_ads/search_volume/live',
+          url: 'https://api.dataforseo.com/v3/keywords_data/google_ads/keywords_for_keywords/live',
           init: buildDataForSeoRequest([
             {
               keywords: [input.productIdea],
               location_name: input.config.targetMarket === 'US' ? 'United States' : input.config.targetMarket,
               language_name: 'English',
+              sort_by: 'search_volume',
             },
           ]),
+          metadata: { endpoint: 'keywords_for_keywords' },
         },
       ];
     }
@@ -65,9 +66,7 @@ export class KeywordResearchProvider extends HttpResearchProvider {
     const root = this.asRecord(response);
 
     // DataForSEO response format
-    const tasks = Array.isArray(root.tasks) ? root.tasks : [];
-    const firstTask = this.asRecord(tasks[0]);
-    const dfResult = Array.isArray(firstTask.result) ? firstTask.result : [];
+    const dfResult = this.extractDataForSeoKeywordRecords(root);
 
     if (dfResult.length > 0) {
       return dfResult.slice(0, 10).map((item) => this.normalizeDataForSeoItem(item, input));
@@ -85,14 +84,63 @@ export class KeywordResearchProvider extends HttpResearchProvider {
     return keywords.slice(0, 10).map((item) => this.normalizeSerpApiKeywordItem(item, input));
   }
 
-  private normalizeDataForSeoItem(item: unknown, input: ResearchProviderCollectInput): NormalizedResearchSourceInput {
+  private extractDataForSeoKeywordRecords(root: Record<string, unknown>): Record<string, unknown>[] {
+    const tasks = Array.isArray(root.tasks) ? root.tasks : [];
+    return tasks.flatMap((task) => {
+      const taskRecord = this.asRecord(task);
+      const result = Array.isArray(taskRecord.result) ? taskRecord.result : [];
+      return result.flatMap((item) => this.extractKeywordRecords(item));
+    });
+  }
+
+  private extractKeywordRecords(value: unknown, depth = 0): Record<string, unknown>[] {
+    if (depth > 4) {
+      return [];
+    }
+
+    if (Array.isArray(value)) {
+      return value.flatMap((item) => this.extractKeywordRecords(item, depth + 1));
+    }
+
+    const record = this.asRecord(value);
+    if (Object.keys(record).length === 0) {
+      return [];
+    }
+
+    const current = typeof record.keyword === 'string' ? [record] : [];
+    const nested = [
+      record.items,
+      record.data,
+      record.results,
+      record.keyword_data,
+      record.keyword_ideas,
+    ].flatMap((item) => this.extractKeywordRecords(item, depth + 1));
+
+    return [...current, ...nested];
+  }
+
+  private normalizeDataForSeoItem(
+    item: Record<string, unknown>,
+    input: ResearchProviderCollectInput,
+  ): NormalizedResearchSourceInput {
     const record = this.asRecord(item);
     const keyword = this.stringOrUndefined(record.keyword) ?? input.productIdea;
     const volume = this.numberOrUndefined(record.search_volume);
     const cpc = this.numberOrUndefined(record.cpc);
-    const competition = this.numberOrUndefined(record.competition_index);
+    const competition = this.numberOrUndefined(record.competition_index) ??
+      this.numberOrUndefined(record.competition);
 
-    return this.buildKeywordSource(keyword, volume, cpc, competition, 'DataForSEO Google Ads', record);
+    return this.buildKeywordSource(
+      keyword,
+      volume,
+      cpc,
+      competition,
+      'DataForSEO Google Ads Keywords For Keywords',
+      {
+        ...record,
+        dataForSeoEndpoint: 'keywords_for_keywords',
+      },
+    );
   }
 
   private normalizeSerpApiItem(item: unknown, input: ResearchProviderCollectInput): NormalizedResearchSourceInput {
