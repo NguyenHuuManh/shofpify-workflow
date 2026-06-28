@@ -3,7 +3,7 @@
  * Server actions for the independent Product Research workspace.
  *
  * Responsibilities:
- * - Create research projects
+ * - Start autonomous discovery jobs
  * - Select and promote candidates
  *
  * Dependencies:
@@ -22,50 +22,6 @@ import { discoveryJobService } from '@/services/discovery-job.service';
 import { sourceMatchingService } from '@/services/source-matching.service';
 import { enqueueProductDiscoveryJob } from '@/jobs/job-producer';
 
-export async function createResearchProject(formData: FormData): Promise<void> {
-  const query = String(formData.get('query') ?? '').trim();
-  const objective = String(formData.get('objective') ?? 'find_winning_product');
-  const priceMin = optionalNumber(formData.get('priceMin'));
-  const priceMax = optionalNumber(formData.get('priceMax'));
-  const maxMoq = optionalNumber(formData.get('maxMoq'));
-  const internationalFreightPerUnit = optionalNumber(formData.get('internationalFreightPerUnit'));
-  const targetMarginPercent = optionalNumber(formData.get('targetMarginPercent')) ?? 40;
-
-  await researchService.createProjectAndRun({
-    query,
-    targetMarket: String(formData.get('targetMarket') ?? 'US'),
-    objective,
-    priceBand:
-      priceMin !== undefined || priceMax !== undefined
-        ? {
-            min: priceMin ?? 0,
-            max: priceMax ?? priceMin ?? 0,
-          }
-        : undefined,
-    targetMarginPercent,
-    riskTolerance: parseRiskTolerance(formData.get('riskTolerance')),
-    excludedCategories: parseExcludedCategories(
-      formData,
-      'excludedCategories',
-      'excludedCategoriesCustom',
-    ),
-    sourcing: {
-      targetSource: '1688',
-      targetCurrency: 'USD',
-      maxMoq,
-      landedCostAssumptions: {
-        agentFeePercent: optionalNumber(formData.get('agentFeePercent')),
-        internationalFreightPerUnit,
-        customsDutyPercent: optionalNumber(formData.get('customsDutyPercent')),
-        packagingPerUnit: optionalNumber(formData.get('packagingPerUnit')),
-        qcPerUnit: optionalNumber(formData.get('qcPerUnit')),
-      },
-    },
-  });
-
-  redirect('/dashboard/product-research');
-}
-
 export async function startDiscoveryJob(formData: FormData): Promise<void> {
   const seedQuery = String(formData.get('seedQuery') ?? '').trim();
   const priceMin = optionalNumber(formData.get('discoveryPriceMin'));
@@ -79,7 +35,7 @@ export async function startDiscoveryJob(formData: FormData): Promise<void> {
   const maxQueries = optionalNumber(formData.get('maxQueries')) ?? 6;
 
   const result = await discoveryJobService.start({
-    seedQuery: seedQuery || undefined,
+    seedQuery,
     targetMarket: String(formData.get('discoveryTargetMarket') ?? 'US'),
     objective: 'autonomous_discovery',
     priceBand:

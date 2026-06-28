@@ -4,7 +4,7 @@
  *
  * Responsibilities:
  * - Group provider-backed marketplace listings with AI when available
- * - Fall back to deterministic deduplication when AI output is unavailable or invalid
+ * - Return no groups when AI grouping is unavailable or invalid
  * - Merge source metrics without fabricating product facts
  *
  * Dependencies:
@@ -37,24 +37,40 @@ export class ProductAggregationService {
   ): Promise<ProductAggregationResult> {
     const sources = this.prepareMarketplaceSources(input.sources);
     if (sources.length === 0) {
-      return { groups: [], sources: [], method: 'deterministic_dedup' };
+      return { groups: [], sources: [], method: 'ai_grouping' };
     }
 
-    if (aiProvider && sources.length > 1) {
-      const aiGroups = await this.tryAiGrouping(input.productIdea, sources, input.maxGroups, aiProvider);
-      if (aiGroups.length > 0) {
-        return {
-          groups: aiGroups.slice(0, input.maxGroups),
-          sources,
-          method: 'ai_grouping',
-        };
-      }
+    if (sources.length === 1) {
+      const source = sources[0]!;
+      return {
+        groups: [
+          validate(productAggregationGroupSchema, {
+            groupId: this.groupId('ai', [source]),
+            name: this.representativeName(source.title ?? source.externalId, [source]),
+            sourceKeys: [source.sourceKey],
+            method: 'ai_grouping',
+            rationale: 'Single marketplace listing; no cross-source grouping required.',
+            mergedMetrics: this.mergeMetrics([source]),
+          }),
+        ],
+        sources,
+        method: 'ai_grouping',
+      };
     }
 
+    if (!aiProvider) {
+      logger.warn(
+        { productIdea: input.productIdea, sourceCount: sources.length },
+        'Product aggregation AI provider is unavailable; returning no product groups',
+      );
+      return { groups: [], sources, method: 'ai_grouping' };
+    }
+
+    const aiGroups = await this.tryAiGrouping(input.productIdea, sources, input.maxGroups, aiProvider);
     return {
-      groups: this.deterministicGroups(sources).slice(0, input.maxGroups),
+      groups: aiGroups.slice(0, input.maxGroups),
       sources,
-      method: 'deterministic_dedup',
+      method: 'ai_grouping',
     };
   }
 
@@ -103,7 +119,7 @@ export class ProductAggregationService {
       if (!parsed.success) {
         logger.warn(
           { provider: aiProvider.providerName, validationErrors: parsed.error.flatten() },
-          'Product aggregation AI output failed validation; falling back to deterministic grouping',
+          'Product aggregation AI output failed validation; returning no product groups',
         );
         return [];
       }
@@ -112,7 +128,7 @@ export class ProductAggregationService {
     } catch (error) {
       logger.warn(
         { provider: aiProvider.providerName, error },
-        'Product aggregation AI grouping failed; falling back to deterministic grouping',
+        'Product aggregation AI grouping failed; returning no product groups',
       );
       return [];
     }
@@ -146,42 +162,19 @@ export class ProductAggregationService {
       );
     }
 
-    if (assigned.size !== sources.length) {
-      return [];
+    const unassignedCount = sources.length - assigned.size;
+    if (unassignedCount > 0) {
+      logger.info(
+        {
+          sourceCount: sources.length,
+          assignedCount: assigned.size,
+          unassignedCount,
+        },
+        'Product aggregation AI left marketplace sources unassigned',
+      );
     }
 
     return normalized;
-  }
-
-  private deterministicGroups(sources: ProductAggregationSource[]): ProductAggregationGroup[] {
-    const grouped = new Map<string, ProductAggregationSource[]>();
-    for (const source of sources) {
-      const key = this.deterministicGroupKey(source);
-      grouped.set(key, [...(grouped.get(key) ?? []), source]);
-    }
-
-    return Array.from(grouped.values())
-      .map((groupSources) =>
-        validate(productAggregationGroupSchema, {
-          groupId: this.groupId('det', groupSources),
-          name: this.representativeName(groupSources[0]?.title ?? groupSources[0]?.externalId, groupSources),
-          sourceKeys: groupSources.map((source) => source.sourceKey),
-          method: 'deterministic_dedup',
-          rationale: 'Grouped by normalized title and price cluster.',
-          mergedMetrics: this.mergeMetrics(groupSources),
-        }),
-      )
-      .sort((a, b) => {
-        const demandDelta = (b.mergedMetrics.demandSignal ?? 0) - (a.mergedMetrics.demandSignal ?? 0);
-        return demandDelta !== 0 ? demandDelta : b.mergedMetrics.sourceCount - a.mergedMetrics.sourceCount;
-      });
-  }
-
-  private deterministicGroupKey(source: ProductAggregationSource): string {
-    const name = this.normalizeName(source.title ?? source.externalId ?? source.url ?? 'marketplace listing');
-    const price = this.extractEvidenceMetrics(source).price;
-    const priceCluster = price === undefined ? 'unknown' : String(Math.round(price / 10) * 10);
-    return `${name}:${priceCluster}`;
   }
 
   private mergeMetrics(sources: ProductAggregationSource[]): ProductAggregationMergedMetrics {
@@ -197,6 +190,13 @@ export class ProductAggregationService {
     const demandSignals = metrics
       .map((metric) => metric.demandSignal)
       .filter((value): value is number => value !== undefined);
+    const imageUrls = Array.from(
+      new Set(
+        sources
+          .map((source) => this.extractSourceImageUrl(source))
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
 
     return {
       demandSignal:
@@ -209,6 +209,7 @@ export class ProductAggregationService {
       ratingAverage: this.average(ratings),
       reviewCountTotal: this.sum(reviewCounts),
       orderCountTotal: this.sum(orderCounts),
+      ...(imageUrls[0] ? { imageUrl: imageUrls[0], imageUrls } : {}),
       sourceCount: sources.length,
     };
   }
@@ -228,6 +229,29 @@ export class ProductAggregationService {
       : {};
   }
 
+  private extractSourceImageUrl(source: ProductAggregationSource): string | undefined {
+    const rawData = source.rawData ?? {};
+    const metrics = this.extractEvidenceMetrics(source) as Record<string, unknown>;
+    const metricImage = this.stringOrUndefined(metrics.imageUrl);
+    if (metricImage) {
+      return metricImage;
+    }
+
+    for (const key of ['imageUrl', 'image', 'image_url', 'thumbnail', 'thumbnailUrl']) {
+      const value = this.stringOrUndefined(rawData[key]);
+      if (value) {
+        return value;
+      }
+    }
+
+    const images = rawData.images;
+    if (Array.isArray(images)) {
+      return images.find((image): image is string => typeof image === 'string' && image.length > 0);
+    }
+
+    return undefined;
+  }
+
   private metricNumber(metrics: ProviderEvidenceMetrics, key: string): number | undefined {
     const value = (metrics as Record<string, unknown>)[key];
     return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
@@ -240,6 +264,10 @@ export class ProductAggregationService {
       .replace(/\b(the|and|with|for|new|hot|best|sale|shop|official)\b/gu, ' ')
       .replace(/\s+/gu, ' ')
       .trim();
+  }
+
+  private stringOrUndefined(value: unknown): string | undefined {
+    return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
   }
 
   private groupId(prefix: string, sources: ProductAggregationSource[]): string {
@@ -259,8 +287,10 @@ export class ProductAggregationService {
       'You group marketplace product listings for Product Research.',
       'Use only the provided source records.',
       'Do not invent product names, prices, URLs, suppliers, costs, MOQ, or source evidence.',
-      'Every sourceKey must appear in exactly one group.',
-      'Put uncertain matches in separate groups.',
+      'Return up to the requested maxGroups strongest real-world product groups.',
+      'A selected sourceKey may appear in at most one group.',
+      'Leave weak, noisy, broad, or unrelated listings unassigned instead of forcing bad matches.',
+      'Put uncertain but still product-like matches in separate groups.',
       'Return only strict JSON.',
     ].join('\n');
   }
@@ -278,11 +308,16 @@ export class ProductAggregationService {
         groups: [
           {
             name: 'representative title copied from one source title',
-            sourceKeys: ['sourceKey assigned exactly once'],
+            sourceKeys: ['sourceKey selected for this group; do not repeat across groups'],
             rationale: 'short evidence-backed grouping rationale',
           },
         ],
       },
+      rules: [
+        'Use sourceKeys from the provided list only.',
+        'Do not include every source unless it truly belongs to one of the strongest product groups.',
+        'Prefer precise product identity over broad query or category similarity.',
+      ],
       sources: sources.map((source) => ({
         sourceKey: source.sourceKey,
         provider: source.provider,

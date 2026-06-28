@@ -4,7 +4,7 @@
  *
  * Responsibilities:
  * - Verify AI grouping uses only provider-backed source keys
- * - Verify deterministic fallback grouping and metric merging
+ * - Verify invalid or missing AI grouping returns no product groups
  * - Verify SOURCING evidence cannot seed discovery groups
  *
  * Dependencies:
@@ -31,6 +31,7 @@ const marketplaceSources: NormalizedResearchSourceInput[] = [
         rating: 4.6,
         reviewCount: 1200,
         demandSignal: 82,
+        imageUrl: 'https://example.com/blender-a.jpg',
       },
       apifyActorId: 'epctex/google-shopping-scraper',
     },
@@ -113,13 +114,15 @@ describe('ProductAggregationService', () => {
           ratingAverage: 4.5,
           reviewCountTotal: 2000,
           demandSignal: 82,
+          imageUrl: 'https://example.com/blender-a.jpg',
+          imageUrls: ['https://example.com/blender-a.jpg'],
           sourceCount: 2,
         }),
       }),
     );
   });
 
-  it('falls back to deterministic dedup when AI output is invalid', async () => {
+  it('returns no product groups when AI output is invalid', async () => {
     const service = new ProductAggregationService();
     const aiProvider = aiProviderWithText('not json');
 
@@ -132,9 +135,49 @@ describe('ProductAggregationService', () => {
       aiProvider,
     );
 
-    expect(result.method).toBe('deterministic_dedup');
-    expect(result.groups.length).toBeGreaterThan(0);
-    expect(result.groups.every((group) => group.method === 'deterministic_dedup')).toBe(true);
+    expect(result.method).toBe('ai_grouping');
+    expect(result.groups).toEqual([]);
+    expect(result.sources).toHaveLength(2);
+  });
+
+  it('accepts AI groups that intentionally leave noisy sources unassigned', async () => {
+    const service = new ProductAggregationService();
+    const prepared = marketplaceSources.map((source, index) => service.sourceKey(source, index));
+    const aiProvider = aiProviderWithText(
+      JSON.stringify({
+        groups: [
+          {
+            name: 'USB Portable Blender',
+            sourceKeys: [prepared[0]],
+            rationale: 'The first listing is the strongest precise portable blender match.',
+          },
+        ],
+      }),
+    );
+
+    const result = await service.aggregate(
+      {
+        productIdea: 'portable blender',
+        sources: marketplaceSources,
+        maxGroups: 5,
+      },
+      aiProvider,
+    );
+
+    expect(result.method).toBe('ai_grouping');
+    expect(result.groups).toHaveLength(1);
+    expect(result.groups[0]).toEqual(
+      expect.objectContaining({
+        name: 'USB Portable Blender',
+        sourceKeys: [prepared[0]],
+        mergedMetrics: expect.objectContaining({
+          medianPrice: 39.99,
+          reviewCountTotal: 1200,
+          sourceCount: 1,
+        }),
+      }),
+    );
+    expect(result.sources).toHaveLength(2);
   });
 
   it('ignores sourcing evidence during initial aggregation', async () => {
@@ -166,7 +209,7 @@ describe('ProductAggregationService', () => {
     expect(result.sources).toEqual([]);
   });
 
-  it('respects the configured group limit', async () => {
+  it('returns no product groups when no AI provider is available', async () => {
     const service = new ProductAggregationService();
     const chopperSource: NormalizedResearchSourceInput = {
       type: 'MARKETPLACE',
@@ -193,6 +236,8 @@ describe('ProductAggregationService', () => {
       maxGroups: 1,
     });
 
-    expect(result.groups).toHaveLength(1);
+    expect(result.method).toBe('ai_grouping');
+    expect(result.groups).toEqual([]);
+    expect(result.sources).toHaveLength(3);
   });
 });

@@ -39,8 +39,8 @@ export function createDefaultResearchProviders(): ResearchProvider[] {
   return [
     new SearchResearchProvider(),
     new DataForSeoMerchantProvider(),
-    // ApifyCandidateDiscoveryProvider is the fallback/additional marketplace
-    // source when DataForSEO Merchant returns no usable marketplace evidence.
+    // ApifyCandidateDiscoveryProvider expands marketplace discovery after
+    // DataForSEO Merchant with configured marketplace/ads actors.
     new ApifyCandidateDiscoveryProvider(),
     new Sourcing1688ResearchProvider(),
     new TrendResearchProvider(),

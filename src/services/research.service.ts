@@ -3,7 +3,7 @@
  * Business logic for the Research Product Intelligence Module.
  *
  * Responsibilities:
- * - Generate product candidate hypotheses through AIProvider interface
+ * - Build provider-backed product candidates from marketplace evidence
  * - Collect normalized evidence through research provider interfaces
  * - Persist research runs, candidates, source evidence, and selected candidate
  * - Coordinate candidate scoring and recommendation
@@ -31,6 +31,7 @@ import { workflowService, type WorkflowService } from './workflow.service';
 import { CandidateScoringService, candidateScoringService } from './candidate-scoring.service';
 import { ProductAggregationService, productAggregationService } from './product-aggregation.service';
 import { QueryIntelligenceService, queryIntelligenceService } from './query-intelligence.service';
+import { createDefaultProvider } from '@/providers/provider.factory';
 import { createDefaultResearchProviders } from '@/providers/research';
 import { AppError, ErrorCodes } from '@/lib/errors';
 import { logger } from '@/lib/logger';
@@ -38,7 +39,6 @@ import { validate } from '@/lib/validate';
 import {
   normalizedResearchSourceSchema,
   researchRunConfigSchema,
-  createResearchProjectSchema,
 } from '@/schemas/research.schema';
 import type { AIProvider } from '@/types/ai-provider.interface';
 import type {
@@ -47,7 +47,6 @@ import type {
   ProductAggregationGroup,
   ResearchCandidateDraft,
   ResearchRunConfig,
-  CreateResearchProjectInput,
   ResearchRunConfigInput,
   SupplementalProviderName,
 } from '@/schemas/research.schema';
@@ -88,33 +87,6 @@ export class ResearchService {
     private readonly aggregation: ProductAggregationService = productAggregationService,
     private readonly queryIntelligence: QueryIntelligenceService = queryIntelligenceService,
   ) {}
-
-  async createProjectAndRun(
-    input: CreateResearchProjectInput,
-    aiProvider?: AIProvider,
-  ): Promise<RunResearchResult & { researchProject: ResearchProject }> {
-    const parsed = validate(createResearchProjectSchema, input);
-    const project = await this.projectRepo.create({ query: parsed.query });
-
-    const result = await this.run(
-      {
-        researchProjectId: project.id,
-        productIdea: parsed.query,
-        config: parsed,
-      },
-      aiProvider,
-    );
-
-    const updatedProject = await this.projectRepo.updateSummary(
-      project.id,
-      result.summary,
-    );
-
-    return {
-      ...result,
-      researchProject: updatedProject,
-    };
-  }
 
   async run(
     input: RunResearchInput,
@@ -181,7 +153,7 @@ export class ResearchService {
         sources: candidateDiscoverySources,
         maxGroups: config.maxCandidates,
       },
-      aiProvider ?? this.defaultAiProvider,
+      this.resolveAggregationAiProvider(aiProvider),
     );
     const candidateDrafts = this.buildCandidatesFromAggregatedGroups(
       input.productIdea,
@@ -754,6 +726,7 @@ export class ResearchService {
 
       const name = this.normalizeCandidateName(group.name || groupSources[0]?.title || productIdea);
       const metrics = this.metricsFromAggregationGroup(group);
+      const imageUrls = this.collectAggregationImageUrls(group, groupSources);
       candidates.push({
         name,
         positioning: this.truncate(
@@ -792,11 +765,13 @@ export class ResearchService {
             groupSources.length === 1 ? groupSources[0]?.provider : 'aggregated_marketplace',
           sourceUrl: groupSources[0]?.url,
           sourceExternalId: groupSources[0]?.externalId,
+          ...(imageUrls[0] ? { sourceImageUrl: imageUrls[0] } : {}),
           aggregation: {
             groupId: group.groupId,
             method: group.method,
             sourceKeys: group.sourceKeys,
             sourceUrls: groupSources.map((source) => source.url).filter(Boolean),
+            ...(imageUrls.length > 0 ? { sourceImageUrls: imageUrls } : {}),
             sourceExternalIds: groupSources.map((source) => source.externalId).filter(Boolean),
             sourceTitles: groupSources.map((source) => source.title).filter(Boolean),
             providers: Array.from(new Set(groupSources.map((source) => source.provider))),
@@ -938,7 +913,8 @@ export class ResearchService {
         );
     });
 
-    if (this.shouldUseSequentialMarketplaceFallback(allowedProviderTypes, options?.collectionContext)) {
+    if (this.shouldUseSequentialMarketplaceCollection(allowedProviderTypes, options?.collectionContext)) {
+      const sources: NormalizedResearchSourceInput[] = [];
       for (const provider of providers) {
         const providerSources = await provider.collect({
           productIdea,
@@ -946,14 +922,13 @@ export class ResearchService {
           candidates,
           collectionContext: options?.collectionContext,
         });
-        const validated = providerSources.map((source) => validate(normalizedResearchSourceSchema, source));
-        const usableMarketplaceSources = validated.filter((source) => source.type === 'MARKETPLACE');
-        if (usableMarketplaceSources.length > 0) {
-          return validated;
-        }
+        const validated = providerSources
+          .map((source) => validate(normalizedResearchSourceSchema, source))
+          .map((source) => this.withCanonicalSourceUrl(source));
+        sources.push(...validated);
       }
 
-      return [];
+      return sources;
     }
 
     const results = await Promise.all(
@@ -969,10 +944,47 @@ export class ResearchService {
 
     return results
       .flat()
-      .map((source) => validate(normalizedResearchSourceSchema, source));
+      .map((source) => validate(normalizedResearchSourceSchema, source))
+      .map((source) => this.withCanonicalSourceUrl(source));
   }
 
-  private shouldUseSequentialMarketplaceFallback(
+  private withCanonicalSourceUrl(source: NormalizedResearchSourceInput): NormalizedResearchSourceInput {
+    if (source.url) {
+      return source;
+    }
+
+    const url = this.extractUrlFromRawData(source.rawData);
+    return url ? { ...source, url } : source;
+  }
+
+  private extractUrlFromRawData(rawData: Record<string, unknown> | undefined): string | undefined {
+    if (!rawData) {
+      return undefined;
+    }
+
+    for (const key of [
+      'shopping_url',
+      'shoppingUrl',
+      'product_url',
+      'productUrl',
+      'product_link',
+      'productLink',
+      'seller_url',
+      'sellerUrl',
+      'url',
+      'link',
+      'url_redirect',
+    ]) {
+      const value = this.validUrlOrUndefined(this.rawDataValueString(rawData, key));
+      if (value) {
+        return value;
+      }
+    }
+
+    return undefined;
+  }
+
+  private shouldUseSequentialMarketplaceCollection(
     allowedProviderTypes: Set<SupplementalProviderName> | undefined,
     collectionContext: ResearchCollectionContext | undefined,
   ): boolean {
@@ -1124,8 +1136,24 @@ export class ResearchService {
 
   private rawDataString(source: NormalizedResearchSourceInput, key: string): string | undefined {
     const rawData = source.rawData ?? {};
+    return this.rawDataValueString(rawData, key);
+  }
+
+  private rawDataValueString(rawData: Record<string, unknown>, key: string): string | undefined {
     const value = rawData[key];
     return typeof value === 'string' && value.length > 0 ? value : undefined;
+  }
+
+  private validUrlOrUndefined(value: string | undefined): string | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    try {
+      return new URL(value).toString();
+    } catch {
+      return undefined;
+    }
   }
 
   private applyEvidenceToScorePayload(
@@ -1225,6 +1253,70 @@ export class ResearchService {
     }
 
     return metrics;
+  }
+
+  private collectAggregationImageUrls(
+    group: ProductAggregationGroup,
+    groupSources: Array<NormalizedResearchSourceInput & { sourceKey?: string }>,
+  ): string[] {
+    const urls = new Set<string>();
+    const add = (value: unknown): void => {
+      const url = this.stringOrUndefined(value);
+      if (url) {
+        urls.add(url);
+      }
+    };
+
+    add(group.mergedMetrics.imageUrl);
+    group.mergedMetrics.imageUrls?.forEach(add);
+
+    for (const source of groupSources) {
+      const rawData = source.rawData ?? {};
+      const metrics =
+        rawData.metrics && typeof rawData.metrics === 'object' && !Array.isArray(rawData.metrics)
+          ? (rawData.metrics as Record<string, unknown>)
+          : {};
+
+      add(metrics.imageUrl);
+      for (const key of ['imageUrl', 'image', 'image_url', 'thumbnail', 'thumbnailUrl']) {
+        add(rawData[key]);
+      }
+
+      const images = rawData.images;
+      if (Array.isArray(images)) {
+        images.forEach(add);
+      }
+    }
+
+    return Array.from(urls);
+  }
+
+  private stringOrUndefined(value: unknown): string | undefined {
+    return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+  }
+
+  private resolveAggregationAiProvider(aiProvider?: AIProvider): AIProvider | undefined {
+    if (aiProvider) {
+      return aiProvider;
+    }
+
+    if (this.defaultAiProvider) {
+      return this.defaultAiProvider;
+    }
+
+    if (process.env.NODE_ENV === 'test') {
+      return undefined;
+    }
+
+    try {
+      return createDefaultProvider();
+    } catch (error) {
+      logger.warn(
+        { error: error instanceof Error ? error.message : 'Unknown' },
+        'Default AI provider unavailable for product aggregation',
+      );
+      return undefined;
+    }
   }
 
   private volumeToDemandScore(volume: number | undefined): number | undefined {

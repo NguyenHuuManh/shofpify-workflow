@@ -160,6 +160,7 @@ export const providerEvidenceMetricsSchema = z.object({
   rating: z.coerce.number().min(0).max(5).optional(),
   searchVolume: z.coerce.number().int().nonnegative().optional(),
   cpc: z.coerce.number().nonnegative().optional(),
+  imageUrl: z.string().url().optional(),
 });
 
 export const researchCollectionStageSchema = z.enum([
@@ -230,6 +231,8 @@ export const productAggregationMergedMetricsSchema = z.object({
   ratingAverage: z.coerce.number().min(0).max(5).optional(),
   reviewCountTotal: z.coerce.number().int().nonnegative().optional(),
   orderCountTotal: z.coerce.number().int().nonnegative().optional(),
+  imageUrl: z.string().url().optional(),
+  imageUrls: z.array(z.string().url()).optional(),
   sourceCount: z.coerce.number().int().positive(),
 });
 
@@ -257,12 +260,6 @@ export const researchGenerationSchema = z.object({
   candidates: z.array(researchCandidateDraftSchema).min(1).max(10),
 });
 
-export const startResearchRunSchema = researchRunConfigSchema.partial();
-
-export const createResearchProjectSchema = researchRunConfigSchema.partial().extend({
-  query: z.string().min(1, 'Research query is required').max(255).trim(),
-});
-
 export const discoveryQueryPlanItemSchema = z.object({
   query: z.string().min(2).max(120),
   angle: z.string().min(1).max(240),
@@ -274,7 +271,7 @@ export const discoveryQueryPlanSchema = z.object({
 });
 
 export const autonomousDiscoveryJobSchema = researchRunConfigSchema.extend({
-  seedQuery: z.string().trim().min(2).max(255).optional(),
+  seedQuery: z.string().trim().min(2, 'Seed product is required').max(255),
   maxQueries: z.coerce.number().int().min(1).max(12).default(6),
 });
 
@@ -607,8 +604,6 @@ export type ProductAggregationMergedMetrics = z.infer<typeof productAggregationM
 export type ProductAggregationGroup = z.infer<typeof productAggregationGroupSchema>;
 export type ProductAggregationAiOutput = z.infer<typeof productAggregationAiOutputSchema>;
 export type ResearchGeneration = z.infer<typeof researchGenerationSchema>;
-export type StartResearchRunInput = z.input<typeof startResearchRunSchema>;
-export type CreateResearchProjectInput = z.input<typeof createResearchProjectSchema>;
 export type DiscoveryQueryPlan = z.infer<typeof discoveryQueryPlanSchema>;
 export type DiscoveryQueryPlanItem = z.infer<typeof discoveryQueryPlanItemSchema>;
 export type AutonomousDiscoveryJobInput = z.input<typeof autonomousDiscoveryJobSchema>;

@@ -4,7 +4,7 @@
  *
  * Responsibilities:
  * - Create discovery projects and jobs from broad research briefs
- * - Generate query plans through AI provider interfaces or deterministic fallback
+ * - Expand user-provided seed products through provider-backed query intelligence
  * - Execute provider-backed ResearchService runs for each planned query
  * - Persist job status, results, failures, and audit events
  *
@@ -43,7 +43,6 @@ import {
   type AutonomousDiscoveryJobConfig,
   type AutonomousDiscoveryJobInput,
   type DiscoveryJobResult,
-  type QueryIntelligenceCandidate,
   type ResearchRunConfig,
   type ResearchRunConfigInput,
 } from '@/schemas/research.schema';
@@ -77,7 +76,7 @@ export class DiscoveryJobService {
     actorId?: string,
   ): Promise<StartDiscoveryJobResult> {
     const parsed = validate(autonomousDiscoveryJobSchema, input);
-    const projectQuery = parsed.seedQuery || this.defaultProjectQuery(parsed);
+    const projectQuery = parsed.seedQuery;
 
     const created = await BaseRepository.transaction(async (tx) => {
       const researchProject = await this.projectRepo.create(
@@ -267,158 +266,15 @@ export class DiscoveryJobService {
 
   /**
    * Collect discovery queries from provider-backed keyword intelligence.
-   *
-   * Two paths:
-   * - With seed query: QueryIntelligenceService filters keywords by relevance to seed
-   * - Without seed query: query root-discovery providers that collect broad
-   *   category/keyword evidence directly from DataForSEO, then cap keywords
    */
   private async collectDiscoveryQueries(
     config: AutonomousDiscoveryJobConfig,
   ): Promise<string[]> {
-    const hasSeedQuery = Boolean(config.seedQuery?.trim());
-    const seedQuery = (config.seedQuery ?? '').trim().replace(/\s+/g, ' ');
+    const seedQuery = config.seedQuery.trim().replace(/\s+/g, ' ');
     const queryIntelConfig = validate(researchRunConfigSchema, config);
 
-    if (!hasSeedQuery) {
-      return this.collectTrendBasedDiscoveryQueries(queryIntelConfig, config);
-    }
-
-    // With seed query — collect keyword evidence and filter by relevance
     const keywordSources = await this.collectKeywordEvidence(seedQuery, queryIntelConfig);
     return this.selectDiscoveryQueriesWithSeed(seedQuery, keywordSources, config, queryIntelConfig);
-  }
-
-  /**
-   * Without seed query: query DataForSEO Labs root-discovery evidence and use
-   * only provider-backed category/keyword candidates.
-   */
-  private async collectTrendBasedDiscoveryQueries(
-    config: ResearchRunConfig,
-    discoveryConfig: AutonomousDiscoveryJobConfig,
-  ): Promise<string[]> {
-    const sources = await this.collectAutonomousDiscoveryEvidence(config);
-    const candidates = this.keywordCandidatesFromRootSources(sources);
-    const selected = this.selectDistinctKeywordCandidates(candidates, discoveryConfig.maxQueries);
-
-    if (selected.length > 0) {
-      const categories = this.distinctSourceCategories(sources);
-      logger.info(
-        {
-          providerCategories: categories,
-          providerKeywordCandidates: candidates.length,
-          selected,
-        },
-        'Discovery queries selected from provider-backed DataForSEO category and keyword intelligence',
-      );
-      return selected;
-    }
-
-    logger.warn(
-      { sourceCount: sources.length },
-      'Autonomous discovery stopped because keyword providers returned no usable query evidence',
-    );
-    throw new AppError({
-      code: ErrorCodes.VALIDATION_ERROR,
-      message: 'No provider-backed discovery categories or keywords were found. Configure DataForSEO Labs or adjust discovery constraints.',
-      statusCode: 422,
-    });
-  }
-
-  private async collectAutonomousDiscoveryEvidence(
-    config: ResearchRunConfig,
-  ): Promise<NormalizedResearchSourceInput[]> {
-    const enabledProviders = new Set(config.supplementalProviders);
-    const results = await Promise.all(
-      this.providers
-        .filter((p) => p.discoveryRootProvider === true)
-        .filter((p) => p.providerType && enabledProviders.has(p.providerType))
-        .map((provider) =>
-          provider.collect({
-            productIdea: 'autonomous product discovery',
-            config,
-            collectionContext: {
-              stage: 'query_intelligence',
-              queries: [],
-            },
-          }),
-        ),
-    );
-
-    return results.flat().map((source) => validate(normalizedResearchSourceSchema, source));
-  }
-
-  private distinctSourceCategories(sources: NormalizedResearchSourceInput[]): string[] {
-    const categories = sources.flatMap((source) => {
-      const rawData = source.rawData as Record<string, unknown> | undefined;
-      const value = rawData?.categories;
-      return Array.isArray(value) ? value.map(String) : [];
-    });
-    return [...new Set(categories)].slice(0, 12);
-  }
-
-  private keywordCandidatesFromRootSources(
-    sources: NormalizedResearchSourceInput[],
-  ): QueryIntelligenceCandidate[] {
-    return sources
-      .filter((source) => source.type === 'KEYWORD')
-      .map((source) => {
-        const rawData = source.rawData as Record<string, unknown> | undefined;
-        const metrics = rawData?.metrics as Record<string, unknown> | undefined;
-        const query = typeof rawData?.keyword === 'string'
-          ? rawData.keyword
-          : source.externalId ?? source.title?.replace(/\s+keyword signal$/iu, '') ?? '';
-        const searchVolume = this.numberFromUnknown(metrics?.searchVolume);
-        const cpc = this.numberFromUnknown(metrics?.cpc);
-        const competitionScore = this.numberFromUnknown(metrics?.competitionSignal);
-        const volumeScore = searchVolume
-          ? Math.min(35, Math.log10(Math.max(searchVolume, 10)) * 8)
-          : 0;
-        const cpcScore = cpc ? Math.min(20, cpc * 4) : 0;
-        const competitionPenalty = competitionScore !== undefined
-          ? Math.min(25, competitionScore / 4)
-          : 8;
-        const score = Math.round(Math.max(1, volumeScore + cpcScore + 45 - competitionPenalty));
-
-        return {
-          query,
-          score,
-          reason: [
-            `DataForSEO Labs provider-backed score ${score}`,
-            searchVolume !== undefined ? `volume ${searchVolume}` : undefined,
-          ].filter(Boolean).join(', '),
-          sourceTypes: ['KEYWORD'],
-          providers: [source.provider],
-          searchVolume,
-          cpc,
-          competitionScore,
-          buyerIntentScore: cpc ? Math.min(100, 50 + cpc * 8) : 50,
-          relevanceScore: 100,
-          riskScore: 10,
-        };
-      });
-  }
-
-  private numberFromUnknown(value: unknown): number | undefined {
-    return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-  }
-
-  private selectDistinctKeywordCandidates(
-    candidates: QueryIntelligenceCandidate[],
-    maxQueries: number,
-  ): string[] {
-    const seen = new Set<string>();
-    return [...candidates]
-      .sort((a, b) => b.score - a.score)
-      .map((candidate) => candidate.query.trim().replace(/\s+/g, ' ').toLowerCase())
-      .filter((query) => {
-        if (query.length <= 3 || query.split(/\s+/).length < 2 || seen.has(query)) {
-          return false;
-        }
-        seen.add(query);
-        return true;
-      })
-      .slice(0, maxQueries);
   }
 
   private async selectDiscoveryQueriesWithSeed(
@@ -583,14 +439,10 @@ export class DiscoveryJobService {
 
   private buildProjectSummary(result: DiscoveryJobResult): string {
     if (result.candidateCount === 0) {
-      return `Autonomous discovery completed ${result.runCount} provider-backed research runs and found no usable candidates.`;
+      return `Seed-product discovery completed ${result.runCount} provider-backed research runs and found no usable candidates.`;
     }
 
-    return `Autonomous discovery completed ${result.runCount} provider-backed research runs and found ${result.candidateCount} candidates.`;
-  }
-
-  private defaultProjectQuery(config: AutonomousDiscoveryJobConfig): string {
-    return `Autonomous discovery for ${config.targetMarket} winning products`;
+    return `Seed-product discovery completed ${result.runCount} provider-backed research runs and found ${result.candidateCount} candidates.`;
   }
 
   private toJson(value: unknown): Prisma.InputJsonValue {

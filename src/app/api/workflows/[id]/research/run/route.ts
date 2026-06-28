@@ -1,44 +1,30 @@
 /**
  * Purpose:
- * Research Product Intelligence run API route.
+ * Disabled legacy direct Research Product Intelligence run API route.
  * POST /api/workflows/:id/research/run
+ *
+ * Product Research execution now starts only through AI Discovery Jobs:
+ * POST /api/product-research/discovery-jobs
  */
 
-import type { NextResponse } from 'next/server';
-import { workflowService } from '@/services/workflow.service';
-import { productService } from '@/services/product.service';
-import { researchService } from '@/services/research.service';
-import { startResearchRunSchema } from '@/schemas/research.schema';
-import { success, handleError, parseBody } from '../../../../api-helpers';
-import { logger } from '@/lib/logger';
+import { NextResponse } from 'next/server';
 
 export async function POST(
-  request: Request,
-  { params }: { params: { id: string } },
+  _request: Request,
+  { params: _params }: { params: { id: string } },
 ): Promise<NextResponse> {
-  try {
-    const body = await parseBody(request, startResearchRunSchema);
-    const workflow = await workflowService.getById(params.id);
-    const product = await productService.getById(workflow.productId);
-
-    const result = await researchService.run({
-      workflowId: workflow.id,
-      productId: workflow.productId,
-      productIdea: product.title,
-      config: body,
-    });
-
-    logger.info(
-      { workflowId: params.id, researchRunId: result.researchRun.id },
-      'Research run started via API',
-    );
-
-    return success({
-      researchRunId: result.researchRun.id,
-      status: result.researchRun.completedAt ? 'COMPLETED' : 'RUNNING',
-      candidateCount: result.candidates.length,
-    });
-  } catch (error) {
-    return handleError(error);
-  }
+  return NextResponse.json(
+    {
+      success: false,
+      error: {
+        code: 'METHOD_NOT_ALLOWED',
+        message:
+          'Direct workflow research runs are disabled. Start Product Research through /api/product-research/discovery-jobs.',
+      },
+    },
+    {
+      status: 405,
+      headers: { Allow: 'GET' },
+    },
+  );
 }

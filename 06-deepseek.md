@@ -319,19 +319,22 @@ validation does not replace ProductAggregationService; multiple Merchant
 listings can describe the same product opportunity and must be grouped before
 candidate creation.
 
-Apify marketplace actors remain available as fallback or additional
-marketplace evidence when DataForSEO Merchant is unavailable, unconfigured,
-fails, or returns no usable listings. Provider orchestration must avoid
-fabricating product candidates when both Merchant and fallback marketplace
-providers return no usable evidence.
+Apify marketplace actors remain available as additive marketplace evidence
+after DataForSEO Merchant runs for the seed query and selected derived queries.
+Provider orchestration must not short-circuit Apify just because Merchant
+returned usable marketplace evidence, and it must avoid fabricating product
+candidates when marketplace providers return no usable evidence.
 
 AI aggregation must only group provider-backed evidence. It must not generate
-product names, prices, URLs, suppliers, costs, or source evidence. Every input
-listing must be assigned to exactly one group. Uncertain matches go in separate
+product names, prices, URLs, suppliers, costs, or source evidence. Each
+selected listing may be assigned to at most one group. Weak, noisy, broad, or
+unrelated listings may remain unassigned instead of being forced into
+low-quality groups. Uncertain but still product-like matches go in separate
 groups.
 
-Fallback: when AI is unavailable, the aggregation must use deterministic
-name-based deduplication as the fallback path.
+When AI grouping is unavailable, misconfigured, or invalid, multi-source
+aggregation must return no product groups and surface an empty/failed
+provider-backed result instead of using deterministic fallback grouping.
 
 Only `MARKETPLACE` evidence seeds initial ProductCandidate drafts. `SEARCH`,
 `TREND`, `KEYWORD`, `ADS_SIGNAL`, and `SOCIAL` evidence can enrich scoring and

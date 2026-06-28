@@ -138,25 +138,26 @@ TREND / KEYWORD / lightweight SEARCH evidence
 
 Query intelligence must not create ProductCandidate records. It only selects
 search terms for downstream provider calls and enrichment. Derived query text
-must come from provider-backed evidence such as related/rising trend queries,
+must come from provider-backed evidence such as DataForSEO Labs keyword
+suggestions generated from the seed product, related/rising trend queries,
 keyword-volume results, or search result titles/snippets. AI may only rank,
 filter, deduplicate, or explain existing provider-backed query candidates; it
 must not invent keywords, product ideas, URLs, prices, suppliers, or evidence.
 When query intelligence returns no usable derived queries, the system must use
 the original seed query only instead of generating AI fallback keywords.
-For autonomous discovery jobs without an original seed query, the system must
-collect broad category/keyword roots from approved providers such as DataForSEO
-Labs. It must not rely on project hardcoded category seed lists as the source
-of discovery categories.
+Discovery jobs must require an original seed product from the user. The system
+must not start by generating seed products, hardcoded category seed lists, or
+provider-root broad categories as a substitute for user intent.
 
 The initial discovery run must seed candidates from `MARKETPLACE` evidence
 after ProductAggregationService groups listings from multiple providers.
 DataForSEO Merchant Google Shopping is the preferred market-validation source
-for product-like discovery queries. Merchant results must be normalized into
-`MARKETPLACE` ResearchSource evidence and must not create ProductCandidate
-records directly. Apify marketplace actors may be used as fallback or
-additional marketplace evidence when Merchant is unavailable, unconfigured, or
-returns no usable listings.
+for product-like discovery queries and must run before additive Apify
+marketplace discovery. Merchant results must be normalized into `MARKETPLACE`
+ResearchSource evidence and must not create ProductCandidate records directly.
+Apify marketplace actors should run after Merchant for the seed query plus
+selected derived queries as additive marketplace evidence, not as a
+Merchant-only fallback path.
 `SEARCH`, `TREND`, `KEYWORD`, `ADS_SIGNAL`, and `SOCIAL` evidence may enrich
 scores, risk flags, source panels, and confidence. They must not create
 standalone candidates in the initial discovery phase. The initial discovery run
@@ -215,9 +216,10 @@ candidate promotion must be persisted or embedded in candidate metadata so the
 decision remains auditable. Uncertain matches require human confirmation before
 they affect the final output.
 
-Autonomous product discovery jobs may use AI only to plan research angles,
-niche hypotheses, and query batches. The job service must persist the query
-plan and then call ResearchService for each planned query. ProductCandidate,
+Autonomous product discovery jobs may use AI only to rank, filter, or explain
+provider-backed keyword candidates derived from the user seed product. The job
+service must persist the query plan and then call ResearchService for the seed
+product plus selected provider-backed derived queries. ProductCandidate,
 ResearchSource, supplier, cost, MOQ, landed-cost, and source URL data must come
 from approved providers and repositories, not from AI planner output.
 
@@ -255,11 +257,15 @@ provider-backed listings. AI must:
 - Group items that describe the same real-world product based on product name,
   price cluster, review/order scale, and provider context
 - Never fabricate product names, prices, URLs, suppliers, or source evidence
-- Assign every input listing to exactly one group
-- Place uncertain matches in separate groups
+- Assign each selected listing to at most one group
+- Leave weak, noisy, broad, or unrelated listings unassigned instead of forcing
+  them into low-quality groups
+- Place uncertain but still product-like matches in separate groups
 
 When the AI provider is unavailable, misconfigured, or returns invalid output,
-the aggregation must fall back to deterministic name-based deduplication.
+multi-source aggregation must return no product groups and surface an
+empty/failed provider-backed result instead of silently falling back to
+deterministic name-based deduplication.
 
 Merged metrics per product group must apply these rules:
 

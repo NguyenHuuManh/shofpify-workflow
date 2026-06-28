@@ -149,67 +149,14 @@ PUT /workflow/:id/landing
 
 ### POST /product-research
 
-Creates a product research project and runs the Research Product Intelligence Module.
-The same configuration is used by the dashboard Product Research form. Brief
-constraints are applied to provider-backed candidates after evidence collection;
-they do not enable AI-generated fallback candidates. The initial run discovers
-product candidates through the two-phase discovery pipeline:
+Disabled. Product Research execution must start through
+`POST /product-research/discovery-jobs`.
 
-```text
-raw provider listings -> aggregated product groups -> ProductCandidate drafts
-```
+Direct product-brief research runs are intentionally not exposed through the
+public API. `ResearchService.run()` remains an internal service method used by
+the AI Discovery Job worker for each planned provider-backed query.
 
-The initial run seeds candidates from marketplace evidence only. DataForSEO
-Merchant Google Shopping is the preferred marketplace validation provider for
-product-like queries; Apify marketplace actors may provide fallback or
-additional marketplace evidence. Search, trend, keyword, ads, and social
-evidence may enrich scores or confidence; 1688 supplier lookup and factory-cost
-enrichment are run later per candidate.
-Before marketplace discovery, the service may run provider-backed query
-intelligence to select derived queries. These derived queries come only from
-provider evidence and are used to improve marketplace/Apify search relevance.
-Merchant and Apify marketplace results must still pass through ProductAggregationService before any ProductCandidate is created.
-
-Request:
-
-```json
-{
-  "query": "portable kitchen gadgets",
-  "targetMarket": "US",
-  "priceBand": {
-    "min": 30,
-    "max": 120
-  },
-  "targetMarginPercent": 40,
-  "riskTolerance": "medium",
-  "excludedCategories": ["regulated", "fragile"],
-  "objective": "find_winning_product",
-  "maxDerivedQueries": 5,
-  "sourcing": {
-    "targetSource": "1688",
-    "targetCurrency": "USD",
-    "maxMoq": 500,
-    "landedCostAssumptions": {
-      "agentFeePercent": 8,
-      "internationalFreightPerUnit": 8,
-      "customsDutyPercent": 5,
-      "packagingPerUnit": 1.5,
-      "qcPerUnit": 0.75
-    }
-  },
-  "maxCandidates": 5
-}
-```
-
-Response:
-
-```json
-{
-  "researchProjectId": "research-project-id",
-  "researchRunId": "research-run-id",
-  "status": "COMPLETED"
-}
-```
+Response: `405 Method Not Allowed`.
 
 ---
 
@@ -221,10 +168,10 @@ Returns research projects with latest candidate summary.
 
 ### POST /product-research/discovery-jobs
 
-Starts an autonomous product discovery job. The user may provide a broad brief
-and constraints without a specific keyword. AI may generate the query plan only;
-ProductCandidate and ResearchSource records must still come from provider-backed
-Product Research runs.
+Starts a seed-product discovery job. The user must provide a seed product plus
+optional constraints. AI may rank or filter provider-backed keyword candidates
+only; ProductCandidate and ResearchSource records must still come from
+provider-backed Product Research runs.
 
 Request:
 

@@ -60,7 +60,19 @@ Worker
 
 ## Sequence
 
-Create Product Research Project
+Start AI Discovery Job
+
+↓
+
+Discovery Job Service
+
+↓
+
+BullMQ research-queue
+
+↓
+
+Discovery Job Worker
 
 ↓
 
@@ -76,8 +88,8 @@ Query Intelligence Service (provider-backed derived queries)
 
 ↓
 
-Candidate Discovery Providers (DataForSEO Merchant Google Shopping primary,
-Apify marketplace actors fallback/additional)
+Candidate Discovery Providers (DataForSEO Merchant Google Shopping first,
+then additive Apify marketplace actors for selected queries)
 
 ↓
 
@@ -189,14 +201,14 @@ The dashboard also exposes a top-level Product Research menu at:
 
 This page acts as an independent research workbench and provides:
 - Active and completed research project visibility
-- Product brief input for idea/niche, target market, objective, price band,
-  margin target, maximum MOQ, landed-cost assumptions, risk tolerance, and
-  excluded categories
+- AI Discovery Job controls for seed product, target market, price band, margin
+  target, maximum MOQ, landed-cost assumptions, risk tolerance, excluded
+  categories, and query count
 - Candidate shortlist status and selected candidate summary when available
 - Candidate comparison snapshot for top shortlisted products
 - Candidate promotion into a product creation workflow
-- Autonomous discovery job controls for starting a provider-backed winning
-  product search from broad market constraints without requiring a keyword
+- Autonomous discovery job list for tracking provider-backed winning-product
+  searches
 
 ---
 
@@ -263,6 +275,11 @@ product.published
 
 Product Research is a dedicated module responsible for discovering, validating, scoring, and recommending product candidates before a product creation workflow begins.
 
+New Product Research execution starts only through AI Discovery Jobs. Direct
+product-brief research runs are not exposed through dashboard or public API
+surfaces; `ResearchService.run()` remains an internal execution step used by
+the discovery job worker for each planned query.
+
 The module follows the platform architecture:
 
 ```text
@@ -295,8 +312,8 @@ The Research Agent must not call external research APIs, Prisma, Redis, Shopify 
 
 ## Autonomous Product Discovery Job
 
-Autonomous discovery is a background Product Research job that expands a broad
-brief into multiple provider-backed research runs.
+Seed-product discovery is a background Product Research job that expands the
+user-entered seed product into provider-backed research runs.
 
 The job follows this flow:
 
@@ -312,9 +329,6 @@ BullMQ research-queue
 Discovery Job Worker
     ↓
 Discovery Job Service
-    ↓
-AI Provider Interface (query planning only)
-    ↓
 Research Service
     ↓
 Research Provider Interfaces
@@ -322,11 +336,12 @@ Research Provider Interfaces
 External Research APIs
 ```
 
-The AI planning step may generate niche hypotheses, keyword batches, and
-research angles. It must not create ProductCandidate records, supplier records,
-source URLs, prices, MOQ, landed cost, or source evidence. Every candidate
-created by the job must come from the underlying ResearchService provider
-evidence pipeline.
+AI may rank, filter, or explain provider-backed keyword candidates when the
+query text already exists in source evidence. It must not generate seed
+products, niche hypotheses used as queries, ProductCandidate records, supplier
+records, source URLs, prices, MOQ, landed cost, or source evidence. Every
+candidate created by the job must come from the underlying ResearchService
+provider evidence pipeline.
 
 The job creates one ResearchProject and then runs multiple ResearchRun records
 under that project. Each run uses one planned query and the same validated
@@ -365,14 +380,12 @@ Initial provider categories:
 
 Provider output must be normalized before persistence.
 
-Query intelligence runs before marketplace candidate discovery. With a user
-seed query, it uses provider-backed `TREND`, `KEYWORD`, and lightweight
-`SEARCH` evidence to extract candidate search terms such as rising queries,
-related queries, high-volume buyer-intent keywords, and useful
-problem/alternative terms from search result titles or snippets. Without a user
-seed query, autonomous discovery uses DataForSEO Labs root-discovery evidence to
-collect broad provider-backed category/keyword opportunities instead of
-project hardcoded category seeds. These terms are ranked and capped before they
+Query intelligence runs before marketplace candidate discovery. It starts from
+the required user seed product and uses DataForSEO Labs keyword suggestions
+plus provider-backed `TREND`, `KEYWORD`, and lightweight `SEARCH` evidence to
+extract candidate search terms such as rising queries, related queries,
+high-volume buyer-intent keywords, and useful problem/alternative terms from
+search result titles or snippets. These terms are ranked and capped before they
 are passed into marketplace and Apify discovery providers.
 
 Query intelligence must remain evidence-backed:
@@ -394,8 +407,8 @@ families include:
 - Search and competitor discovery via search APIs such as DataForSEO SERP,
   Brave Search, or SerpAPI
 - Marketplace intelligence via DataForSEO Merchant Google Shopping as the
-  primary product-query validation source, with Apify marketplace actors or
-  other approved marketplace providers as fallback/additional evidence
+  primary product-query validation source, followed by Apify marketplace actors
+  or other approved marketplace providers as additive evidence
 - Trend and keyword intelligence via DataForSEO trend/keyword APIs or SerpAPI
 - Ads signal intelligence via approved ads libraries or ads intelligence providers
 - Factory sourcing intelligence via 1688, Alibaba-family sourcing APIs, or
@@ -468,9 +481,13 @@ ProductCandidate is created.
 The marketplace provider policy is:
 
 - Use DataForSEO Merchant Google Shopping first when configured.
+- Run Apify marketplace actors after Merchant as additive evidence for the seed
+  query and selected derived queries, subject to configured actor and query
+  caps.
 - If Merchant is unavailable, unconfigured, fails, or returns no usable
-  `MARKETPLACE` evidence, use Apify marketplace actors as fallback/additional
-  evidence.
+  `MARKETPLACE` evidence, Apify may still contribute marketplace evidence, but
+  candidate discovery must not rely on an automatic Merchant-only short-circuit
+  fallback mode.
 - Do not let any marketplace provider create ProductCandidate records directly.
 - Do not use Google Shopping keyword or SERP evidence alone as a product
   candidate; only normalized `MARKETPLACE` listings can seed aggregation.
@@ -537,10 +554,11 @@ the final output.
 
 ## Research Pipeline
 
-The Research Product Intelligence Module runs the following pipeline:
+The Research Product Intelligence Module runs the following pipeline inside an
+AI Discovery Job:
 
 ```text
-Input Product Idea / Niche
+User Seed Product + Discovery Constraints
     ↓
 Apply Research Brief Constraints
     ↓
@@ -548,7 +566,7 @@ Collect Query Intelligence Evidence (TREND, KEYWORD, lightweight SEARCH)
     ↓
 QueryIntelligenceService ranks provider-backed derived queries
     ↓
-Collect Candidate Discovery Evidence using seed query + derived queries
+Collect Candidate Discovery Evidence using the seed product + derived queries
     ↓
 DataForSEO Merchant validates product-like queries with MARKETPLACE listings
     ↓

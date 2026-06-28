@@ -173,10 +173,31 @@ export class DataForSeoMerchantProvider implements ResearchProvider {
     response: unknown,
     queryContext: Record<string, unknown>,
   ): NormalizedResearchSourceInput[] {
-    return extractDataForSeoItems(response)
+    return this.extractMerchantItems(response)
       .map((item) => this.normalizeItem(item, queryContext))
       .filter((source): source is NormalizedResearchSourceInput => source !== undefined)
       .slice(0, 10);
+  }
+
+  private extractMerchantItems(response: unknown): Record<string, unknown>[] {
+    return extractDataForSeoItems(response).flatMap((item) => {
+      const nestedItems = item.items;
+      if (Array.isArray(nestedItems) && nestedItems.length > 0) {
+        const itemType = this.stringOrUndefined(item.type);
+        logger.debug(
+          {
+            provider: this.name,
+            containerType: itemType,
+            containerTitle: this.stringOrUndefined(item.title),
+            nestedCount: nestedItems.length,
+          },
+          'Flattening nested Merchant items into individual product sources',
+        );
+        return nestedItems.map((nestedItem) => this.asRecord(nestedItem));
+      }
+
+      return [item];
+    });
   }
 
   private normalizeItem(
@@ -186,10 +207,12 @@ export class DataForSeoMerchantProvider implements ResearchProvider {
     const title =
       this.stringOrUndefined(item.title) ??
       this.stringOrUndefined(item.product_title) ??
+      this.stringOrUndefined(item.productTitle) ??
       this.stringOrUndefined(item.name);
     const externalId =
       this.stringOrUndefined(item.product_id) ??
       this.stringOrUndefined(item.productId) ??
+      this.stringOrUndefined(item.gid) ??
       this.stringOrUndefined(item.item_id) ??
       this.stringOrUndefined(item.id);
 
@@ -224,10 +247,39 @@ export class DataForSeoMerchantProvider implements ResearchProvider {
       this.stringOrUndefined(item.domain);
     const url = this.validUrlOrUndefined(
       this.stringOrUndefined(item.url) ??
+        this.stringOrUndefined(item.shopping_url) ??
+        this.stringOrUndefined(item.shoppingUrl) ??
         this.stringOrUndefined(item.product_url) ??
+        this.stringOrUndefined(item.productUrl) ??
+        this.stringOrUndefined(item.product_link) ??
+        this.stringOrUndefined(item.productLink) ??
+        this.stringOrUndefined(item.seller_url) ??
+        this.stringOrUndefined(item.sellerUrl) ??
         this.stringOrUndefined(item.link) ??
         this.stringOrUndefined(item.url_redirect),
     );
+    const imageUrls = this.extractImageUrls(item);
+    const imageUrl = imageUrls[0];
+
+    // Defensive guard: carousel container items must be flattened by extractMerchantItems.
+    // If a carousel-level item reaches normalizeItem, it means nested extraction failed.
+    const itemType = this.stringOrUndefined(item.type);
+    const hasNestedItems = Array.isArray(item.items) && item.items.length > 0;
+    if (itemType === 'google_shopping_carousel' && hasNestedItems) {
+      logger.warn(
+        {
+          provider: this.name,
+          containerTitle: this.stringOrUndefined(item.title),
+          nestedCount: (item.items as unknown[]).length,
+        },
+        'Carousel container item reached normalizeItem — nested extraction may have failed. Skipping.',
+      );
+      return undefined;
+    }
+
+    if (!this.isProductLikeItem({ url, externalId, price, rating, reviewCount, seller, imageUrls })) {
+      return undefined;
+    }
 
     return {
       type: 'MARKETPLACE',
@@ -247,6 +299,8 @@ export class DataForSeoMerchantProvider implements ResearchProvider {
       ),
       rawData: {
         ...item,
+        ...(imageUrl ? { imageUrl } : {}),
+        ...(imageUrls.length > 0 ? { images: imageUrls } : {}),
         dataForSeoEndpoint: 'merchant/google/products',
         ...this.queryProvenance(queryContext),
         metrics: {
@@ -255,6 +309,7 @@ export class DataForSeoMerchantProvider implements ResearchProvider {
           rating,
           reviewCount,
           seller,
+          ...(imageUrl ? { imageUrl } : {}),
           demandSignal: this.reviewCountToDemandScore(reviewCount),
         },
       },
@@ -325,7 +380,85 @@ export class DataForSeoMerchantProvider implements ResearchProvider {
   }
 
   private stringOrUndefined(value: unknown): string | undefined {
-    return typeof value === 'string' && value.length > 0 ? value : undefined;
+    return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
+  }
+
+  private isProductLikeItem(input: {
+    url?: string;
+    externalId?: string;
+    price?: number;
+    rating?: number;
+    reviewCount?: number;
+    seller?: string;
+    imageUrls: string[];
+  }): boolean {
+    return Boolean(
+      input.url ||
+        input.externalId ||
+        input.price !== undefined ||
+        input.rating !== undefined ||
+        input.reviewCount !== undefined ||
+        input.seller ||
+        input.imageUrls.length > 0,
+    );
+  }
+
+  private extractImageUrls(item: Record<string, unknown>): string[] {
+    const urls = new Set<string>();
+    const add = (value: unknown): void => {
+      const url = this.validUrlOrUndefined(this.stringOrUndefined(value));
+      if (url) {
+        urls.add(url);
+      }
+    };
+
+    for (const key of [
+      'image',
+      'image_url',
+      'imageUrl',
+      'thumbnail',
+      'thumbnail_url',
+      'thumbnailUrl',
+      'product_image',
+      'productImage',
+      'image_link',
+      'imageLink',
+    ]) {
+      add(item[key]);
+    }
+
+    for (const key of ['images', 'product_images', 'productImages', 'thumbnails']) {
+      const value = item[key];
+      if (Array.isArray(value)) {
+        value.forEach((image) => {
+          if (typeof image === 'string') {
+            add(image);
+            return;
+          }
+
+          if (image && typeof image === 'object' && !Array.isArray(image)) {
+            const record = image as Record<string, unknown>;
+            add(record.url ?? record.link ?? record.image ?? record.imageUrl);
+          }
+        });
+      }
+    }
+
+    const productPhotos = item.product_photos ?? item.productPhotos;
+    if (Array.isArray(productPhotos)) {
+      for (const photo of productPhotos) {
+        if (typeof photo === 'string') {
+          add(photo);
+          continue;
+        }
+        if (photo && typeof photo === 'object' && !Array.isArray(photo)) {
+          const record = photo as Record<string, unknown>;
+          add(record.url ?? record.link ?? record.image ?? record.imageUrl);
+        }
+      }
+    }
+
+    return Array.from(urls);
   }
 
   private numberOrUndefined(value: unknown): number | undefined {

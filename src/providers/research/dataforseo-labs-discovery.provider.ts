@@ -1,11 +1,10 @@
 /**
  * Purpose:
- * DataForSEO Labs autonomous root discovery provider.
+ * DataForSEO Labs seed keyword expansion provider.
  *
  * Responsibilities:
- * - Collect provider-backed broad category/keyword opportunities without
- *   relying on project hardcoded category seeds
- * - Normalize DataForSEO Labs Top Searches records into KEYWORD evidence
+ * - Expand a user-provided seed product into provider-backed keyword ideas
+ * - Normalize DataForSEO Labs Keyword Suggestions records into KEYWORD evidence
  * - Preserve product category provenance when DataForSEO returns it
  *
  * Dependencies:
@@ -22,7 +21,6 @@ import { buildDataForSeoRequest } from './dataforseo-client';
 export class DataForSeoLabsDiscoveryProvider extends HttpResearchProvider {
   readonly name = 'DataForSeoLabsDiscoveryProvider';
   readonly providerType = 'keyword' as const;
-  readonly discoveryRootProvider = true;
 
   private readonly login = getOptionalEnvValue('DATAFORSEO_LOGIN');
   private readonly password = getOptionalEnvValue('DATAFORSEO_PASSWORD');
@@ -38,27 +36,37 @@ export class DataForSeoLabsDiscoveryProvider extends HttpResearchProvider {
   protected buildRequests(input: ResearchProviderCollectInput): ResearchHttpRequest[] {
     return [
       {
-        url: 'https://api.dataforseo.com/v3/dataforseo_labs/google/top_searches/live',
+        url: 'https://api.dataforseo.com/v3/dataforseo_labs/google/keyword_suggestions/live',
         init: buildDataForSeoRequest([
           {
+            keyword: input.productIdea,
             location_name: input.config.targetMarket === 'US'
               ? 'United States'
               : input.config.targetMarket,
             language_name: 'English',
-            limit: 100,
+            include_seed_keyword: true,
+            limit: Math.max(input.config.maxDerivedQueries * 4, 20),
             order_by: ['keyword_info.search_volume,desc'],
           },
         ]),
-        metadata: { endpoint: 'top_searches' },
+        metadata: { endpoint: 'keyword_suggestions', seedQuery: input.productIdea },
       },
     ];
   }
 
-  protected normalizeResponse(response: unknown): NormalizedResearchSourceInput[] {
+  protected normalizeResponse(
+    response: unknown,
+    input: ResearchProviderCollectInput,
+    metadata?: Record<string, unknown>,
+  ): NormalizedResearchSourceInput[] {
+    const seedQuery = typeof metadata?.seedQuery === 'string'
+      ? metadata.seedQuery
+      : input.productIdea;
+
     return this.extractKeywordRecords(response)
       .filter((record) => this.isCommercialKeyword(record.keyword))
       .slice(0, 40)
-      .map((record) => this.normalizeDataForSeoLabsItem(record));
+      .map((record) => this.normalizeDataForSeoLabsItem(record, seedQuery));
   }
 
   private extractKeywordRecords(value: unknown, depth = 0): LabsKeywordRecord[] {
@@ -101,7 +109,10 @@ export class DataForSeoLabsDiscoveryProvider extends HttpResearchProvider {
     return [...current, ...nested];
   }
 
-  private normalizeDataForSeoLabsItem(record: LabsKeywordRecord): NormalizedResearchSourceInput {
+  private normalizeDataForSeoLabsItem(
+    record: LabsKeywordRecord,
+    seedQuery: string,
+  ): NormalizedResearchSourceInput {
     const volume = this.numberOrUndefined(record.keywordInfo.search_volume);
     const cpc = this.numberOrUndefined(record.keywordInfo.cpc);
     const competition = this.numberOrUndefined(record.keywordInfo.competition_index);
@@ -109,12 +120,12 @@ export class DataForSeoLabsDiscoveryProvider extends HttpResearchProvider {
 
     return {
       type: 'KEYWORD',
-      provider: 'DataForSEO Labs Top Searches',
+      provider: 'DataForSEO Labs Keyword Suggestions',
       externalId: record.keyword,
       title: `${record.keyword} keyword signal`,
       extractedSignal: this.truncate(
         [
-          `${record.keyword} autonomous discovery keyword`,
+          `${record.keyword} keyword suggestion for ${seedQuery}`,
           volume !== undefined ? `search volume ${volume}` : undefined,
           cpc !== undefined ? `CPC ${cpc}` : undefined,
           competition !== undefined ? `competition ${competition}` : undefined,
@@ -125,9 +136,13 @@ export class DataForSeoLabsDiscoveryProvider extends HttpResearchProvider {
       rawData: {
         ...record.rawRecord,
         keyword: record.keyword,
+        seedQuery,
         categories,
-        dataForSeoEndpoint: 'dataforseo_labs_google_top_searches',
-        discoveryStage: 'autonomous_category_keyword_discovery',
+        dataForSeoEndpoint: 'dataforseo_labs_google_keyword_suggestions',
+        discoveryStage: 'seed_product_keyword_expansion',
+        collectionStage: 'query_intelligence',
+        queryUsed: seedQuery,
+        querySource: 'SEED_QUERY',
         metrics: {
           searchVolume: volume,
           cpc,

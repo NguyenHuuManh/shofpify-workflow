@@ -6,10 +6,7 @@
 
 import { Badge, Button, Card, Table } from '@/components/ui';
 import { DeleteResearchProjectButton } from '@/components/dashboard/delete-research-project-button';
-import {
-  DiscoveryJobForm,
-  ResearchForm,
-} from '@/components/dashboard/research-form';
+import { DiscoveryJobForm } from '@/components/dashboard/research-form';
 import { discoveryJobService } from '@/services/discovery-job.service';
 import { researchService } from '@/services/research.service';
 import type {
@@ -71,7 +68,6 @@ export default async function ProductResearchPage(): Promise<React.ReactElement>
       </div>
 
       <DiscoveryJobForm />
-      <ResearchForm />
 
       <div
         style={{

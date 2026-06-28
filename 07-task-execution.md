@@ -1,955 +1,283 @@
 # TASK EXECUTION PLAN
 
-## Phase 1
+Status: Final current handoff
+Last consolidated: 2026-06-27
 
-Project Bootstrap
-
-Tasks:
-- Create Next.js application
-- Configure TypeScript
-- Configure ESLint
-- Configure Prettier
-- Configure Prisma
-- Configure PostgreSQL
-- Configure Redis
-
-Deliverables:
-- Running application
-- Database connection
-- Redis connection
+This file is the current operational source of truth for future sessions. It
+intentionally replaces the older phase-by-phase history with the final Product
+Research contract and the remaining execution checklist.
 
 ---
 
-## Phase 2
+## Current Product Research Contract
 
-Database Layer
-
-Tasks:
-- Prisma schema
-- WorkflowStepType enum (14 types: RESEARCH, RESEARCH_REVIEW, CONTENT, CONTENT_REVIEW, SEO, SEO_REVIEW, LANDING, LANDING_REVIEW, IMAGE, SHOPIFY, FINAL_REVIEW, PUBLISH)
-- Migrations
-- Repositories
-
-Deliverables:
-- Repository layer complete
-
----
-
-## Phase 2b
-
-Authentication
-
-Tasks:
-- Add `passwordHash` field to User model + migration
-- Create auth types (`LoginInput`, `RegisterInput`, `AuthSession`, `JwtPayload`)
-- Create Zod schemas (`loginSchema`, `registerSchema`)
-- Create `src/lib/auth.ts` — JWT sign/verify + bcrypt password hashing
-- Extend `UserRepository` with `findByEmail()`, `createWithPassword()`, `updatePassword()`
-- Create `AuthService` — login, register, getSession, verifyToken
-- Create API routes: `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/logout`, `GET /api/auth/me`
-- Create `src/middleware.ts` — protect `/dashboard/*` and `/api/*` (except `/api/auth/*`)
-- Create login page at `/login` with login form
-- Create client-side `AuthProvider` context for session state
-- Update seed script with hashed admin password
-
-Deliverables:
-- Users must authenticate before accessing dashboard or API
-- JWT-based sessions with httpOnly cookies
-- Role-based access control enforced at API layer
-
----
-
-## Phase 3
-
-Service Layer
-
-Tasks:
-- Product Service
-- Workflow Service
-- Review Service (per-step approvals: research, content, seo, landing, final)
-- Shopify Service
-
-Deliverables:
-- Service layer complete
-
----
-
-## Phase 4
-
-Agent Framework
-
-Tasks:
-- Research Agent
-- Content Agent
-- SEO Agent
-- Landing Agent
-- Review Agent
-- Intermediate Review Gates (Research Review, Content Review, SEO Review, Landing Review)
-
-Deliverables:
-- Agent layer complete
-- Per-step review workflow
-
----
-
-## Phase 5
-
-Workflow Engine
-
-Tasks:
-- LangGraph
-- BullMQ
-- State Machine (with intermediate review gates + rework loops, max 3 reworks/step)
-
-Deliverables:
-- Workflow execution with per-step review gates
-
----
-
-## Phase 6
-
-API Layer
-
-Tasks:
-- REST API
-- Per-step review endpoints (POST /workflow/:id/review/research, /content, /seo, /landing, /final)
-- Validation
-- Error Handling
-
-Deliverables:
-- Public API
-
----
-
-## Phase 6b
-
-API Layer — Per-Step Content Routes
-
-Tasks:
-- GET /workflow/:id/research — fetch research data
-- PUT /workflow/:id/research — edit research data
-- GET /workflow/:id/content — fetch content data
-- PUT /workflow/:id/content — edit content data
-- GET /workflow/:id/seo — fetch SEO data
-- PUT /workflow/:id/seo — edit SEO data
-- GET /workflow/:id/landing — fetch landing page data
-- PUT /workflow/:id/landing — edit landing page data
-- Add Zod schemas for each edit payload (updateResearchSchema, updateContentSchema, updateSeoSchema, updateLandingSchema)
-- Add update methods to ProductService (updateResearch, updateContent, updateSEO, updateLanding)
-
-Deliverables:
-- Per-section GET + PUT API routes
-- Content editing capabilities via API
-
----
-
-## Phase 7
-
-Dashboard
-
-Tasks:
-- Workflow Dashboard (with per-step progress)
-- Review Dashboard (step-by-step review interface)
-- Monitoring Dashboard
-
-Deliverables:
-- Working UI
-
----
-
-## Phase 7b
-
-Dashboard — Per-Step Review & Edit Pages
-
-Tasks:
-- /dashboard/workflows/:id/research — Research review + edit page
-- /dashboard/workflows/:id/content — Content review + edit page
-- /dashboard/workflows/:id/seo — SEO review + edit page
-- /dashboard/workflows/:id/landing — Landing review + edit page
-- Each page: view generated content, inline edit, approve/reject buttons
-- Update workflow detail page with navigation links to each section
-
-Deliverables:
-- Dedicated review + edit dashboard per section
-- Human can edit AI-generated content before approving
-
----
-
-## Phase 7c
-
-Research Product Intelligence Module
-
-Tasks:
-- Add Research Product V2 types for research runs, source evidence, candidates, scoring, risks, and recommendations
-- Add Zod schemas for research run configuration, candidate selection, candidate score payloads, and normalized source evidence
-- Add Prisma models and migrations for ResearchRun, ProductCandidate, ResearchSource, ResearchSourceType, and ResearchCandidateStatus
-- Add repositories for research runs, product candidates, and research sources
-- Add ResearchService to coordinate candidate discovery, source persistence, cost analysis, scoring, recommendation, and selected candidate state
-- Add CandidateScoringService with configurable scoring weights
-- Add provider interfaces for Search, Marketplace, Trend, Keyword, Ads Signal, Supplier, and Social Listening data
-- Add initial provider implementations or stubs behind feature flags and environment configuration
-- Upgrade ResearchAgent to call ResearchService and AIProvider without directly accessing repositories, external APIs, provider SDKs, Prisma, Redis, or Shopify
-- Refactor workflow entrypoints so Research execution is orchestrated through WorkflowService or WorkflowEngine, not duplicated in API routes or server actions
-- Add API routes for research runs, ranked candidates, candidate detail, candidate selection, and source evidence
-- Add top-level /dashboard/product-research menu page for research-focused workflow navigation
-- Add structured product brief controls for target market, objective, price band,
-  margin target, max MOQ, landed-cost assumptions, risk tolerance, and excluded
-  categories
-- Add top-candidate comparison snapshot with score, economics, sourcing, and
-  evidence quality
-- Decouple Product Research from Workflow so research projects can exist before a Product or Workflow
-- Add candidate promotion flow that creates Product and starts Workflow at Content
-- Upgrade /dashboard/workflows/:id/research into a candidate review page with ranked list, score breakdown, evidence panel, cost analysis, risk flags, approve selected candidate, and reject with feedback
-- Add tests for ResearchService, CandidateScoringService, repositories, API routes, ResearchAgent, and workflow transition behavior
-
-Deliverables:
-- Product Research produces a ranked, source-backed product candidate shortlist outside Workflow
-- Reviewers can select and promote one candidate before Content generation starts
-- Content generation receives selected candidate context
-- Candidate scores, source evidence, costs, risks, and recommendations are persisted and auditable
-
-### Phase 7c Supplemental Provider Upgrade
-
-Supplemental data providers must replace the previous local-only stub behavior
-for Search, Marketplace, Trend, Keyword, Ads Signal, and Supplier/Sourcing
-evidence.
-
-Implementation requirements:
-- Add optional provider credentials in `.env.example` and validated env loading
-- Keep all external calls inside `src/providers/research/`
-- Return empty evidence with structured warning logs when credentials are missing
-- Persist every normalized external signal as ResearchSource
-- Use provider-backed metrics to adjust candidate scores and confidence
-- Do not fall back to AI-generated product candidates when providers are
-  missing, failing, or returning no evidence; return an empty shortlist or
-  visible failure state instead
-- Add focused provider and ResearchService tests
-
-DataForSEO should be treated as the primary supplemental provider when
-`DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD` are configured. SerpAPI and Brave
-Search remain optional fallbacks for search, marketplace, and trend evidence.
-
----
-
-### Phase 7d 1688 Sourcing Intelligence Upgrade
-
-The Product Research module must support the user's factory sourcing model:
-research product opportunities, discover factory supply sources, estimate
-production and landed cost, rank products by profit potential, then let a human
-decide whether to contact/order from the discovered factory. This is not a
-dropshipping model.
-
-Primary source:
-- 1688 is the target source for factory cost and supplier discovery evidence.
-- DajiSaaS is the selected primary 1688 API provider.
-- Apify is the selected sequential backup provider and must be called only when
-  DajiSaaS is unavailable, fails, times out, is rate-limited, fails validation,
-  or returns no usable evidence.
-- DajiSaaS and Apify must not be called in parallel or merged during automatic
-  failover. If both return no usable evidence, Product Research must return an
-  empty shortlist or visible failure without AI-generated fallback candidates.
-- The provider must be replaceable behind the Research Provider interface.
-
-Tasks:
-- [x] Add sourcing-specific types for 1688 offers, tiered prices, MOQ, landed cost
-  breakdown, sourcing score, factory cost score, logistics score, and sourcing
-  risk.
-- [x] Add Zod schemas for sourcing configuration, landed cost assumptions, and
-  normalized `SOURCING` evidence.
-- [x] Add Prisma migration for `SOURCING` ResearchSourceType and first-class
-  ProductCandidate sourcing fields.
-- [x] Add a `Sourcing1688ResearchProvider` under `src/providers/research/`.
-- [x] Add provider credentials in `.env.example` and `src/lib/env.ts` using explicit
-  names such as `SOURCING_1688_PROVIDER`, `SOURCING_1688_API_KEY`, and
-  `SOURCING_1688_ENDPOINT`. Do not continue expanding generic
-  `SUPPLIER_PROVIDER_*` names for 1688-specific behavior.
-- [x] Add the original `SOURCING` evidence path and candidate cost fields.
-  This foundation is retained, but the current Product Research flow no longer
-  calls 1688 during initial candidate discovery.
-- [x] Update cost analysis to calculate landed cost from factory unit cost, MOQ,
-  tiered prices, domestic China shipping, international freight assumptions,
-  agent fee, packaging/QC, customs/duty, and payment fees.
-- [x] Update `CandidateScoringService` to include sourcing, factory cost, logistics,
-  margin, and sourcing risk signals.
-- [x] Update Product Research APIs and dashboard candidate detail to expose sourcing
-  summary, landed cost breakdown, MOQ, factory/source URL, and source evidence.
-- [x] Add focused tests for 1688 provider normalization, sourcing candidate
-  creation, landed cost calculation, scoring, and API response shape.
-- [x] Select the production vendor chain: DajiSaaS primary and Apify backup.
-- [x] Add a DajiSaaS adapter for signed keyword-search and product-detail
-  responses, including response validation and 1688 evidence normalization.
-- [x] Add an Apify adapter behind the same normalized sourcing contract.
-- [x] Add sequential failover orchestration with structured reason logging,
-  vendor provenance, and no parallel or merged automatic provider results.
-- [x] Add provider-specific response fixtures and tests for success, invalid
-  payload, timeout, rate limit, empty evidence, fallback success, and total
-  provider failure.
-- [x] Add sourcing verification workflow for human supplier validation before
-  purchase/order decisions.
-
-Deliverables:
-- [x] Product Research has first-class `SOURCING` evidence support for
-  candidate-level enrichment after a candidate exists.
-- [x] Each enriched recommendation has persisted `SOURCING` ResearchSource
-  evidence.
-- [x] Candidate detail shows factory cost, MOQ, landed cost assumptions, margin, and
-  sourcing risk.
-- [x] 1688 evidence is clearly labeled as unverified sourcing evidence until a human
-  or approved sourcing verification workflow confirms supplier quality.
-- [x] Sourcing verification workflow with human checklist (factory exists, MOQ,
-  price, samples, shipping, supplier responsiveness) and status tracking
-  (UNVERIFIED, PENDING_VERIFICATION, VERIFIED, REJECTED, NEEDS_MORE_INFO).
-- [x] SourcingVerification model with dedicated Prisma migration, repository,
-  service, API routes, and dashboard UI.
-- [x] Audit trail for all verification actions and candidate metadata sync.
-
-Out of scope for Phase 7d:
-- Purchase order automation
-- Supplier-side order automation
-- Inventory synchronization
-- Warehouse, 3PL, or fulfillment operations
-- Direct Shopify fulfillment integration from 1688
-
----
-
-### Phase 7c Implementation Handoff
-
-## STATUS: Phases 1–7i COMPLETE (2026-06-24)
-
-| Phase | Name | Status |
-|-------|------|--------|
-| 1 | Project Bootstrap | ✅ |
-| 2 | Database Layer | ✅ |
-| 2b | Authentication | ✅ |
-| 3 | Service Layer | ✅ |
-| 4 | Agent Framework | ✅ |
-| 5 | Workflow Engine | ✅ |
-| 6 | API Layer | ✅ |
-| 6b | API Per-Step Content Routes | ✅ |
-| 7 | Dashboard | ✅ |
-| 7b | Dashboard Per-Step Review & Edit | ✅ |
-| 7c | Research Product Intelligence Module | ✅ |
-| 7d | 1688 Sourcing Intelligence Upgrade | ✅ |
-| 7e | AI-Assisted Source Match Review | ✅ |
-| 7f | Autonomous Product Discovery Job | ✅ |
-| 7g | Candidate-Level Sourcing Enrichment | ✅ |
-| 7h | Product Aggregation & Two-Phase Discovery | ✅ |
-| 7i | Provider-Backed Query Intelligence | ✅ |
-| **8** | **Production Deployment** | ⬜ |
-
-### Current pipeline summary
-
-The full Research Product Intelligence pipeline is:
-
-```
-TREND / KEYWORD / SEARCH providers (query_intelligence stage)
-    ↓
-QueryIntelligenceService.selectQueries()
-    ↓
-seed query + capped derived queries (maxDerivedQueries config)
-    ↓
-MARKETPLACE / Apify providers (candidate_discovery stage, multi-query)
-    ↓
-ProductAggregationService.aggregate() — AI grouping + deterministic fallback
-    ↓
-buildCandidatesFromAggregatedGroups() — candidate drafts from aggregated groups
-    ↓
-candidateMatchesResearchBrief() — filter by price band, MOQ, excluded categories
-    ↓
-Phase 1: scoreDiscovery() — market signals only (demand, trend, competition,
-  creativePotential, risk; margin only with cost data)
-    ↓
-Persist candidates, sources, audit log
-    ↓
-[Candidate selected by reviewer]
-    ↓
-CandidateSourcingService.enrichCandidate() — 1688 sourcing enrichment
-    ↓
-Phase 2: score() — all 10 factors with sourcing-backed data
-    ↓
-SourceMatchingService — AI-assisted demand/sourcing evidence match review
-    ↓
-promoteCandidate() — creates Product + starts Workflow at Content
-```
-
-Autonomous discovery also supported via DiscoveryJobService + BullMQ:
-
-```
-Dashboard brief (keyword optional)
-    ↓
-DiscoveryJobService → AI query planning (or deterministic fallback)
-    ↓
-BullMQ research-queue → product-discovery-job worker
-    ↓
-ResearchService.run() for each planned query
-    ↓
-Provider-backed candidates only, no AI fallback
-```
-
-Next: Phase 8 — Production Deployment (Docker, Docker Compose, Nginx, CI/CD).
-
----
-
-### Phase 7e AI-Assisted Source Match Review
-
-Goal:
-- Increase confidence that demand/store evidence and sourcing evidence describe
-  the same underlying product before the final Product Research output is used.
-- Keep AI in an advisory reviewer role only. AI must not create product
-  candidates, supplier evidence, source URLs, prices, MOQ, or fallback results.
-
-Architecture flow:
-
-```text
-API Route / Server Action
-    ↓
-SourceMatchingService
-    ↓
-ResearchSourceRepository / ProductCandidateRepository
-    ↓
-AI Provider Interface
-    ↓
-External AI Provider
-```
-
-Tasks:
-- [x] Add source match review types for `LIKELY_MATCH`, `POTENTIAL_MATCH`,
-  `WEAK_MATCH`, `NOT_A_MATCH`, and `INSUFFICIENT_EVIDENCE`.
-- [x] Add Zod schemas for source match review request, structured AI output,
-  and human decision payloads.
-- [x] Add SourceMatchingService to build evidence bundles from persisted
-  ResearchSource records and candidate metadata.
-- [x] Add an AI Provider prompt contract that returns only structured JSON with
-  match status, confidence score, reasons, warnings, and recommended action.
-- [x] Persist initial source match results in `ProductCandidate.metadata` or
-  add a first-class model if query/reporting requirements justify a migration.
-- [x] Add dashboard candidate-detail UI for match confidence, reasons,
-  warnings, and reviewer actions.
-- [x] Add API routes for running a source match review and persisting a human
-  decision.
-- [x] Add tests for likely match, potential match, weak match, not a match,
-  insufficient evidence, and provider failure without AI-generated fallback.
-
-Current status:
-- Phase 7e source match foundation has been implemented (2026-06-23).
-- `SourceMatchingService` compares only persisted `ResearchSource` records and
-  candidate metadata, calls AI through the AI Provider interface, and persists
-  auditable source match results in `ProductCandidate.metadata.sourceMatches`.
-- API routes now exist for running reviews and persisting human decisions:
-  `/api/product-research/candidates/:candidateId/source-matches/review` and
-  `/api/product-research/candidates/:candidateId/source-matches/:matchId/decision`.
-- The Product Research candidate detail dashboard now shows source match status,
-  confidence, reasons, warnings, recommended action, and reviewer decision
-  buttons.
-- No Prisma migration was added for Phase 7e. Keep using metadata storage until
-  querying/reporting requirements justify a first-class `ResearchSourceMatch`
-  model.
-- Local Node is currently `v16.14.0`, which fails Vitest startup because Vite
-  needs `crypto.getRandomValues`. Verification was run successfully with Node 20.
-
-Implemented Phase 7e files:
-- `src/types/research.types.ts` — source match status, action, decision, and
-  persisted result types.
-- `src/schemas/research.schema.ts` — review request, AI output, result, and
-  human decision schemas.
-- `src/repositories/product-candidate.repository.ts` — metadata update method.
-- `src/repositories/research-source.repository.ts` — scoped source lookup for a
-  candidate review.
-- `src/services/source-matching.service.ts` — evidence bundle construction,
-  AI structured review, metadata persistence, and reviewer decision persistence.
-- `src/app/api/product-research/candidates/[candidateId]/source-matches/review/route.ts`
-  — source match review endpoint.
-- `src/app/api/product-research/candidates/[candidateId]/source-matches/[matchId]/decision/route.ts`
-  — human source match decision endpoint.
-- `src/app/dashboard/product-research/actions.ts` and
-  `src/app/dashboard/product-research/[projectId]/page.tsx` — dashboard source
-  match actions and candidate detail panel.
-- `tests/services/source-matching.service.test.ts` — focused service coverage.
-
-Verification already run after Phase 7e implementation:
-- `npm run type-check`
-- `npx prisma validate`
-- `git diff --check`
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run`
-
-Implementation order:
-1. Types and schemas: `src/types/research.types.ts`,
-   `src/schemas/research.schema.ts`
-2. Persistence contract: candidate metadata first, dedicated Prisma model only
-   if needed
-3. Repositories: read/update methods for candidate metadata and source lookup
-4. Service: `src/services/source-matching.service.ts`
-5. Provider contract: AI structured output through the existing AI provider
-   abstraction
-6. API routes under
-   `/api/product-research/candidates/:candidateId/source-matches`
-7. Dashboard candidate-detail source match review panel
-8. Focused service, schema, API, and UI tests
-
-Decision thresholds:
-- `LIKELY_MATCH`: 90-100 confidence, may be shown as a high-confidence sourcing
-  match but must remain source-auditable
-- `POTENTIAL_MATCH`: 75-89 confidence, requires human confirmation before
-  affecting final output
-- `WEAK_MATCH`: 50-74 confidence, keep sources separate by default
-- `NOT_A_MATCH`: below 50 confidence
-- `INSUFFICIENT_EVIDENCE`: source data is too thin to decide
-
-Guardrails:
-- SourceMatchingService must use only persisted sources and candidate metadata.
-- The service must not call DataForSEO, 1688, DajiSaaS, Apify, SerpAPI, Brave,
-  Shopify, or Prisma directly.
-- The AI prompt must explicitly reject missing data instead of guessing.
-- Provider failure or weak source evidence must produce an auditable failure or
-  `INSUFFICIENT_EVIDENCE`, never an AI-generated candidate or source.
-
----
-
-### Phase 7f Autonomous Product Discovery Job
-
-Goal:
-- Allow the user to start a Product Research job without entering a specific
-  keyword.
-- Use AI to plan research directions only, then run provider-backed Product
-  Research for each planned query.
-- Preserve the current guardrail that ProductCandidate, supplier, cost, MOQ,
-  landed cost, source URL, and source evidence must come from persisted
-  provider evidence, not AI fallback output.
-
-Architecture flow:
+Product Research has one user-facing start path:
 
 ```text
 Dashboard / API
-    ↓
-DiscoveryJobService
-    ↓
-ResearchDiscoveryJobRepository / ResearchProjectRepository
-    ↓
-BullMQ research-queue
-    ↓
-Discovery job worker
-    ↓
-DiscoveryJobService
-    ↓
-AI Provider Interface (query planning only)
-    ↓
-ResearchService
-    ↓
-Research Provider Interfaces
-    ↓
-External Research APIs
+    -> DiscoveryJobService.start()
+    -> enqueueProductDiscoveryJob()
+    -> BullMQ research-queue
+    -> product-discovery-job worker
+    -> DiscoveryJobService.runJob()
+    -> ResearchService.run() for each planned query
+    -> Provider-backed candidates
 ```
 
-Tasks:
-- [x] Add discovery job types for status, query plan, job input, and job result.
-- [x] Add Zod schemas for autonomous discovery brief and AI query-plan output.
-- [x] Add Prisma model and migration for `ResearchDiscoveryJob`.
-- [x] Add `ResearchDiscoveryJobRepository`.
-- [x] Add `DiscoveryJobService` for creating jobs, planning queries, running
-  multiple `ResearchService.run()` calls, and persisting final job result.
-- [x] Add BullMQ producer and worker handling for discovery jobs on the
-  research queue.
-- [x] Add Product Research API routes for starting/listing discovery jobs.
-- [x] Add Product Research dashboard controls and job status display.
-- [x] Add focused service tests for AI-planned queries, deterministic fallback,
-  provider-empty outcomes, and no AI-generated candidate fallback.
+Direct product-brief research runs are no longer supported as a dashboard or
+public API start path. `ResearchService.run()` remains an internal service-layer
+execution primitive used by the discovery job worker.
 
-Current status:
-- Phase 7f autonomous discovery foundation has been implemented (2026-06-23).
-- `ResearchDiscoveryJob` persists job input, status, AI/fallback query plan,
-  result summary, and failure message.
-- Product Research dashboard now has an AI Discovery Job form where keyword is
-  optional; the job can start from market, price, margin, MOQ, risk, and
-  excluded-category constraints.
-- Discovery jobs run on `research-queue` using the `product-discovery-job`
-  BullMQ job name.
-- `DiscoveryJobService` uses AI only for query planning. If no usable AI
-  provider is configured or the AI output is invalid, it uses deterministic
-  query planning. Product candidates still come only from `ResearchService`
-  provider-backed runs.
-
-Implemented Phase 7f files:
-- `prisma/schema.prisma` and
-  `prisma/migrations/20260623120000_add_autonomous_discovery_jobs/migration.sql`
-  — `ResearchDiscoveryJobStatus` enum and `ResearchDiscoveryJob` model.
-- `src/schemas/research.schema.ts` and `src/types/research.types.ts` —
-  autonomous discovery input, query plan, result, summary, and queue payload
-  contracts.
-- `src/repositories/research-discovery-job.repository.ts` — repository-only
-  persistence operations for discovery jobs.
-- `src/services/discovery-job.service.ts` — job creation, query planning,
-  provider-backed research execution, result persistence, and audit logging.
-- `src/jobs/product-discovery-job.ts`, `src/jobs/job-producer.ts`, and
-  `src/jobs/worker.ts` — BullMQ enqueue and processing support.
-- `src/app/api/product-research/discovery-jobs/route.ts` — list/start
-  discovery job API.
-- `src/components/dashboard/research-form.tsx`,
-  `src/app/dashboard/product-research/actions.ts`, and
-  `src/app/dashboard/product-research/page.tsx` — dashboard start form and job
-  status table.
-- `tests/services/discovery-job.service.test.ts` — focused service coverage.
-
-Verification already run after Phase 7f implementation:
-- `npm run db:generate`
-- `npm run type-check`
-- `npx prisma validate`
-- `git diff --check`
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/discovery-job.service.test.ts`
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run`
-
-Guardrails:
-- AI planner output can contain only research queries, angles, and rationale.
-- The service must ignore any planner-provided product, supplier, price, MOQ,
-  URL, or cost claims.
-- Each discovery query must flow through `ResearchService`.
-- Provider failures or empty evidence must produce an empty/failed job result,
-  never an AI-created candidate.
-
----
-
-### Phase 7g Candidate-Level Sourcing Enrichment
-
-Product Research flow was updated on 2026-06-23 to split winning-product
-discovery from factory sourcing:
-
-- Initial Product Research and autonomous discovery runs collect candidate
-  evidence from demand/store providers only by default.
-- `ResearchService` filters providers through `supplementalProviders`; the
-  default provider set excludes `sourcing` and legacy `supplier`.
-- Candidate creation ignores `SOURCING` evidence. 1688 sourcing must enrich an
-  existing ProductCandidate rather than creating a new one.
-- Each candidate detail view exposes a Supplier / 1688 Sourcing action.
-- The user may paste a 1688 URL or leave the URL blank and let the sourcing
-  provider search from the candidate title/query.
-- Candidate-level sourcing persists `SOURCING` ResearchSource rows with
-  `candidateId`, updates factory cost, MOQ, landed cost, sourcing/factory/
-  logistics scores, and stores enrichment status in candidate metadata.
-- Manual 1688 URLs are saved as evidence even when provider detail data is not
-  available; cost fields are updated only from provider-backed metrics.
-
-Implemented Phase 7g files:
-- `src/schemas/research.schema.ts` — candidate sourcing request schema.
-- `src/repositories/product-candidate.repository.ts` — sourcing analysis update
-  method.
-- `src/services/candidate-sourcing.service.ts` — candidate-level 1688 enrichment
-  orchestration.
-- `src/services/research.service.ts` — default discovery excludes sourcing and
-  candidate creation is limited to aggregated marketplace evidence.
-- `src/app/dashboard/product-research/actions.ts` and
-  `src/app/dashboard/product-research/[projectId]/page.tsx` — dashboard
-  candidate sourcing form and revalidation.
-
-Guardrails:
-- Do not call 1688 providers from API routes, dashboard actions, agents, or
-  workflow nodes directly.
-- Do not create ProductCandidate records from the candidate sourcing action.
-- Do not invent supplier URLs, factory costs, MOQ, or landed-cost metrics when
-  the provider/manual evidence does not contain them.
-
----
-
-### Phase 7h Product Aggregation and Two-Phase Candidate Discovery
-
-Product Research must now split candidate discovery into two phases:
+Canonical start endpoint:
 
 ```text
-Phase 1: raw provider listings -> normalized ResearchSource evidence
-Phase 2: aggregated product groups -> ProductCandidate drafts
+POST /api/product-research/discovery-jobs
 ```
 
-This is separate from candidate-level 1688 sourcing enrichment. Sourcing
-enrichment remains a later action on an existing ProductCandidate.
+Disabled direct-start endpoints:
 
-Goal:
-- Replace direct one-source-to-one-candidate creation with provider-backed
-  aggregation across marketplace listings from multiple actors/providers.
-- Use AI only to analyze and group existing provider-backed listings into
-  coherent product groups. AI must not invent product names, prices, suppliers,
-  URLs, costs, MOQ, source evidence, or fallback candidates.
-- Preserve provider-first Product Research: provider-empty outcomes produce an
-  empty shortlist or visible failure, not AI-generated products.
-
-Source-type contract:
-- `MARKETPLACE` is the only initial candidate-seeding evidence type.
-- `SEARCH`, `TREND`, `KEYWORD`, `ADS_SIGNAL`, and `SOCIAL` may enrich scoring,
-  risk flags, evidence panels, and confidence.
-- `SOURCING` is excluded from initial discovery. It enriches an existing
-  ProductCandidate through CandidateSourcingService.
-
-Apify candidate discovery:
-- Actor definitions live in `config/apify-candidate-discovery.json`.
-- The Apify candidate discovery provider runs configured actors whose
-  `providerType` is enabled by the validated research configuration.
-- Actor dataset items normalize into ResearchSource evidence and feed
-  ProductAggregationService; the provider must not create ProductCandidate
-  records directly.
-
-Persistence contract:
-- Do not add a `ProductGroup` Prisma model in this phase.
-- Product groups are transient service-layer outputs.
-- Persist aggregation audit data in `ProductCandidate.metadata.aggregation`,
-  including source IDs/URLs, actor/provider provenance, grouping method, and
-  merged metrics.
-- Link persisted ResearchSource records to the created candidate where the
-  evidence supports that candidate.
-
-Candidate output limit:
-- Use the validated research run configuration for candidate output limits.
-- Do not keep a hidden hardcoded top-5 limit once this phase is implemented.
-
-Current status:
-- Phase 7h product aggregation and two-phase candidate discovery has been
-  implemented (2026-06-24).
-- `ProductAggregationService` aggregates marketplace listings with AI grouping
-  and deterministic fallback deduplication.
-- `ResearchService.run()` now uses the full staged pipeline: query intelligence
-  → marketplace collection → product aggregation → candidate draft building →
-  Phase 1 discovery scoring.
-- Phase 1 discovery scoring (`scoreDiscovery()`) excludes sourcing-dependent
-  factors (supplier, sourcing, factoryCost, logistics).
-- `ApifyCandidateDiscoveryProvider` normalizes actor dataset items into
-  ResearchSource evidence only; it does not create ProductCandidate records.
-- `MARKETPLACE` is the only initial candidate-seeding evidence type.
-  `SOURCING` evidence is excluded from initial discovery.
-- No `ProductGroup` Prisma model was created; aggregation audit data is
-  persisted in `ProductCandidate.metadata.aggregation`.
-- Candidate output limit respects the validated research run configuration.
-
-Implemented Phase 7h files:
-- `src/types/research.types.ts` — `ProductAggregationInput`,
-  `ProductAggregationResult`, `ProductAggregationSource` types.
-- `src/schemas/research.schema.ts` — `productAggregationSourceSchema`,
-  `productAggregationGroupSchema`, `productAggregationMergedMetricsSchema`,
-  `productAggregationAiOutputSchema`.
-- `src/services/product-aggregation.service.ts` — AI grouping with
-  deterministic fallback, merge metrics (median price, sum reviews/orders,
-  max demandSignal, average rating, sourceCount).
-- `src/services/research.service.ts` —
-  `buildCandidatesFromAggregatedGroups()`, staged collection pipeline,
-  `candidateMatchesResearchBrief()` filtering, `scoreDiscovery()` for Phase 1.
-- `src/services/candidate-scoring.service.ts` — `scoreDiscovery()` with
-  sourcing-excluded weights.
-- `src/providers/research/apify-candidate-discovery.provider.ts` — actor
-  discovery driven by `config/apify-candidate-discovery.json`.
-- `tests/services/product-aggregation.service.test.ts` — 4 tests (AI grouping,
-  deterministic fallback, SOURCING exclusion, group limit).
-- `tests/services/research.service.test.ts` — 11 tests including aggregation
-  pipeline, sourcing exclusion, query intelligence, and brief constraint
-  filtering.
-
-Verification already run after Phase 7h implementation:
-- `npm run type-check`
-- `npx prisma validate`
-- `git diff --check`
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/product-aggregation.service.test.ts` (4 passed)
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/research.service.test.ts` (11 passed)
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run` (all 91 tests passed)
+```text
+POST /api/product-research
+POST /api/workflows/:id/research/run
+```
 
 ---
 
-### Phase 7i Provider-Backed Query Intelligence and Phased Discovery
+## Final Research Pipeline
 
-Current status:
-- Phase 7i provider-backed query intelligence and phased discovery has been
-  implemented (2026-06-24).
-- `QueryIntelligenceService.selectQueries()` extracts derived queries from
-  TREND, KEYWORD, and SEARCH evidence, then ranks, deduplicates, and caps them.
-- `ResearchService.run()` uses staged orchestration: query intelligence
-  providers first → QueryIntelligenceService → marketplace/Apify discovery
-  with seed query + derived queries → ProductAggregationService → candidate
-  drafts.
-- `MarketplaceResearchProvider.discoveryQueryContexts()` iterates over
-  `selectedQueries` and stamps `queryProvenance(metadata)` into rawData.
-- `ApifyCandidateDiscoveryProvider.discoveryQueryContexts()` does the same,
-  preserving `queryUsed`, `querySource`, `queryScore`, `querySourceTypes`,
-  `queryReason`, and `collectionStage` in every normalized source.
-- Seed query is always preserved as the first discovery query.
-- Derived query count is capped by `maxDerivedQueries` (default 5, max 10).
-- When query intelligence returns no usable derived queries, only the seed
-  query is used. AI never invents fallback keywords.
-- `TREND`, `KEYWORD`, `SEARCH`, `ADS_SIGNAL`, and `SOCIAL` evidence enriches
-  scores and confidence; they do not create standalone candidates.
-- `SOURCING` evidence is excluded from initial discovery.
+```text
+User seed product + discovery constraints
+    ↓
+DataForSEO Labs keyword suggestions / trend / keyword / lightweight search query intelligence
+    ↓
+QueryIntelligenceService.selectQueries()
+    ↓
+Seed query + capped provider-backed derived queries
+    ↓
+DataForSEO Merchant Google Shopping first-pass marketplace validation
+    ↓
+Additive Apify marketplace actors for selected queries
+    ↓
+Normalized MARKETPLACE ResearchSource evidence
+    ↓
+ProductAggregationService.aggregate()
+    ↓
+ProductCandidate drafts
+    ↓
+CandidateScoringService.scoreDiscovery()
+    ↓
+Candidate review / selection
+    ↓
+CandidateSourcingService.enrichCandidate() for 1688 sourcing
+    ↓
+CandidateScoringService.score() full scoring
+    ↓
+SourceMatchingService source review
+    ↓
+promoteCandidate() creates Product and starts Workflow at Content
+```
 
-Implemented Phase 7i files:
-- `src/types/research.types.ts` — `QueryIntelligenceInput`,
-  `ResearchCollectionContext` with stage/query provenance fields.
-- `src/schemas/research.schema.ts` — `queryIntelligenceCandidateSchema`,
-  `queryIntelligenceResultSchema`, `selectedDiscoveryQuerySchema`,
-  `researchCollectionStageSchema`, `maxDerivedQueries` in config.
-- `src/services/query-intelligence.service.ts` — extraction from TREND/KEYWORD/
-  SEARCH evidence, scoring, deduplication, capping, seed query preservation.
-- `src/services/research.service.ts` — staged `collectProviderSources()` with
-  `query_intelligence` stage first, then `candidate_discovery` with derived
-  queries passed via `collectionContext.selectedQueries`.
-- `src/providers/research/marketplace.provider.ts` —
-  `discoveryQueryContexts()`, `queryProvenance()` stamping.
-- `src/providers/research/apify-candidate-discovery.provider.ts` —
-  `discoveryQueryContexts()`, `queryProvenance()` stamping with actor ID.
-- `src/providers/research/trend.provider.ts` — full trend response in rawData
-  for query extraction including `relatedQueries`, `risingQueries`.
-- `src/providers/research/keyword.provider.ts` — keyword metrics in normalized
-  format with keyword text for extraction.
-- `tests/services/query-intelligence.service.test.ts` — 2 tests (derived
-  queries, fallback to seed-only).
-- `tests/services/research.service.test.ts` — "should use provider-backed
-  query intelligence before marketplace discovery" test.
+Provider-empty outcomes must produce an empty shortlist or visible failure.
+Never generate AI fallback products, suppliers, prices, URLs, MOQ, costs, or
+source evidence.
 
-Verification already run after Phase 7i implementation:
-- `npm run type-check`
-- `npx prisma validate`
-- `git diff --check`
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/query-intelligence.service.test.ts` (2 passed)
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/research.service.test.ts` (11 passed)
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run` (all 91 tests passed)
+### Temporary Discovery Walkthrough Note
 
----
-
-### Phase 7j DataForSEO Autonomous Keyword Discovery
-
-Current status:
-- Phase 7j DataForSEO autonomous keyword discovery has been implemented
-  (2026-06-26) and updated so no-seed discovery no longer relies on project
-  hardcoded category seeds.
-- `DataForSeoLabsDiscoveryProvider` calls DataForSEO Labs Google
-  `top_searches/live` to collect broad provider-backed category/keyword roots
-  when the user leaves `seedQuery` blank.
-- `KeywordResearchProvider` now calls DataForSEO Google Ads
-  `keywords_for_keywords/live` for seed-query expansion instead of only
-  search-volume metrics for a user-entered keyword.
-- When an autonomous discovery job has no `seedQuery`, `DiscoveryJobService`
-  queries approved root-discovery providers, extracts category and keyword
-  provenance from normalized DataForSEO evidence, ranks/deduplicates the
-  provider-backed keywords, and runs Product Research only for selected
-  provider-backed keywords.
-- The previous static fallback keyword list was removed. If configured
-  providers return no usable keyword evidence, the discovery job is marked
-  failed with a visible validation error instead of inventing fallback
-  keywords.
-- This change does not call 1688 sourcing and does not require
-  `SOURCING_1688_APIFY_API_TOKEN`; sourcing remains candidate-level enrichment.
-
-Implemented Phase 7j files:
-- `src/providers/research/dataforseo-labs-discovery.provider.ts` —
-  DataForSEO Labs Top Searches autonomous category/keyword root discovery.
-- `src/providers/research/keyword.provider.ts` — DataForSEO keyword suggestion
-  endpoint and flexible nested keyword-record normalization.
-- `src/services/discovery-job.service.ts` — no-seed discovery now uses
-  provider-backed category/keyword candidates only and fails visibly when none
-  exist.
-- `src/components/dashboard/research-form.tsx` — seed input copy clarifies that
-  blank input uses DataForSEO discovery.
-- `tests/providers/research/keyword.provider.test.ts` — DataForSEO keyword
-  suggestion normalization test.
-- `tests/providers/research/dataforseo-labs-discovery.provider.test.ts` —
-  DataForSEO Labs category/keyword evidence normalization test.
-- `tests/services/discovery-job.service.test.ts` — no-seed provider-backed
-  discovery and no-evidence failure tests.
-
-Verification run after Phase 7j implementation:
-- `npm run type-check`
-- `npx prisma validate`
-- `git diff --check`
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/discovery-job.service.test.ts` (3 passed)
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/query-intelligence.service.test.ts tests/providers/research/keyword.provider.test.ts` (3 passed)
+Current local walkthrough status:
+- DataForSEO + Apify additive discovery is implemented, but the combined
+  discovery behavior still needs validation before treating it as stable.
+- For the current discovery-candidate walkthrough, the local `.env` may
+  intentionally comment out `APIFY_CANDIDATE_DISCOVERY_API_TOKEN`,
+  `APIFY_CANDIDATE_DISCOVERY_ENDPOINT`, and
+  `APIFY_CANDIDATE_DISCOVERY_CONFIG_PATH`.
+- With those variables commented, initial discovery should proceed through
+  DataForSEO-backed query intelligence and Merchant marketplace evidence only;
+  Apify candidate discovery is expected to be skipped as unconfigured.
+- This is a temporary debugging posture, not a product decision to remove
+  additive Apify marketplace discovery.
+- `SOURCING_1688_APIFY_*` remains a separate 1688 sourcing backup config and
+  must not be used as a substitute for `APIFY_CANDIDATE_DISCOVERY_*`.
 
 ---
 
-### Phase 7k DataForSEO Merchant Market Validation Handoff
+## Implemented Modules
 
-Current status:
-- DataForSEO Merchant Google Shopping market validation has been implemented
-  (2026-06-26).
-- No database migration is required for the initial plan because Merchant
-  product listings persist as existing `ResearchSource` records with
-  `type = MARKETPLACE`.
-- Existing candidate creation still depends on ProductAggregationService; this
-  remains required after Merchant validation.
-
-Decision:
-- DataForSEO Labs and keyword providers discover product-like queries.
-- DataForSEO Merchant Google Shopping is the preferred marketplace validation
-  provider for product-like queries.
-- Merchant evidence validates that a query maps to real products being sold,
-  but it must not create ProductCandidate records directly.
-- Merchant `MARKETPLACE` listings must still pass through
-  ProductAggregationService so duplicate or similar listings are grouped into
-  unified ProductCandidate drafts.
-- Apify marketplace actors remain fallback or additional marketplace evidence
-  when DataForSEO Merchant is unavailable, unconfigured, fails, or returns no
-  usable listings.
-
-Implemented Phase 7k files:
-- `src/providers/research/dataforseo-merchant.provider.ts` — DataForSEO
-  Merchant Google Products async task provider (`task_post` and
-  `task_get/advanced`) that normalizes product results into `MARKETPLACE`
-  evidence with query provenance.
-- `src/providers/research/index.ts` — registers DataForSEO Merchant before
-  Apify candidate discovery.
-- `src/services/research.service.ts` — candidate discovery marketplace
-  providers now run sequentially for the `candidate_discovery` stage so
-  Merchant can act as primary and Apify as fallback, while still preserving all
-  evidence returned by the selected provider.
-- `tests/providers/research/dataforseo-merchant.provider.test.ts` — Merchant
-  task flow and normalization test.
-- `tests/services/research.service.test.ts` — asserts Merchant marketplace
-  evidence is preferred before Apify fallback and still feeds aggregation.
-
-Before implementing, the next session must read:
-- `.github/skills/task-execution/SKILL.md` — project startup rules.
-- `01-prd.md` — Product Research requirements and FR-003i/FR-003j decisions.
-- `02-sdd.md` — Research pipeline and marketplace provider policy.
-- `05-engineering-standards.md` — provider, aggregation, and no-fallback rules.
-- `06-deepseek.md` — strict architecture boundaries.
-- `src/providers/research/dataforseo-client.ts` — shared DataForSEO auth and
-  response helpers.
-- `src/services/research.service.ts` — staged query intelligence, marketplace
-  collection, aggregation, and candidate creation.
-- `src/services/product-aggregation.service.ts` — grouping rules for
-  `MARKETPLACE` evidence.
-
-Follow-up implementation order:
-1. Optionally add provider-local Zod schemas if live Merchant payload variance
-   requires stricter validation.
-2. Run one live DataForSEO Merchant smoke test with a low-cost query after
-   confirming API quota.
-3. If live payload shape differs from mocks, adapt
-   `DataForSeoMerchantProvider.normalizeItem()` without changing repository or
-   service boundaries.
-4. Update this section with live smoke-test evidence.
-
-Verification run after Phase 7k implementation:
-- `npm run type-check`
-- `npx prisma validate`
-- `git diff --check`
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/providers/research/dataforseo-merchant.provider.test.ts` (1 passed)
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/research.service.test.ts` (12 passed)
-- `npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/providers/research/dataforseo-merchant.provider.test.ts tests/providers/research/keyword.provider.test.ts tests/services/discovery-job.service.test.ts tests/services/query-intelligence.service.test.ts tests/services/research.service.test.ts` (19 passed)
-
-Architecture warnings:
-- Do not call DataForSEO Merchant from agents, API routes, UI, repositories, or
-  workflow nodes; only the provider layer may call the external API.
-- Do not let Merchant, Apify, DataForSEO Labs, or AI create ProductCandidate
-  records directly.
-- Do not skip aggregation after Merchant validation.
-- Do not call 1688 sourcing during initial marketplace validation; 1688 remains
-  candidate-level enrichment after a candidate exists.
-- If Merchant and fallback marketplace providers return no usable
-  `MARKETPLACE` evidence, return an empty shortlist or visible failure. Do not
-  generate AI fallback products, URLs, prices, suppliers, MOQ, or source
-  evidence.
+- Authentication and protected dashboard/API routes.
+- Workflow services, worker queues, review gates, and content/SEO/landing flows.
+- Independent Product Research workspace.
+- AI Discovery Job service, repository, API route, dashboard form, and BullMQ
+  job processing.
+- Provider-backed query intelligence from DataForSEO Labs, keyword, trend, and
+  lightweight search evidence.
+- DataForSEO Merchant Google Shopping first-pass marketplace validation.
+- Additive Apify candidate discovery provider driven by
+  `config/apify-candidate-discovery.json`.
+- ProductAggregationService for MARKETPLACE evidence grouping.
+- Two-phase candidate scoring.
+- Candidate-level 1688 sourcing enrichment with DajiSaaS primary and Apify
+  backup.
+- AI-assisted source match review stored in candidate metadata.
+- Candidate selection and promotion into production workflow.
 
 ---
 
-## Phase 8
+## Current UI Surface
 
-Production Deployment
+Product Research dashboard:
 
-Tasks:
-- Docker
-- Docker Compose
-- Nginx
-- CI/CD
+```text
+/dashboard/product-research
+```
 
-Deliverables:
-- Production ready platform
+It must expose:
+
+- AI Discovery Job form only.
+- Discovery job status table.
+- Research project list created by discovery jobs.
+- Candidate detail/review pages.
+- Candidate select and promote actions.
+- Candidate-level 1688 sourcing enrichment.
+- Source match review actions.
+
+It must not expose:
+
+- A separate direct Product Research form.
+- Any dashboard action that calls `ResearchService.run()` directly.
+
+---
+
+## Current API Surface
+
+Keep:
+
+```text
+GET  /api/product-research
+POST /api/product-research/discovery-jobs
+GET  /api/product-research/discovery-jobs
+GET  /api/product-research/:projectId/candidates
+GET  /api/product-research/:projectId/sources
+GET  /api/product-research/candidates/:candidateId
+POST /api/product-research/candidates/:candidateId/sourcing
+POST /api/product-research/candidates/:candidateId/select
+POST /api/product-research/candidates/:candidateId/promote
+POST /api/product-research/candidates/:candidateId/source-matches/review
+POST /api/product-research/candidates/:candidateId/source-matches/:matchId/decision
+```
+
+Disable or keep disabled:
+
+```text
+POST /api/product-research
+POST /api/workflows/:id/research/run
+```
+
+---
+
+## Architecture Guardrails
+
+- API Route / Server Action -> Service -> Repository -> Prisma.
+- Agent -> Service -> Provider -> External API.
+- Repositories perform database reads/writes only.
+- API routes, UI, agents, workflow nodes, and repositories must not call
+  DataForSEO, Apify, DajiSaaS, 1688, Shopify, Prisma, or AI providers directly
+  outside their approved layer.
+- AI may plan, rank, filter, explain, or group provider-backed evidence only.
+  AI must not fabricate products, keywords absent from provider evidence,
+  suppliers, source URLs, prices, MOQ, factory costs, landed costs, or
+  marketplace evidence.
+- Initial candidate creation uses `MARKETPLACE` evidence only.
+- `SOURCING` evidence enriches an existing ProductCandidate only.
+- 1688 sourcing is research evidence, not fulfillment automation.
+- Shopify operations go through `src/services/shopify/`.
+
+---
+
+## Data And Persistence Contract
+
+Primary Product Research records:
+
+- `ResearchProject`
+- `ResearchDiscoveryJob`
+- `ResearchRun`
+- `ProductCandidate`
+- `ResearchSource`
+- `SourcingVerification`
+
+No `ProductGroup` model exists. Product aggregation groups are transient
+service-layer results persisted through `ProductCandidate.metadata.aggregation`
+and linked `ResearchSource` records.
+
+No first-class `ResearchSourceMatch` model exists. Source match review results
+are stored in `ProductCandidate.metadata.sourceMatches` until reporting or
+querying requirements justify a dedicated migration.
+
+Query intelligence has no first-class table. Persist auditability in
+`ResearchRun.input`, `ResearchSource.rawData`, and candidate aggregation
+metadata.
+
+---
+
+## Required Reading For Future Sessions
+
+Before making Product Research changes, read in this order:
+
+1. `.github/skills/task-execution/SKILL.md`
+2. `01-prd.md`
+3. `02-sdd.md`
+4. `03-ddd.md`
+5. `04-api-design.md`
+6. `05-engineering-standards.md`
+7. `06-deepseek.md`
+8. `07-task-execution.md`
+
+For code changes, inspect the relevant current implementation:
+
+- `src/services/discovery-job.service.ts`
+- `src/services/research.service.ts`
+- `src/services/product-aggregation.service.ts`
+- `src/services/candidate-scoring.service.ts`
+- `src/services/candidate-sourcing.service.ts`
+- `src/services/source-matching.service.ts`
+- `src/providers/research/index.ts`
+- `src/providers/research/dataforseo-labs-discovery.provider.ts`
+- `src/providers/research/dataforseo-merchant.provider.ts`
+- `src/providers/research/keyword.provider.ts`
+- `src/providers/research/sourcing-1688.provider.ts`
+- `src/app/dashboard/product-research/page.tsx`
+- `src/components/dashboard/research-form.tsx`
+- `src/app/api/product-research/discovery-jobs/route.ts`
+
+---
+
+## Verification Baseline
+
+Use the narrowest verification that matches the change. For Product Research
+changes, prefer:
+
+```bash
+npm run type-check
+npx prisma validate
+git diff --check
+npx -p node@20 node ./node_modules/vitest/vitest.mjs run tests/services/discovery-job.service.test.ts tests/services/research.service.test.ts tests/services/query-intelligence.service.test.ts
+```
+
+The local default Node may be too old for Vitest. Use Node 20 with `npx -p
+node@20 ...` when Vite/Vitest fails with `crypto.getRandomValues`.
+
+---
+
+## Remaining Work
+
+Production readiness remains the next major phase:
+
+- Start required worker processes in local/dev/prod (`npm run worker`).
+- Run live low-cost smoke tests for DataForSEO Merchant and, separately,
+  candidate-level 1688 sourcing once provider quotas are confirmed.
+- Add deployment docs for Docker, Docker Compose, Nginx, environment variables,
+  Redis, PostgreSQL, Next.js, and worker processes.
+- Add monitoring/alerting for failed discovery jobs and provider-empty outcomes.
+
+Approval gate:
+
+- Do not make large architecture, database, provider, or workflow changes
+  without first presenting the implementation plan for review.

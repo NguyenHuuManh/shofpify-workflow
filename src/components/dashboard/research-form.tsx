@@ -9,27 +9,7 @@
 import { useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button, Card, Spinner } from '@/components/ui';
-import {
-  createResearchProject,
-  startDiscoveryJob,
-} from '@/app/dashboard/product-research/actions';
-
-function SubmitButton(): React.ReactElement {
-  const { pending } = useFormStatus();
-
-  return (
-    <Button type="submit" disabled={pending}>
-      {pending ? (
-        <>
-          <Spinner size={16} />
-          Researching...
-        </>
-      ) : (
-        'Run Research'
-      )}
-    </Button>
-  );
-}
+import { startDiscoveryJob } from '@/app/dashboard/product-research/actions';
 
 function DiscoverySubmitButton(): React.ReactElement {
   const { pending } = useFormStatus();
@@ -72,8 +52,9 @@ export function DiscoveryJobForm(): React.ReactElement {
           <TextField
             id="seedQuery"
             name="seedQuery"
-            label="Seed override"
-            placeholder="Leave blank for DataForSEO discovery"
+            label="Seed product"
+            placeholder="Portable blender"
+            required
           />
           <TextField
             id="discoveryTargetMarket"
@@ -168,118 +149,6 @@ export function DiscoveryJobForm(): React.ReactElement {
         <input type="hidden" name="discoveryCustomsDutyPercent" value="5" />
         <input type="hidden" name="discoveryPackagingPerUnit" value="1.5" />
         <input type="hidden" name="discoveryQcPerUnit" value="0.75" />
-      </form>
-    </Card>
-  );
-}
-
-export function ResearchForm(): React.ReactElement {
-  const formRef = useRef<HTMLFormElement>(null);
-
-  return (
-    <Card style={{ marginBottom: '24px' }}>
-      <form
-        ref={formRef}
-        action={createResearchProject}
-        style={{
-          display: 'grid',
-          gap: '18px',
-        }}
-      >
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-            gap: '12px',
-            alignItems: 'end',
-          }}
-        >
-          <TextField
-            id="query"
-            name="query"
-            label="Product brief"
-            required
-            placeholder="pet travel accessories for US buyers..."
-          />
-          <TextField
-            id="targetMarket"
-            name="targetMarket"
-            label="Market"
-            defaultValue="US"
-          />
-          <SelectField
-            id="objective"
-            name="objective"
-            label="Mode"
-            defaultValue="find_winning_product"
-            options={[
-              ['find_winning_product', 'Find winners'],
-              ['deep_sourcing', 'Deep sourcing'],
-              ['validate_product', 'Validate idea'],
-            ]}
-          />
-        </div>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-            gap: '12px',
-            alignItems: 'end',
-          }}
-        >
-          <TextField id="priceMin" name="priceMin" label="Min price" type="number" placeholder="25" />
-          <TextField id="priceMax" name="priceMax" label="Max price" type="number" placeholder="60" />
-          <TextField
-            id="targetMarginPercent"
-            name="targetMarginPercent"
-            label="Margin %"
-            type="number"
-            defaultValue="40"
-          />
-          <TextField id="maxMoq" name="maxMoq" label="Max MOQ" type="number" placeholder="500" />
-          <TextField
-            id="internationalFreightPerUnit"
-            name="internationalFreightPerUnit"
-            label="Freight"
-            type="number"
-            step="0.01"
-            placeholder="8"
-          />
-          <SelectField
-            id="riskTolerance"
-            name="riskTolerance"
-            label="Risk"
-            defaultValue="medium"
-            options={[
-              ['low', 'Low'],
-              ['medium', 'Medium'],
-              ['high', 'High'],
-            ]}
-          />
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: '16px',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          <ExcludedCategoryFields
-            checkboxName="excludedCategories"
-            customId="excludedCategoriesCustom"
-            customName="excludedCategoriesCustom"
-          />
-          <SubmitButton />
-        </div>
-
-        <input type="hidden" name="agentFeePercent" value="8" />
-        <input type="hidden" name="customsDutyPercent" value="5" />
-        <input type="hidden" name="packagingPerUnit" value="1.5" />
-        <input type="hidden" name="qcPerUnit" value="0.75" />
       </form>
     </Card>
   );

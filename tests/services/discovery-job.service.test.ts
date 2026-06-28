@@ -10,12 +10,15 @@ import { BaseRepository } from '@/repositories/base.repository';
 import type { ResearchProvider } from '@/types/research.types';
 
 describe('DiscoveryJobService', () => {
-  it('should collect provider-backed keywords and run discovery for each', async () => {
+  it('should start from the user seed product and expand only with provider-backed keywords', async () => {
     vi.spyOn(BaseRepository, 'transaction').mockImplementation(async (fn) =>
       fn(undefined as never),
     );
+    vi.stubEnv('ANTHROPIC_API_KEY', '');
+    vi.stubEnv('DEEPSEEK_API_KEY', '');
 
     const input = {
+      seedQuery: 'pet travel',
       targetMarket: 'US',
       targetMarginPercent: 40,
       riskTolerance: 'medium' as const,
@@ -33,7 +36,7 @@ describe('DiscoveryJobService', () => {
     };
     const project = {
       id: 'project_001',
-      query: 'Autonomous discovery for US winning products',
+      query: 'pet travel',
       status: 'ACTIVE',
       selectedCandidateId: null,
       promotedProductId: null,
@@ -87,21 +90,19 @@ describe('DiscoveryJobService', () => {
     const researchSvc = {
       run: vi.fn().mockResolvedValue({ sources: [{ id: 'source_001' }] }),
     };
-    // Provider-backed category/keyword root discovery source
     const keywordProvider: ResearchProvider = {
       name: 'DataForSeoLabsDiscoveryTestProvider',
       providerType: 'keyword',
-      discoveryRootProvider: true,
       collect: vi.fn(async () => [
         {
           type: 'KEYWORD' as const,
           provider: 'DataForSEO Labs Top Searches',
-          externalId: 'smart home gadget organizer',
-          title: 'smart home gadget organizer keyword signal',
-          extractedSignal: 'smart home gadget organizer, volume 12000, CPC 1.8',
+          externalId: 'pet travel water bottle',
+          title: 'pet travel water bottle keyword signal',
+          extractedSignal: 'pet travel water bottle, volume 12000, CPC 1.8',
           rawData: {
-            keyword: 'smart home gadget organizer',
-            categories: ['Home & Garden'],
+            keyword: 'pet travel water bottle',
+            categories: ['Animals & Pet Supplies'],
             metrics: { searchVolume: 12000, cpc: 1.8 },
           },
           confidence: 0.74,
@@ -110,11 +111,11 @@ describe('DiscoveryJobService', () => {
         {
           type: 'KEYWORD' as const,
           provider: 'DataForSEO Labs Top Searches',
-          externalId: 'pet travel water bottle',
-          title: 'pet travel water bottle keyword signal',
-          extractedSignal: 'pet travel water bottle, volume 9000, CPC 1.4',
+          externalId: 'pet travel carrier',
+          title: 'pet travel carrier keyword signal',
+          extractedSignal: 'pet travel carrier, volume 9000, CPC 1.4',
           rawData: {
-            keyword: 'pet travel water bottle',
+            keyword: 'pet travel carrier',
             categories: ['Animals & Pet Supplies'],
             metrics: { searchVolume: 9000, cpc: 1.4 },
           },
@@ -138,10 +139,9 @@ describe('DiscoveryJobService', () => {
     const result = await service.runJob(started.discoveryJob.id);
 
     expect(started.discoveryJob.id).toBe('job_001');
-    // No seed query -> uses provider-backed root discovery, not hardcoded category seeds.
     expect(researchSvc.run).toHaveBeenCalledTimes(2);
     expect(researchSvc.run.mock.calls.map((call) => call[0].productIdea)).toEqual([
-      'smart home gadget organizer',
+      'pet travel',
       'pet travel water bottle',
     ]);
     expect(jobRepo.markCompleted).toHaveBeenCalledWith(
@@ -156,7 +156,7 @@ describe('DiscoveryJobService', () => {
     expect(result.result.topCandidates.at(0)?.id).toBe('candidate_001');
   });
 
-  it('should fail without seed query when providers return no keyword evidence', async () => {
+  it('should require a user seed product before creating a discovery job', async () => {
     vi.spyOn(BaseRepository, 'transaction').mockImplementation(async (fn) =>
       fn(undefined as never),
     );
@@ -173,72 +173,23 @@ describe('DiscoveryJobService', () => {
         landedCostAssumptions: {},
       },
     };
-    const project = {
-      id: 'project_003',
-      query: 'Autonomous discovery for US winning products',
-      status: 'ACTIVE',
-      selectedCandidateId: null,
-      promotedProductId: null,
-      summary: null,
-      createdAt: new Date('2026-01-01'),
-      updatedAt: new Date('2026-01-01'),
-    };
-    const job = {
-      id: 'job_003',
-      researchProjectId: project.id,
-      status: 'PENDING',
-      input,
-      queryPlan: null,
-      result: null,
-      errorMessage: null,
-      startedAt: null,
-      completedAt: null,
-      createdAt: new Date('2026-01-01'),
-      updatedAt: new Date('2026-01-01'),
-    };
     const jobRepo = {
-      create: vi.fn().mockResolvedValue(job),
-      findByIdOrThrow: vi.fn().mockResolvedValue(job),
-      markRunning: vi.fn(),
-      markCompleted: vi.fn(),
-      markFailed: vi.fn().mockResolvedValue({ ...job, status: 'FAILED' }),
-    };
-    const researchSvc = {
-      run: vi.fn().mockResolvedValue({ sources: [] }),
-    };
-    const emptyProvider: ResearchProvider = {
-      name: 'EmptyProvider',
-      providerType: 'keyword',
-      collect: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
     };
 
     const service = new DiscoveryJobService(
       jobRepo as never,
-      {
-        create: vi.fn().mockResolvedValue(project),
-        findByIdOrThrow: vi.fn().mockResolvedValue(project),
-        updateSummary: vi.fn().mockResolvedValue(project),
-      } as never,
-      { findByResearchProjectId: vi.fn().mockResolvedValue([]) } as never,
-      { create: vi.fn().mockResolvedValue({ id: 'audit_003' }) } as never,
-      researchSvc as never,
-      new QueryIntelligenceService(),
-      [emptyProvider],
+      { create: vi.fn() } as never,
+      { findByResearchProjectId: vi.fn() } as never,
+      { create: vi.fn() } as never,
     );
 
-    await service.start(input);
-    await expect(service.runJob('job_003')).rejects.toMatchObject({
+    await expect(service.start(input as never)).rejects.toMatchObject({
       code: 'VALIDATION_ERROR',
-      statusCode: 422,
+      statusCode: 400,
     });
 
-    expect(researchSvc.run).not.toHaveBeenCalled();
-    expect(jobRepo.markRunning).not.toHaveBeenCalled();
-    expect(jobRepo.markCompleted).not.toHaveBeenCalled();
-    expect(jobRepo.markFailed).toHaveBeenCalledWith(
-      'job_003',
-      'No provider-backed discovery categories or keywords were found. Configure DataForSEO Labs or adjust discovery constraints.',
-    );
+    expect(jobRepo.create).not.toHaveBeenCalled();
   });
 
   it('should use seed query only when providers return no keyword evidence', async () => {

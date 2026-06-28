@@ -93,15 +93,16 @@ describe('ResearchService', () => {
     const providerSource = {
       type: 'MARKETPLACE',
       provider: 'SerpAPI Google Shopping',
-      url: 'https://example.com/blender',
       externalId: 'shopping_001',
       title: 'Self-cleaning Portable Blender',
       extractedSignal: 'Self-cleaning Portable Blender marketplace listing, price 100, rating 4.8, 1200 reviews',
       rawData: {
+        shopping_url: 'https://example.com/blender',
         metrics: {
           price: 100,
           rating: 4.8,
           reviewCount: 1200,
+          imageUrl: 'https://example.com/blender.jpg',
         },
       },
       confidence: 0.72,
@@ -150,6 +151,13 @@ describe('ResearchService', () => {
         productId: 'prod_001',
         name: 'Self-cleaning Portable Blender',
         winningScore: expect.any(Number),
+        metadata: expect.objectContaining({
+          sourceImageUrl: 'https://example.com/blender.jpg',
+          aggregation: expect.objectContaining({
+            sourceUrls: ['https://example.com/blender'],
+            sourceImageUrls: ['https://example.com/blender.jpg'],
+          }),
+        }),
       }),
     );
     expect(sourceRepo.create).toHaveBeenCalledWith(
@@ -158,6 +166,7 @@ describe('ResearchService', () => {
         candidateId: 'cand_001',
         type: 'MARKETPLACE',
         provider: 'SerpAPI Google Shopping',
+        url: 'https://example.com/blender',
       }),
     );
     expect(researchRepo.upsert).toHaveBeenCalledWith(
@@ -301,6 +310,25 @@ describe('ResearchService', () => {
         capturedAt: new Date('2026-01-01'),
       },
     ];
+    const aiProvider: AIProvider = {
+      providerName: 'test-ai',
+      generateText: vi.fn().mockResolvedValue({
+        text: JSON.stringify({
+          groups: [
+            {
+              name: 'USB Portable Blender',
+              sourceKeys: [
+                'MARKETPLACE|Apify Google Shopping|listing_a|https://example.com/blender-a|USB Portable Blender|0',
+                'MARKETPLACE|Apify Amazon Product Scraper|listing_b|https://example.com/blender-b|USB Portable Blender|1',
+              ],
+              rationale: 'Both listings describe the same USB portable blender.',
+            },
+          ],
+        }),
+        model: 'test-model',
+        usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+      }),
+    };
     const service = new ResearchService(
       {
         create: vi.fn().mockResolvedValue(run),
@@ -328,6 +356,7 @@ describe('ResearchService', () => {
           collect: vi.fn().mockResolvedValue(marketplaceSources),
         },
       ],
+      aiProvider,
     );
 
     const result = await service.run({ productIdea: 'Portable Blender' });
@@ -341,7 +370,7 @@ describe('ResearchService', () => {
         metadata: expect.objectContaining({
           generatedFrom: 'product_aggregation',
           aggregation: expect.objectContaining({
-            method: 'deterministic_dedup',
+            method: 'ai_grouping',
             sourceUrls: ['https://example.com/blender-a', 'https://example.com/blender-b'],
             mergedMetrics: expect.objectContaining({
               sourceCount: 2,
@@ -516,7 +545,7 @@ describe('ResearchService', () => {
     );
   });
 
-  it('should prefer DataForSEO Merchant marketplace evidence before Apify fallback', async () => {
+  it('should collect DataForSEO Merchant before additive Apify marketplace evidence', async () => {
     const run = {
       id: 'run_merchant_primary',
       researchProjectId: null,
@@ -564,10 +593,20 @@ describe('ResearchService', () => {
       collect: vi.fn().mockResolvedValue([
         {
           type: 'MARKETPLACE',
-          provider: 'Apify Google Shopping',
+          provider: 'Apify TikTok Shop',
           url: 'https://apify.example.com/product',
-          title: 'Fallback Blender',
-          extractedSignal: 'Fallback listing',
+          title: 'Cordless Portable Blender',
+          extractedSignal: 'Cordless Portable Blender TikTok Shop listing',
+          rawData: {
+            queryUsed: 'portable blender',
+            querySource: 'SEED_QUERY',
+            collectionStage: 'candidate_discovery',
+            metrics: {
+              price: 49,
+              orderCount: 850,
+              demandSignal: 78,
+            },
+          },
           confidence: 0.7,
           capturedAt: new Date('2026-01-01'),
         },
@@ -591,6 +630,25 @@ describe('ResearchService', () => {
         }),
       ),
     };
+    const aiProvider: AIProvider = {
+      providerName: 'test-ai',
+      generateText: vi.fn().mockResolvedValue({
+        text: JSON.stringify({
+          groups: [
+            {
+              name: 'Cordless Portable Blender',
+              sourceKeys: [
+                'MARKETPLACE|DataForSEO Merchant Google Products|merchant_product_001|https://merchant.example.com/product|Cordless Portable Blender|0',
+                'MARKETPLACE|Apify TikTok Shop|https://apify.example.com/product|Cordless Portable Blender|1',
+              ],
+              rationale: 'Both listings describe the same cordless portable blender.',
+            },
+          ],
+        }),
+        model: 'test-model',
+        usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+      }),
+    };
     const service = new ResearchService(
       {
         create: vi.fn().mockResolvedValue(run),
@@ -612,6 +670,7 @@ describe('ResearchService', () => {
       } as never,
       new CandidateScoringService(),
       [merchantProvider, apifyProvider],
+      aiProvider,
     );
 
     const result = await service.run({
@@ -622,7 +681,10 @@ describe('ResearchService', () => {
     });
 
     expect(merchantProvider.collect).toHaveBeenCalledTimes(1);
-    expect(apifyProvider.collect).not.toHaveBeenCalled();
+    expect(apifyProvider.collect).toHaveBeenCalledTimes(1);
+    expect(merchantProvider.collect.mock.invocationCallOrder[0]).toBeLessThan(
+      apifyProvider.collect.mock.invocationCallOrder[0]!,
+    );
     expect(result.candidates).toHaveLength(1);
     expect(candidateRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -636,6 +698,13 @@ describe('ResearchService', () => {
       expect.objectContaining({
         type: 'MARKETPLACE',
         provider: 'DataForSEO Merchant Google Products',
+        candidateId: 'cand_merchant_primary',
+      }),
+    );
+    expect(sourceRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'MARKETPLACE',
+        provider: 'Apify TikTok Shop',
         candidateId: 'cand_merchant_primary',
       }),
     );

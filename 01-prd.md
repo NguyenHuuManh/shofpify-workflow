@@ -4,7 +4,7 @@
 
 Version: 1.0
 
-Status: Draft
+Status: Final current
 
 ---
 
@@ -138,7 +138,8 @@ The system must:
 * Identify pain points
 * Identify competitors
 * Generate USPs
-* Discover and rank product candidates from a product idea or niche
+* Discover and rank product candidates from a user-provided seed product plus
+  research constraints
 * Collect evidence from external research sources through provider integrations
 * Extract provider-backed trending, related, and buyer-intent keywords before
   marketplace discovery so downstream providers search on higher-quality query
@@ -169,10 +170,9 @@ Product Research must evolve from AI-only market synthesis into a structured pro
 
 The module must:
 
-* Accept a product idea, niche, or broad opportunity prompt
-* Accept a structured product brief with target market, price band, margin
-  target, MOQ tolerance, sourcing assumptions, risk tolerance, and excluded
-  categories
+* Accept a required seed product plus structured constraints such as target
+  market, price band, margin target, MOQ tolerance, sourcing assumptions, risk
+  tolerance, and excluded categories
 * Generate multiple product candidates instead of a single research summary
 * Gather supporting data through approved provider interfaces
 * Use DataForSEO Labs and keyword providers for provider-backed product-query
@@ -207,18 +207,18 @@ The module output must include:
 
 ### Autonomous Product Discovery Job
 
-Product Research must support an autonomous discovery job for finding winning
-product opportunities without requiring the user to provide a specific keyword.
+Product Research must use a seed-product discovery job as the only user-facing
+entrypoint for finding winning product opportunities. The job must start from a
+specific seed product entered by the user.
 
 The job must:
 
-* Start from a broad discovery brief such as target market, objective, price
-  band, margin target, maximum MOQ, risk tolerance, excluded categories, and
-  optional seed query
-* Use AI only to generate a research plan, niche hypotheses, and keyword/query
-  batches
-* Execute multiple provider-backed Product Research runs from the generated
-  query plan
+* Start from the user seed product plus target market, objective, price band,
+  margin target, maximum MOQ, risk tolerance, and excluded categories
+* Use AI only to rank, filter, or explain provider-backed keyword candidates;
+  AI must not generate seed products or new product ideas
+* Execute provider-backed Product Research runs from the seed product and
+  capped provider-backed derived queries
 * Create product candidates only from persisted external provider evidence
 * Rank discovered candidates by demand, trend, competition, sourcing,
   landed-cost feasibility, margin, creative potential, and risk
@@ -336,7 +336,9 @@ These features will be implemented in future versions.
 
 ## FR-001
 
-The system shall allow users to create an independent product research project from a product idea, niche, or broad opportunity prompt.
+The system shall allow users to start Product Research only through an AI
+Discovery Job. The job creates the independent ResearchProject and requires a
+seed product plus constraints.
 
 ---
 
@@ -445,12 +447,13 @@ The review must:
 
 ## FR-003h
 
-The system shall support autonomous product discovery jobs that start from a
-broad discovery brief instead of a required keyword.
+The system shall support product discovery jobs that start from a required
+user-entered seed product.
 
-The job shall use AI to create a query plan only. Product candidates, suppliers,
-costs, MOQ, landed cost, source URLs, and source evidence shall come from
-approved provider integrations and persisted ResearchSource records.
+The job may use AI to rank or filter provider-backed derived keywords only.
+Product candidates, suppliers, costs, MOQ, landed cost, source URLs, and source
+evidence shall come from approved provider integrations and persisted
+ResearchSource records.
 
 ---
 
@@ -478,8 +481,12 @@ The Product Aggregation step must:
   describe the same real-world product, based on product name, price cluster,
   review/order scale, and provider context
 * Never fabricate product names, prices, URLs, suppliers, or source evidence
-* Fall back to deterministic name-based deduplication when the AI provider is
-  unavailable, misconfigured, or returns invalid output
+* Allow AI grouping to leave weak, noisy, broad, or unrelated marketplace
+  listings unassigned; only assigned source groups seed ProductCandidate drafts
+* Return no product groups and surface an empty/failed provider-backed result
+  when the AI provider is unavailable, misconfigured, or returns invalid output;
+  multi-source candidate grouping must not silently fall back to deterministic
+  name-based deduplication
 * Merge aggregated metrics per product group: demand signals (max),
   pricing (median and range), rating (average), review and order counts (sum),
   and source count (for confidence scoring)
@@ -511,9 +518,12 @@ Apify-backed candidate discovery shall use the actor definitions in
 the configured actors whose `providerType` is enabled by the research
 configuration, normalize their dataset items into `ResearchSource` evidence,
 and pass the resulting marketplace evidence into ProductAggregationService.
-Apify acts as an additional or fallback marketplace evidence provider when
-DataForSEO Merchant is unavailable, unconfigured, or returns no usable
-marketplace evidence.
+Apify acts as an additive marketplace evidence provider after DataForSEO
+Merchant. DataForSEO Merchant runs first for baseline Google Shopping
+validation; Apify then expands the same seed and selected derived queries across
+configured marketplace, commerce, and ads-signal actors. Candidate discovery
+must not treat Apify as a marketplace fallback that runs only when Merchant
+returns no evidence.
 
 ---
 
@@ -528,9 +538,6 @@ Query intelligence must:
   marketplace and Apify candidate discovery
 * Extract trending, rising, related, and buyer-intent keyword candidates only
   from provider responses and normalized source evidence
-* For autonomous discovery without a user seed query, collect broad category
-  and keyword opportunities from DataForSEO Labs provider evidence instead of
-  using project hardcoded category seeds
 * Rank and filter keyword candidates by relevance to the seed query, trend
   strength, search volume, buyer intent, competition, CPC, risk, and duplicate
   similarity

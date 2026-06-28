@@ -308,10 +308,10 @@ function CandidateCard({
   isPromoted: boolean;
   isOpen: boolean;
 }): React.ReactElement {
-  const productImage = extractProductImage(sources);
+  const productImage = getCandidateImageUrl(candidate.metadata) ?? extractProductImage(sources);
   const marketplaceSource = findSourceByType(sources, 'MARKETPLACE');
   const sourcingSource = findSourceByType(sources, 'SOURCING');
-  const storeSourceUrl = getCandidateSourceUrl(candidate.metadata) ?? marketplaceSource?.url;
+  const storeSourceUrl = getCandidateSourceUrl(candidate.metadata) ?? getResearchSourceUrl(marketplaceSource);
   const storePrice = extractStorePrice(sources) ?? candidate.recommendedPrice;
 
   return (
@@ -463,15 +463,34 @@ function CandidateDetailPanel({
   isSelected: boolean;
   isPromoted: boolean;
 }): React.ReactElement {
+  const productImage = getCandidateImageUrl(candidate.metadata) ?? extractProductImage(sources);
   const marketplaceSource = findSourceByType(sources, 'MARKETPLACE');
   const sourcingSource = findSourceByType(sources, 'SOURCING');
-  const storeSourceUrl = getCandidateSourceUrl(candidate.metadata) ?? marketplaceSource?.url;
+  const storeSourceUrl = getCandidateSourceUrl(candidate.metadata) ?? getResearchSourceUrl(marketplaceSource);
 
   return (
     <div id="candidate-detail">
     <Card style={{ marginTop: '24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        <div>
+        {productImage && (
+          <Image
+            src={productImage}
+            alt={candidate.name}
+            width={112}
+            height={112}
+            unoptimized
+            style={{
+              width: '112px',
+              height: '112px',
+              objectFit: 'contain',
+              border: '1px solid #e2e8f0',
+              borderRadius: '8px',
+              background: '#f8fafc',
+              flex: '0 0 auto',
+            }}
+          />
+        )}
+        <div style={{ flex: '1 1 320px', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
             <h3 style={{ color: '#0f172a', fontSize: '20px', fontWeight: 700, margin: 0 }}>
               {candidate.name}
@@ -1093,7 +1112,8 @@ function SourceMatchDecisionButton({
 }
 
 function SourceTitle({ source }: { source: ResearchSource }): React.ReactElement {
-  if (!source.url) {
+  const sourceUrl = getResearchSourceUrl(source);
+  if (!sourceUrl) {
     return (
       <div>
         <div style={{ color: '#0f172a', fontWeight: 600 }}>{source.title ?? source.provider}</div>
@@ -1105,7 +1125,7 @@ function SourceTitle({ source }: { source: ResearchSource }): React.ReactElement
   return (
     <div>
       <a
-        href={source.url}
+        href={sourceUrl}
         target="_blank"
         rel="noreferrer"
         style={{ color: '#0f172a', fontWeight: 600, textDecoration: 'none' }}
@@ -1147,9 +1167,47 @@ function findSourceByType(
   sources: ResearchSource[],
   type: ResearchSource['type'],
 ): ResearchSource | null {
-  return sources.find((source) => source.type === type && Boolean(source.url)) ??
+  return sources.find((source) => source.type === type && Boolean(getResearchSourceUrl(source))) ??
     sources.find((source) => source.type === type) ??
     null;
+}
+
+function getResearchSourceUrl(source: ResearchSource | null | undefined): string | null {
+  if (!source) {
+    return null;
+  }
+
+  const direct = stringValue(source.url);
+  if (direct) {
+    return direct;
+  }
+
+  const raw = source.rawData;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  for (const key of [
+    'shopping_url',
+    'shoppingUrl',
+    'product_url',
+    'productUrl',
+    'product_link',
+    'productLink',
+    'seller_url',
+    'sellerUrl',
+    'url',
+    'link',
+    'url_redirect',
+  ]) {
+    const value = stringValue(record[key]);
+    if (value) {
+      return value;
+    }
+  }
+
+  return null;
 }
 
 function getCandidateSourceUrl(metadata: ProductCandidate['metadata']): string | null {
@@ -1164,6 +1222,35 @@ function getCandidateSourceUrl(metadata: ProductCandidate['metadata']): string |
 
   const trimmed = sourceUrl.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function getCandidateImageUrl(metadata: ProductCandidate['metadata']): string | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null;
+  }
+
+  const record = metadata as Record<string, unknown>;
+  const direct = stringValue(record.sourceImageUrl);
+  if (direct) {
+    return direct;
+  }
+
+  const aggregation = record.aggregation;
+  if (aggregation && typeof aggregation === 'object' && !Array.isArray(aggregation)) {
+    const sourceImageUrls = (aggregation as Record<string, unknown>).sourceImageUrls;
+    if (Array.isArray(sourceImageUrls)) {
+      const first = sourceImageUrls.find((value): value is string => typeof value === 'string' && value.length > 0);
+      if (first) {
+        return first;
+      }
+    }
+  }
+
+  return null;
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
 function extractStorePrice(sources: ResearchSource[]): number | null {
